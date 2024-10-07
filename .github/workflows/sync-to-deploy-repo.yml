@@ -17,7 +17,7 @@ jobs:
     steps:
       # A 레포지토리 체크아웃
       - name: Checkout A repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Git 설정 (커밋을 위한 사용자 정보)
       - name: Set up Git
