@@ -3,7 +3,7 @@ import AccountManagementForm from '@/components/account-management'
 import { Session } from '@/lib/types'
 import { redirect } from 'next/navigation'
 
-export default async function EditPage() {
+export default async function AccountPage() {
   const session = (await auth()) as Session
 
   if (session) {
