@@ -68,7 +68,7 @@ export function ChatPanel({
     {
       heading: '이미지 생성',
       subheading: `ㅇㅇㅇㅇㅇㅇㅇㅇ`,
-      message: `ㅇㅇㅇㅇㅇㅇㅇㅇ`
+      message: `create image`
     }
   ]
 
