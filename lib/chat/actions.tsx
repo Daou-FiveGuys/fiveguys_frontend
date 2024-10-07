@@ -35,6 +35,8 @@ import { saveChat } from '@/app/actions'
 import { SpinnerMessage, UserMessage } from '@/components/stocks/message'
 import { Chat, Message } from '@/lib/types'
 import { auth } from '@/auth'
+import PromptCreate from '@/components/stocks/prompt-create'
+import ImageCreate from '@/components/stocks/image-create'
 
 async function confirmPurchase(symbol: string, price: number, amount: number) {
   'use server'
@@ -143,6 +145,9 @@ async function submitUserMessage(content: string) {
     If you want to show events, call \`get_events\`.
     If the user wants to sell stock, or complete another impossible task, respond that you are a demo and cannot do that.
 
+
+    If you want to create Prompt, call \'create_prompt\' to create random text.
+    If you want to create Image, call \'create_image\' to create random image.
     Besides that, you can also chat with users and do some calculations if needed.`,
     messages: [
       ...aiState.get().messages.map((message: any) => ({
@@ -471,6 +476,132 @@ async function submitUserMessage(content: string) {
           return (
             <BotCard>
               <Events props={events} />
+            </BotCard>
+          )
+        }
+      },
+      createPrompt: {
+        description:
+          'List funny imaginary events between user highlighted dates that describe stock activity.',
+        parameters: z.object({
+          events: z.array(
+            z.object({
+              date: z
+                .string()
+                .describe('The date of the event, in ISO-8601 format'),
+              headline: z.string().describe('The headline of the event'),
+              description: z.string().describe('The description of the event')
+            })
+          )
+        }),
+        generate: async function* ({ events }) {
+          yield (
+            <BotCard>
+              <PromptCreate />
+            </BotCard>
+          )
+
+          await sleep(1000)
+
+          const toolCallId = nanoid()
+
+          aiState.done({
+            ...aiState.get(),
+            messages: [
+              ...aiState.get().messages,
+              {
+                id: nanoid(),
+                role: 'assistant',
+                content: [
+                  {
+                    type: 'tool-call',
+                    toolName: 'getEvents',
+                    toolCallId,
+                    args: { events }
+                  }
+                ]
+              },
+              {
+                id: nanoid(),
+                role: 'tool',
+                content: [
+                  {
+                    type: 'tool-result',
+                    toolName: 'getEvents',
+                    toolCallId,
+                    result: events
+                  }
+                ]
+              }
+            ]
+          })
+
+          return (
+            <BotCard>
+              <PromptCreate />
+            </BotCard>
+          )
+        }
+      },
+      createImage: {
+        description:
+          'List funny imaginary events between user highlighted dates that describe stock activity.',
+        parameters: z.object({
+          events: z.array(
+            z.object({
+              date: z
+                .string()
+                .describe('The date of the event, in ISO-8601 format'),
+              headline: z.string().describe('The headline of the event'),
+              description: z.string().describe('The description of the event')
+            })
+          )
+        }),
+        generate: async function* ({ events }) {
+          yield (
+            <BotCard>
+              <EventsSkeleton />
+            </BotCard>
+          )
+
+          await sleep(1000)
+
+          const toolCallId = nanoid()
+
+          aiState.done({
+            ...aiState.get(),
+            messages: [
+              ...aiState.get().messages,
+              {
+                id: nanoid(),
+                role: 'assistant',
+                content: [
+                  {
+                    type: 'tool-call',
+                    toolName: 'getEvents',
+                    toolCallId,
+                    args: { events }
+                  }
+                ]
+              },
+              {
+                id: nanoid(),
+                role: 'tool',
+                content: [
+                  {
+                    type: 'tool-result',
+                    toolName: 'getEvents',
+                    toolCallId,
+                    result: events
+                  }
+                ]
+              }
+            ]
+          })
+
+          return (
+            <BotCard>
+              <ImageCreate />
             </BotCard>
           )
         }
