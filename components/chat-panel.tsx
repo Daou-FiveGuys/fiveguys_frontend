@@ -54,6 +54,21 @@ export function ChatPanel({
       heading: 'What are some',
       subheading: `recent events about $DOGE?`,
       message: `What are some recent events about $DOGE?`
+    },
+    {
+      heading: '문자 프롬프트',
+      subheading: `ㅇㅇㅇㅇㅇㅇㅇ`,
+      message: `create prompt`
+    },
+    {
+      heading: '이미지 편집',
+      subheading: `ㅇㅇㅇㅇㅇㅇㅇㅇ`,
+      message: `ㅇㅇㅇㅇㅇㅇㅇㅇ`
+    },
+    {
+      heading: '이미지 생성',
+      subheading: `ㅇㅇㅇㅇㅇㅇㅇㅇ`,
+      message: `ㅇㅇㅇㅇㅇㅇㅇㅇ`
     }
   ]
 
