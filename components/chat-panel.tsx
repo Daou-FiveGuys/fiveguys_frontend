@@ -11,6 +11,8 @@ import { useAIState, useActions, useUIState } from 'ai/rsc'
 import type { AI } from '@/lib/chat/actions'
 import { nanoid } from 'nanoid'
 import { UserMessage } from './stocks/message'
+import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
 export interface ChatPanelProps {
   id?: string
@@ -33,6 +35,7 @@ export function ChatPanel({
   const [messages, setMessages] = useUIState<typeof AI>()
   const { submitUserMessage } = useActions()
   const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
+  const router = useRouter()
 
   const exampleMessages = [
     {
@@ -69,6 +72,10 @@ export function ChatPanel({
                   index > 1 && 'hidden md:block'
                 }`}
                 onClick={async () => {
+                  // 임시방편
+                  if(example.heading == "이미지 편집") {
+                    router.push('/edit')
+                  }
                   setMessages(currentMessages => [
                     ...currentMessages,
                     {
