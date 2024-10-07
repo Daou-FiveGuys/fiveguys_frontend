@@ -73,7 +73,7 @@ export function ChatPanel({
                 }`}
                 onClick={async () => {
                   // 임시방편
-                  if(example.heading == "이미지 편집") {
+                  if (example.heading == '이미지 편집') {
                     router.push('/edit')
                   }
                   setMessages(currentMessages => [

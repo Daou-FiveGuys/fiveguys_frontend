@@ -35,8 +35,8 @@ import { saveChat } from '@/app/actions'
 import { SpinnerMessage, UserMessage } from '@/components/stocks/message'
 import { Chat, Message } from '@/lib/types'
 import { auth } from '@/auth'
-import PromptCreate from "@/components/stocks/prompt-create";
-import ImageCreate from "@/components/stocks/image-create";
+import PromptCreate from '@/components/stocks/prompt-create'
+import ImageCreate from '@/components/stocks/image-create'
 
 async function confirmPurchase(symbol: string, price: number, amount: number) {
   'use server'
@@ -538,31 +538,30 @@ async function submitUserMessage(content: string) {
 
           return (
             <BotCard>
-              <PromptCreate  />
+              <PromptCreate />
             </BotCard>
           )
         }
-      }
-      ,
+      },
       createImage: {
         description:
-            'List funny imaginary events between user highlighted dates that describe stock activity.',
+          'List funny imaginary events between user highlighted dates that describe stock activity.',
         parameters: z.object({
           events: z.array(
-              z.object({
-                date: z
-                    .string()
-                    .describe('The date of the event, in ISO-8601 format'),
-                headline: z.string().describe('The headline of the event'),
-                description: z.string().describe('The description of the event')
-              })
+            z.object({
+              date: z
+                .string()
+                .describe('The date of the event, in ISO-8601 format'),
+              headline: z.string().describe('The headline of the event'),
+              description: z.string().describe('The description of the event')
+            })
           )
         }),
         generate: async function* ({ events }) {
           yield (
-              <BotCard>
-                <EventsSkeleton />
-              </BotCard>
+            <BotCard>
+              <EventsSkeleton />
+            </BotCard>
           )
 
           await sleep(1000)
@@ -601,9 +600,9 @@ async function submitUserMessage(content: string) {
           })
 
           return (
-              <BotCard>
-                <ImageCreate  />
-              </BotCard>
+            <BotCard>
+              <ImageCreate />
+            </BotCard>
           )
         }
       }

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/nextjs-chat.iml" filepath="$PROJECT_DIR$/.idea/nextjs-chat.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/fiveguys_frontend.iml" filepath="$PROJECT_DIR$/.idea/fiveguys_frontend.iml" />
     </modules>
   </component>
 </project>
