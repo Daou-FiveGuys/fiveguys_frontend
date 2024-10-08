@@ -1,0 +1,34 @@
+# .github/workflows/sync-to-b-repo.yml
+name: Sync A repo to B repo
+
+# A 레포지토리의 main 브랜치가 업데이트될 때 (PR 머지 포함)
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      # A 레포지토리 체크아웃
+      - name: Checkout A repository
+        uses: actions/checkout@v4
+
+      # Git 설정 (커밋을 위한 사용자 정보)
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # B 레포지토리를 원격으로 추가
+      - name: Add B repository as remote
+        run: git remote add b-repo https://HS-JNYLee:${{ secrets.B_REPO_TOKEN }}@github.com/HS-JNYLee/fiveguys_frontend_deploy.git
+
+      # B 레포지토리의 main 브랜치로 강제 푸시
+      - name: Force push to B repository
+        run: git push b-repo main --force
