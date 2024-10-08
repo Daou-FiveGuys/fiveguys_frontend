@@ -1,18 +1,18 @@
 import { auth } from '@/auth'
-import LoginForm from '@/components/login'
+import ImageEditorForm from '@/components/image-editor'
 import { Session } from '@/lib/types'
 import { redirect } from 'next/navigation'
 
-export default async function LoginPage() {
+export default async function EditPage() {
   const session = (await auth()) as Session
 
   if (session) {
     redirect('/')
-  }
+  } 
 
   return (
     <main className="flex flex-col p-4">
-      <LoginForm />
+      <ImageEditorForm />
     </main>
   )
 }
