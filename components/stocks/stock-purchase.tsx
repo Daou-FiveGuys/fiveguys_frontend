@@ -71,7 +71,7 @@ export function Purchase({
       ) : status === 'requires_action' ? (
         <>
           <div className="relative pb-6 mt-6">
-            <p>Shares to purchase</p>
+          <label htmlFor="labels-range-input">Shares to purchase</label> 
             <input
               id="labels-range-input"
               type="range"
