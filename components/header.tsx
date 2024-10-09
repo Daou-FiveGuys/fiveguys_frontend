@@ -68,6 +68,7 @@ export function Header() {
         <a
           href="https://vercel.com/templates/Next.js/nextjs-ai-chatbot"
           target="_blank"
+          rel="noopener" 
           className={cn(buttonVariants())}
         >
           <IconVercel className="mr-2" />

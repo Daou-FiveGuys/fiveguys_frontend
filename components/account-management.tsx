@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { toast } from "@/components/ui/use-toast"
+import { ToastProvider } from "@/components/ui/use-toast"
 
 // 더미 사용자 데이터
 const dummyUser = {
@@ -27,29 +27,30 @@ export default function AccountManagementForm() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
 
+  const toastMessage = {
+    title: "프로필 업데이트",
+    description: "프로필이 성공적으로 업데이트되었습니다.",
+  };
+  
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault()
     // 여기에 프로필 업데이트 로직을 구현하세요
     console.log("프로필 업데이트:", user)
-    toast({
-      title: "프로필 업데이트",
-      description: "프로필이 성공적으로 업데이트되었습니다.",
-    })
+    ToastProvider(toastMessage); 
   }
 
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault()
     if (newPassword !== confirmPassword) {
-      toast({
+      ToastProvider({
         title: "비밀번호 변경 실패",
         description: "새 비밀번호와 확인 비밀번호가 일치하지 않습니다.",
-        variant: "destructive",
       })
       return
     }
     // 여기에 비밀번호 변경 로직을 구현하세요
     console.log("비밀번호 변경:", newPassword)
-    toast({
+    ToastProvider({
       title: "비밀번호 변경",
       description: "비밀번호가 성공적으로 변경되었습니다.",
     })

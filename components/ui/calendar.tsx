@@ -15,6 +15,7 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
+  
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -53,10 +54,10 @@ function Calendar({
         day_hidden: "invisible",
         ...classNames,
       }}
-      components={{
-        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
-      }}
+      // components={{
+      //   IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
+      //   IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+      // }} signup 페이지 관련되었는데 없어도 잘 돌아감. 
       {...props}
     />
   )
