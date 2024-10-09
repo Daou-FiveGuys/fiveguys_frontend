@@ -1,54 +1,50 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState } from 'react';
 
-type ToastContextType = {
-  showToast: (message: string, duration?: number) => void;
+type ToastMessage = {
+  title: string;
+  description: string;
 };
 
-const ToastContext = createContext<ToastContextType | undefined>(undefined);
+// ToastContext 생성
+const ToastContext = createContext<{
+  showToast: (message: ToastMessage) => void;
+} | undefined>(undefined);
 
-export const ToastProvider: React.FC = ({ children }) => {
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+// ToastProvider 컴포넌트
+export const ToastProvider: React.FC<ToastMessage> = ({ title,description }) => {
+  const [toastMessage, setToastMessage] = useState<ToastMessage | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
-  const showToast = (message: string, duration = 3000) => {
+  // showToast 함수 정의
+  const showToast = (message: ToastMessage) => {
     setToastMessage(message);
     setIsVisible(true);
 
     setTimeout(() => {
       setIsVisible(false);
-    }, duration);
+      setToastMessage(null); // 메시지를 초기화
+    }, 3000); // 기본 지속 시간 설정
   };
 
   return (
     <ToastContext.Provider value={{ showToast }}>
-      {children}
-      {isVisible && (
-        <div style={toastStyles}>
-          {toastMessage}
+      {title}
+      {description} 
+      {isVisible && toastMessage && (
+        <div>
+          <h4>{toastMessage.title}</h4>
+          <p>{toastMessage.description}</p>
         </div>
       )}
     </ToastContext.Provider>
   );
 };
 
-export const useToast = (): ToastContextType => {
+// ToastContext를 사용하는 훅
+export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error("useToast must be used within a ToastProvider");
+    throw new Error('useToast must be used within a ToastProvider');
   }
-  return context;
-};
-
-// Simple inline styles for the toast popup
-const toastStyles: React.CSSProperties = {
-  position: "fixed",
-  bottom: "20px",
-  left: "50%",
-  transform: "translateX(-50%)",
-  backgroundColor: "#333",
-  color: "#fff",
-  padding: "10px 20px",
-  borderRadius: "5px",
-  boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.2)",
-  zIndex: 1000,
+  return context.showToast;
 };

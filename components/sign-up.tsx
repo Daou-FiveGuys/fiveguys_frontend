@@ -103,7 +103,6 @@ export default function SignUpForm() {
                   mode="single"
                   selected={birthDate}
                   onSelect={setBirthDate}
-                  initialFocus
                 />
               </PopoverContent>
             </Popover>
