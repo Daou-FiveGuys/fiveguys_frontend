@@ -1,16 +1,18 @@
 "use client"
-//추가
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { useRouter } from 'next/navigation'
 
 export default function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,10 +24,13 @@ export default function LoginForm() {
     }
 
     try {
-      // 여기에 실제 로그인 로직을 구현하세요
-      console.log("로그인 시도:", { email, password })
-      // 예: const response = await signIn("credentials", { email, password, redirect: false })
-      // if (response.error) throw new Error(response.error)
+      if (email === "qwer1234@gmail.com" && password === "Qwer1234@") {
+        console.log("로그인 성공")
+        // 로그인 성공 시 홈페이지로 리다이렉션
+        router.push('/')
+      } else {
+        throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.")
+      }
     } catch (err) {
       setError("로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.")
     }
@@ -33,9 +38,11 @@ export default function LoginForm() {
 
   const handleSocialLogin = async (provider: string) => {
     try {
-      // 여기에 소셜 로그인 로직을 구현하세요
       console.log(`${provider} 로그인 시도`)
-      // 예: await signIn(provider, { callbackUrl: "/" })
+      // 실제 구현에서는 이 부분에 소셜 로그인 로직을 추가해야 합니다.
+      // 예시로 알림창을 띄우고 홈페이지로 리다이렉션하겠습니다.
+      alert(`${provider} 로그인 성공!`)
+      router.push('/')
     } catch (err) {
       setError(`${provider} 로그인에 실패했습니다. 다시 시도해주세요.`)
     }
@@ -88,7 +95,7 @@ export default function LoginForm() {
               type="button"
               variant="outline"
               className="w-full"
-              onClick={() => handleSocialLogin("google")}
+              onClick={() => handleSocialLogin("Google")}
             >
               Google로 로그인
             </Button>
@@ -96,7 +103,7 @@ export default function LoginForm() {
               type="button"
               variant="outline"
               className="w-full"
-              onClick={() => handleSocialLogin("naver")}
+              onClick={() => handleSocialLogin("Naver")}
             >
               Naver로 로그인
             </Button>
