@@ -8,6 +8,7 @@ module.exports = {
         port: '',
         pathname: '**'
       }
-    ]
+    ],
+    disableStaticImages: true
   }
 }

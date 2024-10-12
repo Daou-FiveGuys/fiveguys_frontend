@@ -1,49 +1,27 @@
-import * as React from 'react'
+import React from 'react'
 
-import Link from 'next/link'
-
-import { cn } from '@/lib/utils'
-import { SidebarList } from '@/components/sidebar-list'
-import { buttonVariants } from '@/components/ui/button'
-import { IconPlus } from '@/components/ui/icons'
-
-interface ChatHistoryProps {
-  userId?: string
+interface ChatMessage {
+  id: string
+  sender: string
+  message: string
+  timestamp: string
 }
 
-export async function ChatHistory({ userId }: ChatHistoryProps) {
+interface ChatHistoryProps {
+  messages: ChatMessage[]
+}
+
+export function ChatHistory({ messages }: ChatHistoryProps) {
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between p-4">
-        <h4 className="text-sm font-medium">Chat History</h4>
-      </div>
-      <div className="mb-2 px-2">
-        <Link
-          href="/"
-          className={cn(
-            buttonVariants({ variant: 'outline' }),
-            'h-10 w-full justify-start bg-zinc-50 px-4 shadow-none transition-colors hover:bg-zinc-200/40 dark:bg-zinc-900 dark:hover:bg-zinc-300/10'
-          )}
-        >
-          <IconPlus className="-translate-x-2 stroke-2" />
-          New Chat
-        </Link>
-      </div>
-      <React.Suspense
-        fallback={
-          <div className="flex flex-col flex-1 px-4 space-y-4 overflow-auto">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div
-                key={i}
-                className="w-full h-6 rounded-md shrink-0 animate-pulse bg-zinc-200 dark:bg-zinc-800"
-              />
-            ))}
-          </div>
-        }
-      >
-        {/* @ts-ignore */}
-        <SidebarList userId={userId} />
-      </React.Suspense>
+    <div className="bg-gray-100 p-4 rounded-md max-h-80 overflow-y-auto">
+      <h2 className="text-lg font-bold mb-4">채팅 내역</h2>
+      {messages.map((msg) => (
+        <div key={msg.id} className={`mb-2 p-2 rounded-md ${msg.sender === 'user' ? 'bg-blue-100' : 'bg-green-100'}`}>
+          <p className="font-medium">{msg.sender === 'user' ? '사용자' : '봇'}</p>
+          <p>{msg.message}</p>
+          <p className="text-xs text-gray-500">{msg.timestamp}</p>
+        </div>
+      ))}
     </div>
   )
 }
