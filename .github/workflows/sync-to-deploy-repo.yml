@@ -1,34 +1,35 @@
-# .github/workflows/sync-to-b-repo.yml
-name: Sync A repo to B repo
+# name: Deploy to AWS
 
-# A 레포지토리의 main 브랜치가 업데이트될 때 (PR 머지 포함)
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+#on:
+#  push:
+#    branches:
+#      - main
 
-jobs:
-  sync:
-    runs-on: ubuntu-latest
+#jobs:
+#  deploy:
+#    runs-on: ubuntu-latest
 
-    steps:
-      # A 레포지토리 체크아웃
-      - name: Checkout A repository
-        uses: actions/checkout@v4
+#    steps:
+#     - name: Checkout code
+#       uses: actions/checkout@v2
 
-      # Git 설정 (커밋을 위한 사용자 정보)
-      - name: Set up Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+#     - name: Install SSH client
+#       run: |
+#         sudo apt-get update
+#         sudo apt-get install -y ssh
 
-      # B 레포지토리를 원격으로 추가
-      - name: Add B repository as remote
-        run: git remote add b-repo https://HS-JNYLee:${{ secrets.B_REPO_TOKEN }}@github.com/HS-JNYLee/fiveguys_frontend_deploy.git
-
-      # B 레포지토리의 main 브랜치로 강제 푸시
-      - name: Force push to B repository
-        run: git push b-repo main --force
+#     - name: Deploy to AWS
+#       env:
+#         SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+#         SSH_HOST: ${{ secrets.AWS_SSH_HOST }}
+#         SSH_USER: ${{ secrets.AWS_SSH_USER }}
+#       run: |
+#         echo "$SSH_PRIVATE_KEY" > key.pem
+#         chmod 600 key.pem
+#         ssh -o StrictHostKeyChecking=no -i key.pem $SSH_USER@$SSH_HOST << EOF
+#           cd fiveguys_frontend/
+#           git pull origin main
+#           docker prune system -y
+#           docker-compose down
+#           docker-compose up -d --build
+#         EOF
