@@ -4,10 +4,10 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { auth } from '@/auth'
 import { Button, buttonVariants } from '@/components/ui/button'
-import {
-  IconGitHub,
+import PngImage, {
+  IconGitHub, IconJira,
   IconNextChat,
-  IconSeparator,
+  IconSeparator, IconSlack,
   IconVercel
 } from '@/components/ui/icons'
 import { UserMenu } from '@/components/user-menu'
@@ -23,7 +23,17 @@ async function UserOrLogin() {
       {session?.user ? (
         <>
           <SidebarMobile>
-            <ChatHistory userId={session.user.id} />
+            {/*<ChatHistory userId={session.user.id} />*/}
+            <ChatHistory
+              messages={[
+                {
+                  id: '',
+                  sender: '',
+                  message: '',
+                  timestamp: ''
+                }
+              ]}
+            />
           </SidebarMobile>
           <SidebarToggle />
         </>
@@ -58,7 +68,7 @@ export function Header() {
       <div className="flex items-center justify-end space-x-2">
         <a
           target="_blank"
-          href="https://github.com/vercel/nextjs-ai-chatbot/"
+          href="https://github.com/Daou-FiveGuys/fiveguys_frontend"
           rel="noopener noreferrer"
           className={cn(buttonVariants({ variant: 'outline' }))}
         >
@@ -66,14 +76,19 @@ export function Header() {
           <span className="hidden ml-2 md:flex">GitHub</span>
         </a>
         <a
-          href="https://vercel.com/templates/Next.js/nextjs-ai-chatbot"
+          href="https://daoutech-ig-capstone.atlassian.net/jira/software/projects/FG/boards/1/timeline"
           target="_blank"
-          rel="noopener" 
-          className={cn(buttonVariants())}
+          rel="noopener noreferrer"
+          className={cn(buttonVariants({ variant: 'outline' }))}
         >
-          <IconVercel className="mr-2" />
-          <span className="hidden sm:block">Deploy to Vercel</span>
-          <span className="sm:hidden">Deploy</span>
+          <PngImage
+              src="/jira.png"
+              alt="Description of the image"
+              width={20}
+              height={20}
+              className="rounded-md"
+          />
+          <span className="hidden ml-2 md:flex text-blue-600">Manage to Jira</span>
         </a>
       </div>
     </header>

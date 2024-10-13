@@ -244,257 +244,258 @@ export function PromptForm({
   }
 
   return (
-    <form
-      ref={formRef}
-      onSubmit={async (e: any) => {
-        e.preventDefault()
+      <form
+          ref={formRef}
+          onSubmit={async (e: any) => {
+            e.preventDefault()
 
-        if (window.innerWidth < 600) {
-          e.target['message']?.blur()
-        }
-
-        const value = input.trim()
-        setInput('')
-        if (!value) return
-
-        if (currentMode === 'phone') {
-          handlePhoneNumber(value)
-        } else if (currentMode === 'phone-name') {
-          handleName(value)
-        } else if (currentMode === 'phone-group') {
-          if (value.toLowerCase() === '예' || value.toLowerCase() === '아니오') {
-            handleGroupNameResponse(value)
-          } else {
-            handleGroupName(value)
-          }
-        } else if (currentMode === 'text') {
-          setMessages(currentMessages => [
-            ...currentMessages,
-            {
-              id: nanoid(),
-              display: <UserMessage>{value}</UserMessage>
-            },
-            {
-              id: nanoid(),
-              display: <UserTextMessage message={value} onImageGeneration={handleImageGeneration} />
+            if (window.innerWidth < 600) {
+              e.target['message']?.blur()
             }
-          ])
-          setCurrentMode('normal')
-        } else if (currentMode === 'send-message') {
-          setMessages(currentMessages => [
-            ...currentMessages,
-            {
-              id: nanoid(),
-              display: <UserMessage>{value}</UserMessage>
-            },
-            {
-              id: nanoid(),
-              display: <PhoneNumberRecord phoneNumber={value} onSavePhoneNumber={handleSavePhoneNumber} />
-            }
-          ])
-          setCurrentMode('normal')
-        } else if (currentMode === 'image-select') {
-          if (value === '0') {
-            setMessages(currentMessages => [
-              ...currentMessages,
-              {
-                id: nanoid(),
-                display: <UserMessage>{value}</UserMessage>
-              },
-              {
-                id: nanoid(),
-                display: "이미지를 재생성합니다."
-              }
-            ])
-            handleImageGeneration()
-          } else if (['1', '2', '3', '4'].includes(value)) {
-            setSelectedImage(value)
-            setMessages(currentMessages => [
-              ...currentMessages,
-              {
-                id: nanoid(),
-                display: <UserMessage>{value}</UserMessage>
-              },
-              {
-                id: nanoid(),
-                display: <ImageGenerator selectedImage={value} />
-              }
-            ])
-            handleImageAction()
-          } else {
-            setMessages(currentMessages => [
-              ...currentMessages,
-              {
-                id: nanoid(),
-                display: <UserMessage>{value}</UserMessage>
-              },
-              {
-                id: nanoid(),
-                display: "잘못된 선택입니다. 0, 1, 2, 3, 4 중 하나를 선택해주세요. (0: 이미지 재생성)"
-              }
-            ])
-          }
-        } else if (currentMode === 'image-action') {
-          if (value === '이미지 편집') {
-            setMessages(currentMessages => [
-              ...currentMessages,
-              {
-                id: nanoid(),
-                display: <UserMessage>{value}</UserMessage>
-              },
-              {
-                id: nanoid(),
-                display: "이미지 편집 페이지로 이동합니다."
-              }
-            ])
-            router.push('/image-edit')
-          } else if (value === '이미지 보강') {
-            setMessages(currentMessages => [
-              ...currentMessages,
-              {
-                id: nanoid(),
-                display: <UserMessage>{value}</UserMessage>
-              }
-            ])
-            handleImageEnhance(selectedImage!)
-          } else if (value === '종료') {
-            setMessages(currentMessages => [
-              ...currentMessages,
-              {
-                id: nanoid(),
-                display: <UserMessage>{value}</UserMessage>
-              },
-              {
-                id: nanoid(),
-                display: "이미지 생성이 종료되었습니다."
-              }
-            ])
-            setCurrentMode('normal')
-          } else {
-            setMessages(currentMessages => [
-              ...currentMessages,
-              {
-                id: nanoid(),
-                display: <UserMessage>{value}</UserMessage>
-              },
-              {
-                id: nanoid(),
-                display: "잘못된 입력입니다. 이미지 편집, 이미지 보강, 종료 중에 하나를 입력하세요."
-              }
-            ])
-          }
-        } else if (currentMode === 'image-enhance-action') {
-          if (value === '이미지 편집') {
-            setMessages(currentMessages => [
-              ...currentMessages,
-              {
-                id: nanoid(),
-                display: <UserMessage>{value}</UserMessage>
-              },
-              {
-                id: nanoid(),
-                display: "이미지 편집 페이지로 이동합니다."
-              }
-            ])
-            router.push('/image-edit')
-          } else if (value === '종료') {
-            setMessages(currentMessages => [
-              ...currentMessages,
-              {
-                id: nanoid(),
-                display: <UserMessage>{value}</UserMessage>
-              },
-              {
-                id: nanoid(),
-                display: "이미지 생성이 종료되었습니다."
-              }
-            ])
-            setCurrentMode('normal')
-          } else {
-            setMessages(currentMessages => [
-              ...currentMessages,
-              {
-                id: nanoid(),
-                display: <UserMessage>{value}</UserMessage>
-              },
-              {
-                id: nanoid(),
-                display: "잘못된 입력입니다. 이미지 편집, 종료 중에 입력하시오."
-              }
-            ])
-          }
-        } else {
-          setMessages(currentMessages => [
-            
-            ...currentMessages,
-            {
-              id: nanoid(),
-              display: <UserMessage>{value}</UserMessage>
-            }
-          ])
 
-          const responseMessage = await submitUserMessage(value)
-          setMessages(currentMessages => [...currentMessages, responseMessage])
-        }
-      }}
-    >
-      <div className="bg-gray-700 relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute left-0 top-4 size-8 rounded-full bg-background p-0 sm:left-4"
-              onClick={() => {
-                router.push('/new')
-              }}
-            >
-              <IconPlus />
-              <span className="sr-only">New Chat</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>New Chat</TooltipContent>
-        </Tooltip>
-        <div className="flex justify-center space-x-2 mb-4 mt-8">
+            const value = input.trim()
+            setInput('')
+            if (!value) return
+
+            if (currentMode === 'phone') {
+              handlePhoneNumber(value)
+            } else if (currentMode === 'phone-name') {
+              handleName(value)
+            } else if (currentMode === 'phone-group') {
+              if (value.toLowerCase() === '예' || value.toLowerCase() === '아니오') {
+                handleGroupNameResponse(value)
+              } else {
+                handleGroupName(value)
+              }
+            } else if (currentMode === 'text') {
+              setMessages(currentMessages => [
+                ...currentMessages,
+                {
+                  id: nanoid(),
+                  display: <UserMessage>{value}</UserMessage>
+                },
+                {
+                  id: nanoid(),
+                  display: <UserTextMessage message={value} onImageGeneration={handleImageGeneration}/>
+                }
+              ])
+              setCurrentMode('normal')
+            } else if (currentMode === 'send-message') {
+              setMessages(currentMessages => [
+                ...currentMessages,
+                {
+                  id: nanoid(),
+                  display: <UserMessage>{value}</UserMessage>
+                },
+                {
+                  id: nanoid(),
+                  display: <PhoneNumberRecord phoneNumber={value} onSavePhoneNumber={handleSavePhoneNumber}/>
+                }
+              ])
+              setCurrentMode('normal')
+            } else if (currentMode === 'image-select') {
+              if (value === '0') {
+                setMessages(currentMessages => [
+                  ...currentMessages,
+                  {
+                    id: nanoid(),
+                    display: <UserMessage>{value}</UserMessage>
+                  },
+                  {
+                    id: nanoid(),
+                    display: "이미지를 재생성합니다."
+                  }
+                ])
+                handleImageGeneration()
+              } else if (['1', '2', '3', '4'].includes(value)) {
+                setSelectedImage(value)
+                setMessages(currentMessages => [
+                  ...currentMessages,
+                  {
+                    id: nanoid(),
+                    display: <UserMessage>{value}</UserMessage>
+                  },
+                  {
+                    id: nanoid(),
+                    display: <ImageGenerator selectedImage={value}/>
+                  }
+                ])
+                handleImageAction()
+              } else {
+                setMessages(currentMessages => [
+                  ...currentMessages,
+                  {
+                    id: nanoid(),
+                    display: <UserMessage>{value}</UserMessage>
+                  },
+                  {
+                    id: nanoid(),
+                    display: "잘못된 선택입니다. 0, 1, 2, 3, 4 중 하나를 선택해주세요. (0: 이미지 재생성)"
+                  }
+                ])
+              }
+            } else if (currentMode === 'image-action') {
+              if (value === '이미지 편집') {
+                setMessages(currentMessages => [
+                  ...currentMessages,
+                  {
+                    id: nanoid(),
+                    display: <UserMessage>{value}</UserMessage>
+                  },
+                  {
+                    id: nanoid(),
+                    display: "이미지 편집 페이지로 이동합니다."
+                  }
+                ])
+                router.push('/image-edit')
+              } else if (value === '이미지 보강') {
+                setMessages(currentMessages => [
+                  ...currentMessages,
+                  {
+                    id: nanoid(),
+                    display: <UserMessage>{value}</UserMessage>
+                  }
+                ])
+                handleImageEnhance(selectedImage!)
+              } else if (value === '종료') {
+                setMessages(currentMessages => [
+                  ...currentMessages,
+                  {
+                    id: nanoid(),
+                    display: <UserMessage>{value}</UserMessage>
+                  },
+                  {
+                    id: nanoid(),
+                    display: "이미지 생성이 종료되었습니다."
+                  }
+                ])
+                setCurrentMode('normal')
+              } else {
+                setMessages(currentMessages => [
+                  ...currentMessages,
+                  {
+                    id: nanoid(),
+                    display: <UserMessage>{value}</UserMessage>
+                  },
+                  {
+                    id: nanoid(),
+                    display: "잘못된 입력입니다. 이미지 편집, 이미지 보강, 종료 중에 하나를 입력하세요."
+                  }
+                ])
+              }
+            } else if (currentMode === 'image-enhance-action') {
+              if (value === '이미지 편집') {
+                setMessages(currentMessages => [
+                  ...currentMessages,
+                  {
+                    id: nanoid(),
+                    display: <UserMessage>{value}</UserMessage>
+                  },
+                  {
+                    id: nanoid(),
+                    display: "이미지 편집 페이지로 이동합니다."
+                  }
+                ])
+                router.push('/image-edit')
+              } else if (value === '종료') {
+                setMessages(currentMessages => [
+                  ...currentMessages,
+                  {
+                    id: nanoid(),
+                    display: <UserMessage>{value}</UserMessage>
+                  },
+                  {
+                    id: nanoid(),
+                    display: "이미지 생성이 종료되었습니다."
+                  }
+                ])
+                setCurrentMode('normal')
+              } else {
+                setMessages(currentMessages => [
+                  ...currentMessages,
+                  {
+                    id: nanoid(),
+                    display: <UserMessage>{value}</UserMessage>
+                  },
+                  {
+                    id: nanoid(),
+                    display: "잘못된 입력입니다. 이미지 편집, 종료 중에 입력하시오."
+                  }
+                ])
+              }
+            } else {
+              setMessages(currentMessages => [
+
+                ...currentMessages,
+                {
+                  id: nanoid(),
+                  display: <UserMessage>{value}</UserMessage>
+                }
+              ])
+
+              const responseMessage = await submitUserMessage(value)
+              setMessages(currentMessages => [...currentMessages, responseMessage])
+            }
+          }}
+      >
+        <div className="flex justify-center space-x-2 mt-2 mb-8">
           {predefinedMessages.map((msg, index) => (
-            <Button
-              key={index}
-              onClick={() => handlePredefinedMessage(msg.message, msg.response, msg.mode as 'normal' | 'phone' | 'text' | 'history' | 'token' | 'send-message')}
-              variant="outline"
-              size="sm"
-            >
-              {msg.message}
-            </Button>
+              <Button
+                  key={index}
+                  onClick={() => handlePredefinedMessage(msg.message, msg.response, msg.mode as 'normal' | 'phone' | 'text' | 'history' | 'token' | 'send-message')}
+                  variant="outline"
+                  size="sm"
+              >
+                {msg.message}
+              </Button>
           ))}
         </div>
-        <Textarea 
-          ref={inputRef}
-          tabIndex={0}
-          onKeyDown={onKeyDown}
-          placeholder="Send a message."
-          className="min-h-[60px] w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm"
-          autoFocus
-          spellCheck={false}
-          autoComplete="off"
-          autoCorrect="off"
-          name="message"
-          rows={1}
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          style={{color:'black'}}
-        />
-        <div className="absolute right-0 top-[13px] sm:right-4">
+        <div
+            className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button type="submit" size="icon" disabled={input === ''}>
-                <IconArrowElbow />
-                <span className="sr-only">Send message</span>
+              <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute left-0 top-4 size-8 rounded-full bg-background p-0 sm:left-4"
+                  onClick={() => {
+                    router.push('/new')
+                  }}
+              >
+                <IconPlus/>
+                <span className="sr-only">New Chat</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Send message</TooltipContent>
+            <TooltipContent>New Chat</TooltipContent>
           </Tooltip>
+
+          <Textarea
+              ref={inputRef}
+              tabIndex={0}
+              onKeyDown={onKeyDown}
+              placeholder="Send a message."
+              className="min-h-[60px] w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm"
+              autoFocus
+              spellCheck={false}
+              autoComplete="off"
+              autoCorrect="off"
+              name="message"
+              rows={1}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+          />
+          <div className="absolute right-0 top-[13px] sm:right-4">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button type="submit" size="icon" disabled={input === ''}>
+                  <IconArrowElbow/>
+                  <span className="sr-only">Send message</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Send message</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
-      </div>
-    </form>
+      </form>
   )
 }
