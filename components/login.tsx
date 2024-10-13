@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useRouter } from 'next/navigation'
+import { setCookie } from 'cookies-next'
 
 export default function LoginForm() {
   const [email, setEmail] = useState("")
@@ -26,6 +27,8 @@ export default function LoginForm() {
     try {
       if (email === "qwer1234@gmail.com" && password === "Qwer1234@") {
         console.log("로그인 성공")
+        // Set a session cookie
+        setCookie('user_session', 'logged_in', { maxAge: 60 * 60 * 24 }) // 24 hours
         // 로그인 성공 시 홈페이지로 리다이렉션
         router.push('/')
       } else {
