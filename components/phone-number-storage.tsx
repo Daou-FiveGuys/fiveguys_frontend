@@ -24,3 +24,4 @@ export function PhoneNumberStorage({ phoneNumbers }: PhoneNumberStorageProps) {
     </Card>
   )
 }
+//저장된 전화번호 확인.
