@@ -21,9 +21,13 @@ import { SavePhoneNumber } from './save-phone-number'
 import { UserTextMessage } from './user-text-message'
 import { ChatHistory } from './chat-history'
 import { TokenInfo } from './token-info'
-import { PhoneNumberRecord } from './phone-number-record'
+import { SendingMessage } from './sending-message'
 import { ImageGenerator } from './image-generator'
 import { ImageEnhance } from './image-enhance'
+
+import { PhoneNumberRecordAtOnce } from './phone-number-record-at-once'
+import { PhoneNumberDisplay } from './phone-number-display'
+
 
 interface PhoneNumberData {
   name: string;
@@ -43,9 +47,10 @@ export function PromptForm({
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
-  const [currentMode, setCurrentMode] = React.useState<'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'token' | 'send-message' | 'image-select' | 'image-action' | 'image-enhance-action'>('normal')
+  const [currentMode, setCurrentMode] = React.useState<'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'token' | 'send-message' | 'image-select' | 'image-action' | 'image-enhance-action'| 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'>('normal')
   const [selectedImage, setSelectedImage] = React.useState<string | null>(null)
   const [phoneData, setPhoneData] = React.useState<PhoneNumberData>({ name: '', phoneNumber: '', groupName: 'default' })
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   // 샘플 전화번호 데이터
   const [samplePhoneNumbers, setSamplePhoneNumbers] = React.useState<PhoneNumberData[]>([
@@ -64,8 +69,81 @@ export function PromptForm({
     { message: "문자 생성", response: "어떤 내용의 문자를 생성할까요?", mode: 'text' },
     { message: "채팅 내역 조회", response: "채팅 내역을 조회합니다.", mode: 'history' },
     { message: "토큰 조회", response: "토큰 정보를 조회합니다.", mode: 'token' },
-    { message: "메시지 전송", response: "전화번호를 입력하세요", mode: 'send-message' }
+    { message: "메시지 전송", response: "한명 혹은 단체로 전달하신건가요?", mode: 'send-message' }
   ]
+
+  const validatePhoneNumber = (value: string) => {
+    return /^\d{11}$/.test(value);
+  }
+  // 전화번호 검사1
+  const validateName = (value: string) => {
+    return /^[a-zA-Z가-힣\s]+$/.test(value);
+  }
+  // 전화번호 검사2
+  const validateGroupResponse = (value: string) => {
+    return ['예', '아니오'].includes(value);
+  }
+  // 전화번호 검사3
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const content = e.target?.result as string
+        const { phoneNumbers, errors } = PhoneNumberRecordAtOnce(content)
+        if (errors.length > 0) {
+          setMessages(currentMessages => [
+            ...currentMessages,
+            {
+              id: nanoid(),
+              display: (
+                <div>
+                  <p>파일 처리 중 오류가 발생했습니다:</p>
+                  <ul>
+                    {errors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                  <p>오류를 수정한 후 다시 시도해주세요.</p>
+                </div>
+              )
+            }
+          ])
+        } else {
+          setMessages(currentMessages => [
+            ...currentMessages,
+            {
+              id: nanoid(),
+              display: <PhoneNumberDisplay phoneNumbers={phoneNumbers} />
+            }
+          ])
+        }
+        setCurrentMode('normal')
+      }
+      reader.readAsText(file)
+    }
+    if (event.target) {
+      event.target.value = ''
+    }
+  }
+  //전화번호 저장 파일 업로드 기능.
+
+  const handleBulkSave = () => {
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: (
+          <div>
+            <p>파일을 선택해주세요.</p>
+            <Button onClick={() => fileInputRef.current?.click()}>
+              파일 업로드
+            </Button>
+          </div>
+        )
+      }
+    ])
+  }
 
   const handlePredefinedMessage = async (message: string, response: string, mode: 'normal' | 'phone' | 'text' | 'history' | 'token' | 'send-message') => {
     setMessages(currentMessages => [
@@ -81,6 +159,7 @@ export function PromptForm({
     ])
     setCurrentMode(mode)
   }
+  //버튼 누르면 고정답변 해줌.
 
   const handlePhoneNumber = (number: string) => {
     const existingNumber = samplePhoneNumbers.find(item => item.phoneNumber === number)
@@ -134,27 +213,28 @@ export function PromptForm({
     setCurrentMode('phone-group')
   }
 
-  const handleGroupNameResponse = (response: string) => {
-    if (response.toLowerCase() === '예') {
+  const handleGroupNameResponse = (value: string) => {
+    if (value.toLowerCase() === '예') {
       setMessages(currentMessages => [
         ...currentMessages,
         {
           id: nanoid(),
-          display: <UserMessage>{response}</UserMessage>
+          display: <UserMessage>{value}</UserMessage>
         },
         {
           id: nanoid(),
           display: "그룹명을 입력해주세요."
         }
       ])
-    } else {
+      setCurrentMode('phone-group-input')
+    } else if (value.toLowerCase() === '아니오') {
       const newPhoneData = { ...phoneData, groupName: 'default' }
       setSamplePhoneNumbers(prev => [...prev, newPhoneData])
       setMessages(currentMessages => [
         ...currentMessages,
         {
           id: nanoid(),
-          display: <UserMessage>{response}</UserMessage>
+          display: <UserMessage>{value}</UserMessage>
         },
         {
           id: nanoid(),
@@ -166,8 +246,21 @@ export function PromptForm({
         }
       ])
       setCurrentMode('normal')
+    } else {
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: <UserMessage>{value}</UserMessage>
+        },
+        {
+          id: nanoid(),
+          display: "잘못된 입력입니다. '예' 또는 '아니오'로 답해주세요."
+        }
+      ])
     }
   }
+  //그룹명 입력 여부 컴포넌트 예-> 추가적으로 입력
 
   const handleGroupName = (groupName: string) => {
     const newPhoneData = { ...phoneData, groupName }
@@ -242,6 +335,67 @@ export function PromptForm({
     ])
     setCurrentMode('image-enhance-action')
   }
+  const isValid11DigitNumber = (input:string) => typeof input === 'number' && /^\d{11}$/.test(input);
+
+  const [messageRecipient, setMessageRecipient] = React.useState<string>('')
+  const handleSendMessage = (input: string) => {
+    if (currentMode === 'send-message') {
+      if (input.toLowerCase() === '한명' || input.toLowerCase() === '단체') {
+        setMessages(currentMessages => [
+          ...currentMessages,
+          {
+            id: nanoid(),
+            display: <UserMessage>{input}</UserMessage>
+          },
+          {
+            id: nanoid(),
+            display: input.toLowerCase() === '한명' ? "전화번호 혹은 이름을 입력해 주세요." : "그룹명을 입력해 주세요."
+          }
+        ])
+        setCurrentMode(input.toLowerCase() === '한명' ? 'send-message-recipient' : 'send-message-group')
+      } else {
+        setMessages(currentMessages => [
+          ...currentMessages,
+          {
+            id: nanoid(),
+            display: <UserMessage>{input}</UserMessage>
+          },
+          {
+            id: nanoid(),
+            display: "한명 혹은 단체로 입력해 주세요."
+          }
+        ])
+      }
+    } else if (currentMode === 'send-message-recipient' || currentMode === 'send-message-group') {
+      setMessageRecipient(input)
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: <UserMessage>{input}</UserMessage>
+        },
+        {
+          id: nanoid(),
+          display: <SendingMessage 
+            recipient={input} 
+            isGroup={currentMode === 'send-message-group'}
+            onAddPhoneNumber={(phoneNumber) => {
+              setMessages(currentMessages => [
+                ...currentMessages,
+                {
+                  id: nanoid(),
+                  display: "새로운 전화번호를 추가합니다. 전화번호를 입력해주세요."
+                }
+              ])
+              setMessageRecipient(phoneNumber)
+              setCurrentMode('phone')
+            }}
+          />
+        }
+      ])
+      setCurrentMode('normal')
+    }
+  }
 
   return (
       <form
@@ -258,15 +412,63 @@ export function PromptForm({
             if (!value) return
 
             if (currentMode === 'phone') {
-              handlePhoneNumber(value)
+              if (value === '단체저장') {
+                setMessages(currentMessages => [
+                  ...currentMessages,
+                  {
+                    id: nanoid(),
+                    display: <UserMessage>{value}</UserMessage>
+                  },
+                  {
+                    id: nanoid(),
+                    display: "파일을 첨부해주세요."
+                  }
+                ])
+                setCurrentMode('bulk-save')
+                if (fileInputRef.current) {
+                  fileInputRef.current.click()
+                }
+              } else {
+                // 기존의 전화번호 처리 로직
+                if (!validatePhoneNumber(value)) {
+                  setMessages(currentMessages => [
+                    ...currentMessages,
+                    {
+                      id: nanoid(),
+                      display: <UserMessage>{value}</UserMessage>
+                    },
+                    {
+                      id: nanoid(),
+                      display: "올바른 이름 형식이 아닙니다. 11자리 숫자를 입력하세요."
+                    }
+                  ])
+                  return;
+                }
+                else{
+                  handlePhoneNumber(input);
+                }
+              
+              }
             } else if (currentMode === 'phone-name') {
+              if (!validateName(value)) {
+                setMessages(currentMessages => [
+                  ...currentMessages,
+                  {
+                    id: nanoid(),
+                    display: <UserMessage>{value}</UserMessage>
+                  },
+                  {
+                    id: nanoid(),
+                    display: "올바른 이름 형식이 아닙니다. 영어나 한글로 입력해주세요."
+                  }
+                ])
+                return;
+              }
               handleName(value)
             } else if (currentMode === 'phone-group') {
-              if (value.toLowerCase() === '예' || value.toLowerCase() === '아니오') {
-                handleGroupNameResponse(value)
-              } else {
-                handleGroupName(value)
-              }
+              handleGroupNameResponse(value)
+            } else if (currentMode === 'phone-group-input') {
+              handleGroupName(value)
             } else if (currentMode === 'text') {
               setMessages(currentMessages => [
                 ...currentMessages,
@@ -280,19 +482,8 @@ export function PromptForm({
                 }
               ])
               setCurrentMode('normal')
-            } else if (currentMode === 'send-message') {
-              setMessages(currentMessages => [
-                ...currentMessages,
-                {
-                  id: nanoid(),
-                  display: <UserMessage>{value}</UserMessage>
-                },
-                {
-                  id: nanoid(),
-                  display: <PhoneNumberRecord phoneNumber={value} onSavePhoneNumber={handleSavePhoneNumber}/>
-                }
-              ])
-              setCurrentMode('normal')
+            } else if (currentMode === 'send-message' || currentMode === 'send-message-recipient' || currentMode === 'send-message-group') {
+              handleSendMessage(value);
             } else if (currentMode === 'image-select') {
               if (value === '0') {
                 setMessages(currentMessages => [
@@ -495,7 +686,16 @@ export function PromptForm({
               <TooltipContent>Send message</TooltipContent>
             </Tooltip>
           </div>
+          
         </div>
+        <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileUpload}
+        accept=".txt"
+        aria-label="Upload a text file"
+      />
       </form>
   )
 }
