@@ -2,8 +2,10 @@ import { auth } from '@/auth'
 import ImageEditorForm from '@/components/image-editor'
 import { Session } from '@/lib/types'
 import { redirect } from 'next/navigation'
-
-export default async function EditPage() {
+interface EditPageProps {
+  params: { imageid: string };
+}
+export default async function EditPage({ params }: EditPageProps) {
   const session = (await auth()) as Session
 
   if (session) {
@@ -12,7 +14,7 @@ export default async function EditPage() {
 
   return (
     <main className="flex flex-col p-4">
-      <ImageEditorForm />
+      <ImageEditorForm imageid={params.imageid}/>
     </main>
   )
 }

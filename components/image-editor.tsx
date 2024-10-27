@@ -1,12 +1,18 @@
 "use client"
-//추가
+
 import React, { useState } from 'react'
-import { Square, Flame, Pencil, Type, Eraser, Palette, Circle, Triangle, Music, ThumbsUp, ImageIcon } from 'lucide-react'
+import { Square, Flame, Pencil, Type, Eraser, Palette, Circle, Triangle, Music, ThumbsUp, ImageIcon, Save } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { useRouter } from 'next/navigation'
 
-export default function ImageEditorForm() {
+interface EditPageProps {
+  imageid: string
+}
+
+export default function ImageEditorForm({ imageid }: EditPageProps) {
   const [selectedTool, setSelectedTool] = useState<string | null>(null)
+  const router = useRouter()
 
   const tools = [
     { name: '도형', icon: <Square /> },
@@ -20,6 +26,12 @@ export default function ImageEditorForm() {
 
   const handleToolClick = (toolName: string) => {
     setSelectedTool(selectedTool === toolName ? null : toolName)
+  }
+
+  const handleSave = () => {
+    // Here you would typically save the edited image
+    // For now, we'll just navigate back
+    router.back()
   }
 
   const renderToolOptions = () => {
@@ -50,81 +62,9 @@ export default function ImageEditorForm() {
         )
       case '텍스트':
         return (
-          <div className="space-y-4">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full">글꼴 변경</Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-48">
-                <div className="grid gap-2">
-                  {['Arial', 'Verdana', 'Times New Roman', 'Courier', 'Georgia'].map(font => (
-                    <Button key={font} variant="ghost" className="justify-start">
-                      {font}
-                    </Button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full">글자 크기 변경</Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-48">
-                <div className="grid gap-2">
-                  {[12, 14, 16, 18, 20, 24, 28, 32].map(size => (
-                    <Button key={size} variant="ghost" className="justify-start">
-                      {size}px
-                    </Button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-            <div className="space-y-2">
-              {[
-                "삶이 있는 한 희망은 있다. - 키케로",
-                "산다는 것, 그것은 치열한 전투이다. - 로망 로랑",
-                "하루에 3시간을 걸으면 7년 후에 지구를 한 바퀴 돌 수 있다. - 사무엘 존슨"
-              ].map((quote, index) => (
-                <div key={index} className="bg-white rounded-lg p-2 text-sm border border-gray-200">
-                  {quote}
-                </div>
-              ))}
-            </div>
-          </div>
-        )
-      case '지우개':
-        return (
           <div className="space-y-2">
-            <Button variant="outline" className="w-full"><Eraser className="mr-2" /> 지우개</Button>
-            <Button variant="outline" className="w-full"><Eraser className="mr-2" /> 전체 지우기</Button>
-          </div>
-        )
-      case '색상':
-        return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-6 gap-2">
-              {Array.from({ length: 36 }, (_, i) => (
-                <Button
-                  key={i}
-                  variant="outline"
-                  className="w-6 h-6 p-0"
-                  style={{ backgroundColor: `hsl(${i * 10}, 100%, 50%)` }}
-                />
-              ))}
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-2">최근에 사용한 색상</p>
-              <div className="flex space-x-2">
-                {Array.from({ length: 6 }, (_, i) => (
-                  <Button
-                    key={i}
-                    variant="outline"
-                    className="w-6 h-6 p-0"
-                    style={{ backgroundColor: `hsl(${Math.random() * 360}, 100%, 50%)` }}
-                  />
-                ))}
-              </div>
-            </div>
+            <Button variant="outline" className="w-full">글꼴 선택</Button>
+            <Button variant="outline" className="w-full">크기 조절</Button>
           </div>
         )
       default:
@@ -133,29 +73,49 @@ export default function ImageEditorForm() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <div className="flex-1 p-4">
-        <div className="w-full h-full bg-white border-2 border-gray-300 rounded-lg shadow-md">
-          {/* 이미지 편집 영역 */}
+    <div className="flex flex-col h-screen bg-gray-100">
+      <div className="flex-1 flex">
+        <div className="flex-1 p-4">
+          <div className="w-full h-full bg-white border-2 border-gray-300 rounded-lg shadow-md overflow-hidden">
+            <img 
+              src={`/sampleImage${imageid}.jpg`} 
+              alt={`Image ${imageid}`} 
+              className="w-full h-full object-contain"
+            />
+          </div>
+        </div>
+        <div className="w-20 bg-white shadow-lg flex flex-col items-center py-4 space-y-4">
+          {tools.map((tool) => (
+            <Button
+              key={tool.name}
+              variant={selectedTool === tool.name ? "default" : "outline"}
+              size="icon"
+              onClick={() => handleToolClick(tool.name)}
+            >
+              {tool.icon}
+            </Button>
+          ))}
         </div>
       </div>
-      <div className="w-20 bg-white shadow-lg flex flex-col items-center py-4 space-y-4">
-        {tools.map((tool) => (
-          <Button
-            key={tool.name}
-            variant={selectedTool === tool.name ? "default" : "outline"}
-            size="icon"
-            onClick={() => handleToolClick(tool.name)}
-          >
-            {tool.icon}
-          </Button>
-        ))}
+      <div className="bg-white p-4 shadow-lg flex justify-between items-center">
+        <Button onClick={handleSave} className="flex items-center space-x-2">
+          <Save className="w-4 h-4" />
+          <span>저장</span>
+        </Button>
+        {selectedTool && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline">옵션</Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+              <div className="space-y-4">
+                <h4 className="font-medium leading-none">{selectedTool} 옵션</h4>
+                {renderToolOptions()}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
       </div>
-      {selectedTool && (
-        <div className="w-64 bg-gray-100 p-4">
-          {renderToolOptions()}
-        </div>
-      )}
     </div>
   )
 }

@@ -1,16 +1,26 @@
 import React from 'react'
 
+
 interface ImageGeneratorProps {
   selectedImage?: string
+  createdMessage?: string  // 새로운 prop 추가
 }
 
-export function ImageGenerator({ selectedImage }: ImageGeneratorProps) {
+export function ImageGenerator({ selectedImage, createdMessage }: ImageGeneratorProps) {
   const sampleImages = [
-    { id: '1', src: '/placeholder.svg?height=200&width=200' },
-    { id: '2', src: '/placeholder.svg?height=200&width=200' },
-    { id: '3', src: '/placeholder.svg?height=200&width=200' },
-    { id: '4', src: '/placeholder.svg?height=200&width=200' }
+    { id: '1', src: '/sampleImage1.jpg' },
+    { id: '2', src: '/sampleImage2.jpg' },
+    { id: '3', src: '/sampleImage3.jpg' },
+    { id: '4', src: '/sampleImage4.jpg' }
   ]
+
+  // createdMessage 저장 기능 추가
+  React.useEffect(() => {
+    if (createdMessage) {
+      console.log('Saving created message:', createdMessage);
+      // 여기에 실제 저장 로직을 구현할 수 있습니다.
+    }
+  }, [createdMessage]);
 
   if (selectedImage) {
     const image = sampleImages.find(img => img.id === selectedImage)
@@ -23,6 +33,9 @@ export function ImageGenerator({ selectedImage }: ImageGeneratorProps) {
             alt={`Selected image ${image.id}`} 
             className="w-full h-auto rounded-md mb-2"
           />
+          {createdMessage && (
+            <p className="text-sm text-gray-600">관련 메시지: {createdMessage}</p>
+          )}
         </div>
       )
     }
@@ -45,6 +58,9 @@ export function ImageGenerator({ selectedImage }: ImageGeneratorProps) {
           </div>
         ))}
       </div>
+      {createdMessage && (
+        <p className="mt-2 text-sm text-gray-600">관련 메시지: {createdMessage}</p>
+      )}
     </div>
   )
 }
