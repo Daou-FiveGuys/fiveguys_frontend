@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import Textarea from 'react-textarea-autosize'
+import { flushSync } from 'react-dom';
 
 import { useActions, useUIState } from 'ai/rsc'
 
@@ -20,7 +21,7 @@ import { useRouter } from 'next/navigation'
 import { SavePhoneNumber } from './save-phone-number'
 import { UserTextMessage } from './user-text-message'
 import { ChatHistory } from './chat-history'
-import { TokenInfo } from './token-info'
+import { TokenInquiry } from './token-inquiry'
 import { SendingMessage } from './sending-message'
 import { ImageGenerator } from './image-generator'
 import { ImageEnhance } from './image-enhance'
@@ -32,6 +33,7 @@ import { MessageSaver } from './message-saver'
 import { ImageSaver } from './image-saver'
 
 import MessageImageHistory, { getHistoryItem } from './message-image-history'
+import {deductTokens} from './token-dedution'
 
 
 interface PhoneNumberData {
@@ -52,11 +54,12 @@ export function PromptForm({
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
-  const [currentMode, setCurrentMode] = React.useState<'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'token' | 'send-message' | 'image-select' | 'image-action' | 'image-enhance-action'| 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'|'image-enhancing-action'>('normal')
+  const [currentMode, setCurrentMode] = React.useState<'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'image-enhance-action'| 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'|'image-enhancing-action'| 'history-action' >('normal')
   const [selectedImage, setSelectedImage] = React.useState('');
   const [phoneData, setPhoneData] = React.useState<PhoneNumberData>({ name: '', phoneNumber: '', groupName: 'default' })
   const fileInputRef = React.useRef<HTMLInputElement>(null)
-
+  type Action = 'text-image-select' | 'text-action-save' | 'text-action-generate' | 'send-message' | 'image-edit' | 'image-enhance' | 'image-save'
+  const [message, setMessage] = React.useState('')
   // 샘플 전화번호 데이터
   const [samplePhoneNumbers, setSamplePhoneNumbers] = React.useState<PhoneNumberData[]>([
     { name: '홍길동', phoneNumber: '010-1234-5678', groupName: 'default' },
@@ -72,8 +75,8 @@ export function PromptForm({
   const predefinedMessages = [
     { message: "전화번호 저장", response: "전화번호를 입력해주세요.", mode: 'phone' },
     { message: "문자 생성", response: "어떤 내용의 문자를 생성할까요?", mode: 'text' },
-    { message: "히스토리 조회", response: "고유번호를 입력하세요.", mode: 'history' },
-    { message: "토큰 조회", response: "토큰 정보를 조회합니다.", mode: 'token' },
+    { message: "히스토리 조회", response: "히스토리를 조회합니다.", mode: 'history' },
+    { message: "토큰 조회", response: "토큰 정보를 조회합니다.", mode: 'tokenInquiry' },
     { message: "메시지 전송", response: "한명 혹은 단체로 전달하신건가요?", mode: 'send-message' }
   ]
 
@@ -133,13 +136,34 @@ export function PromptForm({
   }
   //전화번호 저장 파일 업로드 기능.
 
-  const handlePredefinedMessage = async (message: string, response: string, mode: 'normal' | 'phone' | 'text' | 'history' | 'token' | 'send-message') => {
-    if (mode === 'history') {
+  const handlePredefinedMessage = async (message: string, response: string, mode: 'normal' | 'phone' | 'text' | 'history' | 'tokenInquiry' | 'send-message') => {
+    if (mode === 'tokenInquiry') {
       setMessages(currentMessages => [
         ...currentMessages,
         {
           id: nanoid(),
           display: <UserMessage>{message}</UserMessage>
+        },
+        {
+          id: nanoid(),
+          display: response
+        },
+        {
+          id: nanoid(),
+          display: <div><TokenInquiry /></div>
+        }
+      ]);
+      setCurrentMode('normal')
+    }else if (mode === 'history') {
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: <UserMessage>{message}</UserMessage>
+        },
+        {
+          id: nanoid(),
+          display: response
         },
         {
           id: nanoid(),
@@ -150,8 +174,10 @@ export function PromptForm({
           display: "조회할 고유번호를 입력하세요."
         }
       ])
-    } else {
-      setMessages(currentMessages => [
+      setCurrentMode('history-action')
+    }
+    else{
+      setMessages(currentMessages => [  
         ...currentMessages,
         {
           id: nanoid(),
@@ -162,10 +188,10 @@ export function PromptForm({
           display: response
         }
       ])
+      setCurrentMode(mode)
     }
-    setCurrentMode(mode)
   }
-  //버튼 누르면 고정답변 해줌.
+  //버튼 누르면 고정답변 해주고 모드 변경.
 
   const handlePhoneNumber = (number: string) => {
     const existingNumber = samplePhoneNumbers.find(item => item.phoneNumber === number)
@@ -288,10 +314,18 @@ export function PromptForm({
     ])
     setCurrentMode('normal')
   }
+  const [tokenCheck, setTokenCheck] = React.useState(true)
+  const handleResultChange = async (result: boolean) => {
+    flushSync(() => {
+    setTokenCheck(result)
+    console.log(result)
+    });
+  }
 
   const handleImageGeneration = () => {
     setMessages(currentMessages => [
       ...currentMessages,
+      //추가
       {
         id: nanoid(),
         display: <ImageGenerator createdMessage={lastCreatedMessage} />
@@ -322,8 +356,10 @@ export function PromptForm({
   const [enhancedImg, setEnhancedImg] = React.useState('')
   const handleImageEnhance = () => {
     setEnhancedImg(`/sampleImage${selectedImage}.jpg`)
+    handleDeductTokens()
     setMessages(currentMessages => [
       ...currentMessages,
+      //추가
       {
         id: nanoid(),
         display: <ImageEnhance imageId={selectedImage} />
@@ -368,12 +404,15 @@ export function PromptForm({
       }
     } else if (currentMode === 'send-message-recipient' || currentMode === 'send-message-group') {
       setMessageRecipient(input)
+      handleDeductTokens()
       setMessages(currentMessages => [
         ...currentMessages,
         {
           id: nanoid(),
           display: <UserMessage>{input}</UserMessage>
         },
+        //추가
+        
         {
           id: nanoid(),
           display: <SendingMessage 
@@ -490,8 +529,11 @@ export function PromptForm({
   const [lastCreatedMessage, setLastCreatedMessage] = React.useState('')
   const [currentImageUrl, setCurrentImageUrl] = React.useState('')
   const handleSaveMessageAndImage = () => {
+    handleDeductTokens()
+    //이거 두번 결제 추가 구현해야됨.
     setMessages(currentMessages => [
       ...currentMessages,
+      
       {
         id: nanoid(),
         display: <MessageSaver message={{ userInput: lastTextInput, createdMessage: lastCreatedMessage }} saveNum={saveNum} />
@@ -512,6 +554,11 @@ export function PromptForm({
   //`ImageSaver` 컴포넌트를 사용해 `currentImageUrl`을 저장합니다.
 
   const handleImageEdit = () => {
+    handleDeductTokens()
+    setMessages(currentMessages => [
+      ...currentMessages,
+      //추가 2번
+    ])
     if (currentImageUrl) {
       router.push(`/edit/${encodeURIComponent(selectedImage)}`)
     } else {
@@ -525,8 +572,31 @@ export function PromptForm({
     }
   }
   //이미지 편집 툴 이동 컴포넌트.
-  
-  
+  const handleDeductTokens = async () => {
+    const result = await deductTokens()
+    if (result) {
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: '토큰이 성공적으로 차감되었습니다.'
+        }
+      ])
+    } else {
+      setMessages(currentMessages => [
+        ...currentMessages,
+        //추가
+        {
+          id: nanoid(),
+          display: '토큰이 부족합니다.'
+        }
+      ]
+      )
+      setCurrentMode('normal')
+    }
+  }
+  //남은 토큰 확인 기능.
+
   return (
       <form
           ref={formRef}
@@ -551,6 +621,7 @@ export function PromptForm({
               handleGroupName(value)
             } else if (currentMode === 'text') {
               setLastTextInput(value)
+              handleDeductTokens()
               setMessages(currentMessages => [
                 ...currentMessages,
                 {
@@ -576,6 +647,7 @@ export function PromptForm({
               if (value.toLowerCase() === '이미지 생성') {
                 handleImageGeneration()
               } else if (value.toLowerCase() === '메시지 저장') {
+                handleDeductTokens()
                 setMessages(currentMessages => [
                   ...currentMessages,
                   {
@@ -784,6 +856,19 @@ export function PromptForm({
                 ])
               }
             } else if (currentMode === 'history') {
+              setMessages(currentMessages => [
+                ...currentMessages,
+                {
+                  id: nanoid(),
+                  display: <MessageImageHistory id={-1} /> // -1을 사용하여 모든 데이터를 표시
+                },
+                {
+                  id: nanoid(),
+                  display: "조회할 고유번호를 입력하세요."
+                }
+              ])
+              setCurrentMode('history-action')
+            } else if (currentMode === 'history-action') {
               const historyId = Number(value);
               const historyItem = getHistoryItem(historyId);
               if (historyItem) {
@@ -816,8 +901,12 @@ export function PromptForm({
                   }
                 ]);
               }
-            }
-            else {
+            } else if (currentMode === 'tokenInquiry') {
+              setMessages(currentMessages => [
+                ...currentMessages,
+              ]);
+              setCurrentMode('normal')
+            } else {
               setMessages(currentMessages => [
 
                 ...currentMessages,
@@ -836,7 +925,7 @@ export function PromptForm({
           {predefinedMessages.map((msg, index) => (
               <Button
                   key={index}
-                  onClick={() => handlePredefinedMessage(msg.message, msg.response, msg.mode as 'normal' | 'phone' | 'text' | 'history' | 'token' | 'send-message')}
+                  onClick={() => handlePredefinedMessage(msg.message, msg.response, msg.mode as 'normal' | 'phone' | 'text' | 'history' | 'tokenInquiry' | 'send-message')}
                   variant="outline"
                   size="sm"
               >
