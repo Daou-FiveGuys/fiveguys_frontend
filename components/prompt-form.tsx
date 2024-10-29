@@ -24,8 +24,8 @@ import { UserTextMessage } from './user-text-message'
 import { ChatHistory } from './chat-history'
 import { TokenInquiry } from './token-inquiry'
 import { SendingMessage } from './sending-message'
-import { ImageGenerator } from './image-generator'
-import { ImageEnhance } from './image-enhance'
+import { ImageGenerator, returnSeletedImage } from './image-generator'
+import { ImageEnhance, ReturnEnhanceImage } from './image-enhance'
 
 import { PhoneNumberRecordAtOnce } from './phone-number-record-at-once'
 import { PhoneNumberDisplay } from './phone-number-display'
@@ -258,6 +258,7 @@ export function PromptForm({
           display: <SendingMessage 
             recipient={input} 
             isGroup={currentMode === 'send-message-group'}
+            currentImageUrl={currentImageUrl}
             onAddPhoneNumber={(phoneNumber) => {
               setMessages(currentMessages => [
                 ...currentMessages,
@@ -268,7 +269,9 @@ export function PromptForm({
               ])
               setMessageRecipient(phoneNumber)
               setCurrentMode('phone')
-            }}
+            }
+          
+          }
           />
         }
       ])
@@ -528,7 +531,8 @@ export function PromptForm({
 
   const [enhancedImg, setEnhancedImg] = React.useState('')
   const handleImageEnhance = (value:string) => {
-    setEnhancedImg(`/sampleImage${selectedImage}.jpg`)
+    // const EnhanceImage = ReturnEnhanceImage()
+    // setEnhancedImg(EnhanceImage)
     //handleDeductTokens()
     setMessages(currentMessages => [
       ...currentMessages,
@@ -621,8 +625,11 @@ export function PromptForm({
     ])
   }
   const stopImageCreate = (value:string) =>{
-    const imageUrl = `/sampleImage${selectedImage}.jpg`
-    setCurrentImageUrl(imageUrl)
+    //const imageUrl = `/sampleImage${selectedImage}.jpg`
+    //setCurrentImageUrl(imageUrl)
+    // const selectImage = returnSeletedImage(value)
+    // setSelectedImage(selectImage)
+    // setCurrentImageUrl(selectImage)
     setMessages(currentMessages => [
       ...currentMessages,
       {
@@ -646,7 +653,9 @@ export function PromptForm({
     handleImageGeneration()
   }
   const HandleimageEnhancingAction = (value:string) =>{
-    setCurrentImageUrl(enhancedImg)
+    const enhance = ReturnEnhanceImage()
+    setEnhancedImg(enhance)
+    setCurrentImageUrl(enhance)
     setMessages(currentMessages => [
       ...currentMessages,
       {
@@ -985,8 +994,13 @@ export function PromptForm({
                   setCurrentMode('image-Reselect');
                 }
               } else if (['1', '2', '3', '4'].includes(value)) {
-                setSelectedImage(value)
-                setCurrentImageUrl(`/sampleImage${value}.jpg`)
+                //setSelectedImage(value)
+                //setCurrentImageUrl(`/sampleImage${value}.jpg`)
+
+                const selectImage = returnSeletedImage(value)
+                setSelectedImage(selectImage)
+                setCurrentImageUrl(selectImage)
+
                 handleSelectedImageSave(value)  
                 handleImageAction(value)
                 setCurrentMode('image-action')
@@ -1005,9 +1019,13 @@ export function PromptForm({
               }
             } else if (currentMode === 'image-Reselect') {
               if (['1', '2', '3', '4'].includes(value)) {
-                setSelectedImage(value)
-                setCurrentImageUrl(`/sampleImage${value}.jpg`)
+                //setSelectedImage(value)
+                //setCurrentImageUrl(`/sampleImage${value}.jpg`)
                 handleSelectedImageSave(value)  
+
+                const selectImage = returnSeletedImage(value)
+                setSelectedImage(selectImage)
+                setCurrentImageUrl(selectImage)
                 handleImageAction(value)
                 setCurrentMode('normal') // 또는 다음 단계의 모드
               } else {

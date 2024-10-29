@@ -1,6 +1,6 @@
 'use server'
 
-let tokenBalance = 20 // 초기 토큰 잔액
+let tokenBalance = 1000 // 초기 토큰 잔액
 
 export async function getTokenBalance() {
   return tokenBalance
