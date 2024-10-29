@@ -3,6 +3,7 @@
 import * as React from 'react'
 import Textarea from 'react-textarea-autosize'
 import { flushSync } from 'react-dom';
+import ReactDOM from 'react-dom';
 
 import { useActions, useUIState } from 'ai/rsc'
 
@@ -34,6 +35,8 @@ import { ImageSaver } from './image-saver'
 
 import MessageImageHistory, { getHistoryItem } from './message-image-history'
 import {deductTokens} from './token-dedution'
+import { useNumberManager } from './number-manager'
+import { useNumberLoad } from './number-load'
 
 
 interface PhoneNumberData {
@@ -50,27 +53,44 @@ export function PromptForm({
   setInput: (value: string) => void
 }) {
   const router = useRouter()
+  
   const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
-  const [currentMode, setCurrentMode] = React.useState<'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'image-enhance-action'| 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'|'image-enhancing-action'| 'history-action' >('normal')
+  const [currentMode, setCurrentMode] = React.useState<'text-create-action'|'image-Reselect'|'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'image-enhance-action'| 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'|'image-enhancing-action'| 'history-action' >('normal')
   const [selectedImage, setSelectedImage] = React.useState('');
   const [phoneData, setPhoneData] = React.useState<PhoneNumberData>({ name: '', phoneNumber: '', groupName: 'default' })
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   type Action = 'text-image-select' | 'text-action-save' | 'text-action-generate' | 'send-message' | 'image-edit' | 'image-enhance' | 'image-save'
   const [message, setMessage] = React.useState('')
-  // 샘플 전화번호 데이터
-  const [samplePhoneNumbers, setSamplePhoneNumbers] = React.useState<PhoneNumberData[]>([
-    { name: '홍길동', phoneNumber: '010-1234-5678', groupName: 'default' },
-    { name: '김철수', phoneNumber: '010-9876-5432', groupName: '친구' },
-  ])
+  const { getNextNumber } = useNumberManager()
+  const handleGetNumber = () => {
+    const newNumber = getNextNumber()
+    setSaveNum(newNumber)
+  }
+  React.useEffect(() => {
+    // 컴포넌트 마운트 시 즉시 번호를 받아옵니다.
+    const initialNumber = getNextNumber()
+    setSaveNum(initialNumber)
+  }, []) // 빈 배열을 넣어 마운트 시에만 실행되도록 합니다.
 
   React.useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()
     }
+    const data = loadSampleData()
+    setSamplePhoneNumbers(data)
+    console.log(data)
   }, [])
+
+  interface PhoneData {
+    name: string;
+    phoneNumber: string;
+    groupName: string;
+  }
+  const [samplePhoneNumbers, setSamplePhoneNumbers] = React.useState<PhoneNumberData[]>([{ name: '', phoneNumber: '', groupName: 'default' }])
+  const { loadSampleData } = useNumberLoad()
 
   const predefinedMessages = [
     { message: "전화번호 저장", response: "전화번호를 입력해주세요.", mode: 'phone' },
@@ -192,6 +212,111 @@ export function PromptForm({
     }
   }
   //버튼 누르면 고정답변 해주고 모드 변경.
+  //토큰 조회 기능 + 이미지, 홍보문자 내역 조회.
+
+  const [tokenCheck, setTokenCheck] = React.useState(true)
+  const [messageRecipient, setMessageRecipient] = React.useState<string>('')
+
+  const handleSendMessage = (input: string) => {
+    if (currentMode === 'send-message') {
+      if (input.toLowerCase() === '한명' || input.toLowerCase() === '단체') {
+        setMessages(currentMessages => [
+          ...currentMessages,
+          {
+            id: nanoid(),
+            display: <UserMessage>{input}</UserMessage>
+          },
+          {
+            id: nanoid(),
+            display: input.toLowerCase() === '한명' ? "전화번호 혹은 이름을 입력해 주세요." : "그룹명을 입력해 주세요."
+          }
+        ])
+        setCurrentMode(input.toLowerCase() === '한명' ? 'send-message-recipient' : 'send-message-group')
+      } else {
+        setMessages(currentMessages => [
+          ...currentMessages,
+          {
+            id: nanoid(),
+            display: <UserMessage>{input}</UserMessage>
+          },
+          {
+            id: nanoid(),
+            display: "한명 혹은 단체로 입력해 주세요."
+          }
+        ])
+      }
+    } else if (currentMode === 'send-message-recipient' || currentMode === 'send-message-group') {
+      setMessageRecipient(input)
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: <UserMessage>{input}</UserMessage>
+        },
+        {
+          id: nanoid(),
+          display: <SendingMessage 
+            recipient={input} 
+            isGroup={currentMode === 'send-message-group'}
+            onAddPhoneNumber={(phoneNumber) => {
+              setMessages(currentMessages => [
+                ...currentMessages,
+                {
+                  id: nanoid(),
+                  display: "새로운 전화번호를 추가합니다. 전화번호를 입력해주세요."
+                }
+              ])
+              setMessageRecipient(phoneNumber)
+              setCurrentMode('phone')
+            }}
+          />
+        }
+      ])
+      setCurrentMode('normal')
+    }
+  }
+  //메시지 전송 기능.
+
+  const handlePhone = (value: string) => {
+    if (value === '단체저장') {
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: <UserMessage>{value}</UserMessage>
+        },
+        {
+          id: nanoid(),
+          display: "파일을 첨부해주세요."
+        }
+      ])
+      setCurrentMode('bulk-save')
+      if (fileInputRef.current) {
+        fileInputRef.current.click()
+      }
+    } else {
+      // 기존의 전화번호 처리 로직
+      if (!validatePhoneNumber(value)) {
+        setMessages(currentMessages => [
+          ...currentMessages,
+          {
+            id: nanoid(),
+            display: <UserMessage>{value}</UserMessage>
+          },
+          {
+            id: nanoid(),
+            display: "올바른 이름 형식이 아닙니다. 11자리 숫자를 입력하세요."
+          }
+        ])
+        return;
+      }
+      else{
+        handlePhoneNumber(input);
+      }
+    
+    }
+  }
+  //전화번호 추가 기능 1: 전화번호 파일 추가(파일 업로드까지) + 전화번호 추가 기능(전번 입력까지).
 
   const handlePhoneNumber = (number: string) => {
     const existingNumber = samplePhoneNumbers.find(item => item.phoneNumber === number)
@@ -228,6 +353,26 @@ export function PromptForm({
       setCurrentMode('phone-name')
     }
   }
+  //전화번호 추가 기능 2: 전화번호 존재 여부 확인.
+
+  const handlePhoneName = (value: string) =>{
+    if (!validateName(value)) {
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: <UserMessage>{value}</UserMessage>
+        },
+        {
+          id: nanoid(),
+          display: "올바른 이름 형식이 아닙니다. 영어나 한글로 입력해주세요."
+        }
+      ])
+      return;
+    }
+    handleName(value)
+  }
+  //전화번호 추가 기능 3: 전화번호 추가 기능(문자입력).
 
   const handleName = (name: string) => {
     setPhoneData(prev => ({ ...prev, name }))
@@ -244,6 +389,7 @@ export function PromptForm({
     ])
     setCurrentMode('phone-group')
   }
+  //전화번호 저장 기능 4: 문자입력 후 그룹명 지정 여부 확인
 
   const handleGroupNameResponse = (value: string) => {
     if (value.toLowerCase() === '예') {
@@ -292,7 +438,7 @@ export function PromptForm({
       ])
     }
   }
-  //그룹명 입력 여부 컴포넌트 예-> 추가적으로 입력
+  //전화번호 저장 기능 5: 예 -> 추가 입력, 아니오-> default 그룹으로 저장 후 동작 종료
 
   const handleGroupName = (groupName: string) => {
     const newPhoneData = { ...phoneData, groupName }
@@ -314,13 +460,43 @@ export function PromptForm({
     ])
     setCurrentMode('normal')
   }
-  const [tokenCheck, setTokenCheck] = React.useState(true)
-  const handleResultChange = async (result: boolean) => {
-    flushSync(() => {
-    setTokenCheck(result)
-    console.log(result)
-    });
+  //전화번호 추가 기능 6: 파일로 전화 번호 저장.
+
+  const handleReenterTopic = () => {
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: "주제를 다시 입력해 주세요."
+      }
+    ])
+    setCurrentMode('text')
   }
+  //문자 생성 기능 2: 문자 생성 후 주제 재입력 기능.
+
+  const handleRegenerateMessage = () => {
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserTextMessage 
+          message={lastTextInput} 
+          onCreatedMessage={setLastCreatedMessage}
+        />
+      },
+      {
+        id: nanoid(),
+        display: "주제, 재요청혹은 메시지 생성 완료를 입력해주세요."
+      }
+    ])
+    setCurrentMode('text-create-action')
+  }
+  //문자 생성 기능 4: 문자 저장 후 이미지 생성 여부 확인
+  
+  const [saveNum, setSaveNum] = React.useState(-1)
+  const [lastTextInput, setLastTextInput] = React.useState('')
+  const [lastCreatedMessage, setLastCreatedMessage] = React.useState('')
+  const [currentImageUrl, setCurrentImageUrl] = React.useState('')
 
   const handleImageGeneration = () => {
     setMessages(currentMessages => [
@@ -337,9 +513,9 @@ export function PromptForm({
     ])
     setCurrentMode('image-select')
   }
-  //이미지 4장 생성 기능.
+  //이미지 생성 기능 1: 이미지 4장 생성 기능.
 
-  const handleImageAction = () => {
+  const handleImageAction = (value:string) => {
     setMessages(currentMessages => [
       ...currentMessages,
       {
@@ -347,190 +523,62 @@ export function PromptForm({
         display: "이미지 편집, 이미지 보강, 종료 중에 하나를 입력하세요."
       }
     ])
-    const imageUrl = `/sampleImage${selectedImage}.jpg`
-    setCurrentImageUrl(imageUrl)
-    setCurrentMode('image-action')
   }
-  //이미지 선택 후 이미지 편집, 보강, 종료 선택 기능.
+  //이미지 생성 기능 2: 이미지 선택 후 이미지 편집, 보강, 종료 선택 기능.
 
   const [enhancedImg, setEnhancedImg] = React.useState('')
-  const handleImageEnhance = () => {
+  const handleImageEnhance = (value:string) => {
     setEnhancedImg(`/sampleImage${selectedImage}.jpg`)
-    handleDeductTokens()
+    //handleDeductTokens()
     setMessages(currentMessages => [
       ...currentMessages,
       //추가
+        {
+          id: nanoid(),
+          display: <UserMessage>{value}</UserMessage>
+        },
       {
         id: nanoid(),
         display: <ImageEnhance imageId={selectedImage} />
       },
       {
         id: nanoid(),
-        display: "변경된 이미지를 저장하시겠습니까? (예/아니오)"
+        display: "변경된 이미지를 저장하시겠습니까? (예/아니오/재보강)."
       }
     ])
     setCurrentMode('image-enhancing-action')
   }
-  //이미지 보강 기능
+  //이미지 생성 기능 3: 이미지 보강 기능
 
-  const [messageRecipient, setMessageRecipient] = React.useState<string>('')
-  const handleSendMessage = (input: string) => {
-    if (currentMode === 'send-message') {
-      if (input.toLowerCase() === '한명' || input.toLowerCase() === '단체') {
-        setMessages(currentMessages => [
-          ...currentMessages,
-          {
-            id: nanoid(),
-            display: <UserMessage>{input}</UserMessage>
-          },
-          {
-            id: nanoid(),
-            display: input.toLowerCase() === '한명' ? "전화번호 혹은 이름을 입력해 주세요." : "그룹명을 입력해 주세요."
-          }
-        ])
-        setCurrentMode(input.toLowerCase() === '한명' ? 'send-message-recipient' : 'send-message-group')
-      } else {
-        setMessages(currentMessages => [
-          ...currentMessages,
-          {
-            id: nanoid(),
-            display: <UserMessage>{input}</UserMessage>
-          },
-          {
-            id: nanoid(),
-            display: "한명 혹은 단체로 입력해 주세요."
-          }
-        ])
-      }
-    } else if (currentMode === 'send-message-recipient' || currentMode === 'send-message-group') {
-      setMessageRecipient(input)
-      handleDeductTokens()
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{input}</UserMessage>
-        },
-        //추가
-        
-        {
-          id: nanoid(),
-          display: <SendingMessage 
-            recipient={input} 
-            isGroup={currentMode === 'send-message-group'}
-            onAddPhoneNumber={(phoneNumber) => {
-              setMessages(currentMessages => [
-                ...currentMessages,
-                {
-                  id: nanoid(),
-                  display: "새로운 전화번호를 추가합니다. 전화번호를 입력해주세요."
-                }
-              ])
-              setMessageRecipient(phoneNumber)
-              setCurrentMode('phone')
-            }}
-          />
-        }
-      ])
-      setCurrentMode('normal')
-    }
-  }
-  const handlePhone = (value: string) => {
-    if (value === '단체저장') {
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{value}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: "파일을 첨부해주세요."
-        }
-      ])
-      setCurrentMode('bulk-save')
-      if (fileInputRef.current) {
-        fileInputRef.current.click()
-      }
-    } else {
-      // 기존의 전화번호 처리 로직
-      if (!validatePhoneNumber(value)) {
-        setMessages(currentMessages => [
-          ...currentMessages,
-          {
-            id: nanoid(),
-            display: <UserMessage>{value}</UserMessage>
-          },
-          {
-            id: nanoid(),
-            display: "올바른 이름 형식이 아닙니다. 11자리 숫자를 입력하세요."
-          }
-        ])
-        return;
-      }
-      else{
-        handlePhoneNumber(input);
-      }
-    
-    }
-  }
-  const handlePhoneName = (value: string) =>{
-    if (!validateName(value)) {
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{value}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: "올바른 이름 형식이 아닙니다. 영어나 한글로 입력해주세요."
-        }
-      ])
-      return;
-    }
-    handleName(value)
-  }
-
-  const handleReenterTopic = () => {
+  const handleImageEdit = (value:string) => {
+    //handleDeductTokens()
     setMessages(currentMessages => [
       ...currentMessages,
       {
         id: nanoid(),
-        display: "주제를 다시 입력해 주세요."
-      }
-    ])
-    setCurrentMode('text')
-  }
-  //사용자에게 주제를 다시 입력하라는 메시지를 표시하고 `currentMode`를 'text'로 설정합니다.
-  const handleRegenerateMessage = () => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserTextMessage 
-          message={lastTextInput} 
-          onReenterTopic={handleReenterTopic}
-          onRegenerateMessage={handleRegenerateMessage}
-          onCreatedMessage={setLastCreatedMessage}
-        />
+        display: <UserMessage>{value}</UserMessage>
       },
       {
         id: nanoid(),
-        display: "이미지 생성을 원하시면 '이미지 생성'을 입력해주세요. 혹은 '메시지 저장'을 입력해 주세요."
+        display: "이미지 편집 페이지로 이동합니다."
       }
+      //추가 2번
     ])
-    setCurrentMode('text-action')
+    if (currentImageUrl) {
+      router.push(`/edit/${encodeURIComponent(selectedImage)}`)
+    } else {
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: "편집할 이미지가 없습니다. 먼저 이미지를 선택해주세요."
+        }
+      ])
+    }
   }
-  //마지막으로 입력한 텍스트로 `UserTextMessage` 컴포넌트를 다시 생성합니다.
-  
-  const [saveNum, setSaveNum] = React.useState(0)
-  const [lastTextInput, setLastTextInput] = React.useState('')
-  const [lastCreatedMessage, setLastCreatedMessage] = React.useState('')
-  const [currentImageUrl, setCurrentImageUrl] = React.useState('')
+  //이미지 생성 기능 4: 이미지 편집 기능
+
   const handleSaveMessageAndImage = () => {
-    handleDeductTokens()
-    //이거 두번 결제 추가 구현해야됨.
     setMessages(currentMessages => [
       ...currentMessages,
       
@@ -550,52 +598,227 @@ export function PromptForm({
     setSaveNum(prevSaveNum => prevSaveNum + 1)
     setCurrentMode('normal')
   }
+  // 이미지 생성 기능 5: 이미지 생성 종료 후 이미지와 문자 저장.
   //`MessageSaver` 컴포넌트를 사용해 `lastTextInput`과 `lastCreatedMessage`를 저장합니다.
   //`ImageSaver` 컴포넌트를 사용해 `currentImageUrl`을 저장합니다.
 
-  const handleImageEdit = () => {
-    handleDeductTokens()
+  const handleCheckTokens = async () => {
+    const result = await deductTokens()
+    return result;
+  }
+
+  const handleSelectedImageSave = (value:string) =>{
     setMessages(currentMessages => [
       ...currentMessages,
-      //추가 2번
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: <ImageGenerator selectedImage={value}/>
+      }
     ])
-    if (currentImageUrl) {
-      router.push(`/edit/${encodeURIComponent(selectedImage)}`)
+  }
+  const stopImageCreate = (value:string) =>{
+    const imageUrl = `/sampleImage${selectedImage}.jpg`
+    setCurrentImageUrl(imageUrl)
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      }
+    ])
+  }
+  const handleImageRegeneration = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "이미지를 재생성합니다."
+      }
+    ])
+    handleImageGeneration()
+  }
+  const HandleimageEnhancingAction = (value:string) =>{
+    setCurrentImageUrl(enhancedImg)
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "향상된 이미지가 저장되었습니다."
+      },
+      {
+        id: nanoid(),
+        display: "이미지 편집, 종료 중에 하나를 입력하세요."
+      }
+    ])
+    setCurrentMode('image-enhance-action')
+  }
+  const errorMessageAutoSave = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "토큰이 부족합니다."
+      }
+    ])
+    handleTextSave(value)
+  }
+  const HandleimageEnhancingCancle = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "이미지가 저장되지 않았습니다."
+      },
+      {
+        id: nanoid(),
+        display: "이미지 편집, 종료 중에 하나를 입력하세요."
+      }
+    ])
+    setCurrentMode('image-enhance-action')
+  }
+  const handleHistory = () =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <MessageImageHistory id={-1} /> // -1을 사용하여 모든 데이터를 표시
+      },
+      {
+        id: nanoid(),
+        display: "조회할 고유번호를 입력하세요."
+      }
+    ])
+    setCurrentMode('history-action')
+  }
+  // 채팅 내역 조회 1: 내역 보여준 후 고유번호 입력 받음.
+  const handleHistoryFind = (value:string) =>{
+    const historyId = Number(value);
+    const historyItem = getHistoryItem(historyId);
+    if (historyItem) {
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: <UserMessage>{value}</UserMessage>
+        },
+        {
+          id: nanoid(),
+          display: <MessageImageHistory id={historyId} />
+        },
+        {
+          id: nanoid(),
+          display: "이미지와 문자를 불러왔습니다."
+        }
+      ]);
+      setCurrentMode('normal');
     } else {
       setMessages(currentMessages => [
         ...currentMessages,
         {
           id: nanoid(),
-          display: "편집할 이미지가 없습니다. 먼저 이미지를 선택해주세요."
+          display: <UserMessage>{value}</UserMessage>
+        },
+        {
+          id: nanoid(),
+          display: "해당 고유번호의 데이터를 찾을 수 없습니다."
         }
-      ])
+      ]);
     }
   }
-  //이미지 편집 툴 이동 컴포넌트.
-  const handleDeductTokens = async () => {
-    const result = await deductTokens()
-    if (result) {
+  // 채팅 내역 조회 2: 고유번호 입력 받아 그 데이터를 currentUrl과 lastMessage에 저장.
+  const handleTextSave = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: <MessageSaver message={{ userInput: lastTextInput, createdMessage: lastCreatedMessage }} saveNum={saveNum} />
+      },
+      {
+        id: nanoid(),
+        display: `메시지가 저장되었습니다 (저장 번호: ${saveNum}).`
+      }
+    ])
+    setSaveNum(prevSaveNum => prevSaveNum + 1)
+    setCurrentMode('normal')
+  }
+
+  const handleErrorTextSave = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <MessageSaver message={{ userInput: lastTextInput, createdMessage: lastCreatedMessage }} saveNum={saveNum} />
+      },
+      {
+        id: nanoid(),
+        display: `메시지가 저장되었습니다 (저장 번호: ${saveNum}).`
+      }
+    ])
+    setSaveNum(prevSaveNum => prevSaveNum + 1)
+    setCurrentMode('normal')
+  }
+
+  const handleText = (value:string) =>{
+    setLastTextInput(value)
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: <UserTextMessage 
+          message={value} 
+          onCreatedMessage={setLastCreatedMessage}
+        />
+      },
+      {
+        id: nanoid(),
+        display: "텍스트 주제 재입력을 원하면 주제, 텍스트 재생성을 원하면 재생성을 입력해주세요. 혹은 메시지 생성 완료를 입력해 주세요."
+      }
+    ])
+    setCurrentMode('text-create-action')
+  }
+  const [awaitingReselection, setAwaitingReselection] = React.useState(false)
+  const requestReselection = () => {
+    setAwaitingReselection(true)
+  }
+  React.useEffect(() => {
+    if (awaitingReselection) {
       setMessages(currentMessages => [
         ...currentMessages,
         {
           id: nanoid(),
-          display: '토큰이 성공적으로 차감되었습니다.'
+          display: "0, 1, 2, 3, 4 중 하나를 선택해주세요. (0: 이미지 재생성)"
         }
       ])
-    } else {
-      setMessages(currentMessages => [
-        ...currentMessages,
-        //추가
-        {
-          id: nanoid(),
-          display: '토큰이 부족합니다.'
-        }
-      ]
-      )
-      setCurrentMode('normal')
     }
-  }
-  //남은 토큰 확인 기능.
+  }, [awaitingReselection])
 
   return (
       <form
@@ -620,34 +843,11 @@ export function PromptForm({
             } else if (currentMode === 'phone-group-input') {
               handleGroupName(value)
             } else if (currentMode === 'text') {
-              setLastTextInput(value)
-              handleDeductTokens()
-              setMessages(currentMessages => [
-                ...currentMessages,
-                {
-                  id: nanoid(),
-                  display: <UserMessage>{value}</UserMessage>
-                },
-                {
-                  id: nanoid(),
-                  display: <UserTextMessage 
-                    message={value} 
-                    onReenterTopic={handleReenterTopic}
-                    onRegenerateMessage={handleRegenerateMessage}
-                    onCreatedMessage={setLastCreatedMessage}
-                  />
-                },
-                {
-                  id: nanoid(),
-                  display: "이미지 생성을 원하시면 '이미지 생성'을 입력해주세요. 혹은 '메시지 저장'을 입력해 주세요."
-                }
-              ])
-              setCurrentMode('text-action')
-            } else if (currentMode === 'text-action') {
-              if (value.toLowerCase() === '이미지 생성') {
-                handleImageGeneration()
-              } else if (value.toLowerCase() === '메시지 저장') {
-                handleDeductTokens()
+              const hasEnoughTokens = await handleCheckTokens()
+              if(hasEnoughTokens){
+                handleText(value)
+              }
+              else{
                 setMessages(currentMessages => [
                   ...currentMessages,
                   {
@@ -656,15 +856,81 @@ export function PromptForm({
                   },
                   {
                     id: nanoid(),
-                    display: <MessageSaver message={{ userInput: lastTextInput, createdMessage: lastCreatedMessage }} saveNum={saveNum} />
-                  },
-                  {
-                    id: nanoid(),
-                    display: `메시지가 저장되었습니다 (저장 번호: ${saveNum}).`
+                    display: "토큰이 부족합니다."
                   }
                 ])
-                setSaveNum(prevSaveNum => prevSaveNum + 1)
-                setCurrentMode('normal')
+                handleErrorTextSave(value)
+              }
+              
+            } else if (currentMode === 'text-create-action') {
+
+                if (value.toLowerCase() === '재생성') {
+                  const hasEnoughTokens = await handleCheckTokens()
+                  if(hasEnoughTokens){
+                  handleRegenerateMessage()
+                  }
+                  else{
+                    setMessages(currentMessages => [
+                      ...currentMessages,
+                      {
+                        id: nanoid(),
+                        display: <UserMessage>{value}</UserMessage>
+                      },
+                      {
+                        id: nanoid(),
+                        display: "재생성할 토큰이 부족합니다."
+                      }
+                    ])
+                    handleErrorTextSave(value)
+                  }
+                } else if (value.toLowerCase() === '주제') {
+                  handleReenterTopic()
+                } else if (value.toLowerCase() === '메시지 생성 완료') {
+                  setCurrentMode('text-action')
+                  setMessages(currentMessages => [
+                    ...currentMessages,
+                    {
+                      id: nanoid(),
+                      display: "이미지 생성, 메시지 저장을 할 수 있습니다."
+                    }
+                  ])
+                }else {
+                  setMessages(currentMessages => [
+                    ...currentMessages,
+                    {
+                      id: nanoid(),
+                      display: <UserMessage>{value}</UserMessage>
+                    },
+                    {
+                      id: nanoid(),
+                      display: "잘못된 입력입니다. '재생성', '주제' 혹은 '메시지 생성 완료'를 입력해주세요."
+                    }
+                  ])
+                }
+              
+            
+            }else if (currentMode === 'text-action') {
+              if (value.toLowerCase() === '이미지 생성') {
+                const hasEnoughTokens = await handleCheckTokens()
+                if(hasEnoughTokens){
+                  handleImageGeneration()
+                }
+                else{
+                  setMessages(currentMessages => [
+                    ...currentMessages,
+                    {
+                      id: nanoid(),
+                      display: <UserMessage>{value}</UserMessage>
+                    },
+                    {
+                      id: nanoid(),
+                      display: "토큰이 부족합니다."
+                    }
+                  ])
+                  handleErrorTextSave(value)
+                }
+              } else if (value.toLowerCase() === '메시지 저장') {
+                handleTextSave(value)
               } else {
                 setMessages(currentMessages => [
                   ...currentMessages,
@@ -679,35 +945,51 @@ export function PromptForm({
                 ])
               }
             } else if (currentMode === 'send-message' || currentMode === 'send-message-recipient' || currentMode === 'send-message-group') {
-              handleSendMessage(value);
+              const hasEnoughTokens = await handleCheckTokens()
+              if(hasEnoughTokens){
+                handleSendMessage(value);
+              }
+              else{
+                setMessages(currentMessages => [
+                  ...currentMessages,
+                  {
+                    id: nanoid(),
+                    display: <UserMessage>{value}</UserMessage>
+                  },
+                  {
+                    id: nanoid(),
+                    display: "토큰이 부족합니다."
+                  }
+                ])
+                setCurrentMode('normal')
+              }
             } else if (currentMode === 'image-select') {
               if (value === '0') {
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: "이미지를 재생성합니다."
-                  }
-                ])
-                handleImageGeneration()
+                const hasEnoughTokens = await handleCheckTokens()
+                if(hasEnoughTokens){
+                  handleImageRegeneration(value)
+                  setAwaitingReselection(false)
+                }
+                else{
+                  setMessages(currentMessages => [
+                    ...currentMessages,
+                    {
+                      id: nanoid(),
+                      display: <UserMessage>{value}</UserMessage>
+                    },
+                    {
+                      id: nanoid(),
+                      display: "토큰이 부족합니다. 생성된 이미지 중에서 선택해 주세요."
+                    }
+                  ])
+                  setCurrentMode('image-Reselect');
+                }
               } else if (['1', '2', '3', '4'].includes(value)) {
                 setSelectedImage(value)
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: <ImageGenerator selectedImage={value}/>
-                  }
-                ])
-                handleImageAction()
+                setCurrentImageUrl(`/sampleImage${value}.jpg`)
+                handleSelectedImageSave(value)  
+                handleImageAction(value)
+                setCurrentMode('image-action')
               } else {
                 setMessages(currentMessages => [
                   ...currentMessages,
@@ -721,8 +1003,14 @@ export function PromptForm({
                   }
                 ])
               }
-            } else if (currentMode === 'image-action') {
-              if (value === '이미지 편집') {
+            } else if (currentMode === 'image-Reselect') {
+              if (['1', '2', '3', '4'].includes(value)) {
+                setSelectedImage(value)
+                setCurrentImageUrl(`/sampleImage${value}.jpg`)
+                handleSelectedImageSave(value)  
+                handleImageAction(value)
+                setCurrentMode('normal') // 또는 다음 단계의 모드
+              } else {
                 setMessages(currentMessages => [
                   ...currentMessages,
                   {
@@ -731,29 +1019,36 @@ export function PromptForm({
                   },
                   {
                     id: nanoid(),
-                    display: "이미지 편집 페이지로 이동합니다."
+                    display: "잘못된 선택입니다. 1, 2, 3, 4 중 하나를 선택해주세요."
                   }
                 ])
-                handleImageEdit()
+                // 현재 모드를 유지하여 다시 선택하도록 함
+                setCurrentMode('image-Reselect')
+              }
+            }else if (currentMode === 'image-action') {
+              if (value === '이미지 편집') {
+                handleImageEdit(value)
               } else if (value === '이미지 보강') {
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  }
-                ])
-                handleImageEnhance()
+                const hasEnoughTokens = await handleCheckTokens()
+                if(hasEnoughTokens){
+                  handleImageEnhance(value)
+                }
+                else{
+                  setMessages(currentMessages => [
+                    ...currentMessages,
+                    {
+                      id: nanoid(),
+                      display: <UserMessage>{value}</UserMessage>
+                    },
+                    {
+                      id: nanoid(),
+                      display: "토큰이 부족합니다. 보강을 진행하지 않습니다. 이미지 편집, 종료 중에 하나를 입력하세요."
+                    }
+                  ])
+                  HandleimageEnhancingAction(value)
+                }
               } else if (value.toLowerCase() === '종료') {
-                const imageUrl = `/sampleImage${selectedImage}.jpg`
-                setCurrentImageUrl(imageUrl)
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  }
-                ])
+                //stopImageCreate(value)
                 handleSaveMessageAndImage()
               } else {
                 setMessages(currentMessages => [
@@ -770,40 +1065,32 @@ export function PromptForm({
               }
             } else if (currentMode === 'image-enhancing-action') {
               if (value.toLowerCase() === '예') {
-                setCurrentImageUrl(enhancedImg)
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: "향상된 이미지가 저장되었습니다."
-                  },
-                  {
-                    id: nanoid(),
-                    display: "이미지 편집, 종료 중에 하나를 입력하세요."
-                  }
-                ])
-                setCurrentMode('image-enhance-action')
+                  HandleimageEnhancingAction(value)
               } else if (value.toLowerCase() === '아니오') {
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: "이미지가 저장되지 않았습니다."
-                  },
-                  {
-                    id: nanoid(),
-                    display: "이미지 편집, 종료 중에 하나를 입력하세요."
-                  }
-                ])
-                setCurrentMode('image-enhance-action')
+                HandleimageEnhancingCancle(value)
+              } else if (value.toLowerCase() === '재보강') {
+                const hasEnoughTokens = await handleCheckTokens()
+                if(hasEnoughTokens){
+                  handleImageEnhance(value)
+                }
+                else{
+                  setMessages(currentMessages => [
+                    ...currentMessages,
+                    {
+                      id: nanoid(),
+                      display: <UserMessage>{value}</UserMessage>
+                    },
+                    {
+                      id: nanoid(),
+                      display: "토큰이 부족합니다. 보강을 진행하지 않습니다. 현재 이미지로 보강하시겠습니까?"
+                    }
+                  ])
+                  if (value.toLowerCase() === '예') {
+                    HandleimageEnhancingAction(value)
+                } else if (value.toLowerCase() === '아니오') {
+                  HandleimageEnhancingCancle(value)
+                }
+                }
               } else {
                 setMessages(currentMessages => [
                   ...currentMessages,
@@ -819,28 +1106,9 @@ export function PromptForm({
               }
             } else if (currentMode === 'image-enhance-action') {
               if (value === '이미지 편집') {
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: "이미지 편집 페이지로 이동합니다."
-                  }
-                ])
-                handleImageEdit()
+                handleImageEdit(value)
               } else if (value.toLowerCase() === '종료') {
-                const imageUrl = `/sampleImage${selectedImage}.jpg`
-                setCurrentImageUrl(imageUrl)
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  }
-                ])
+                stopImageCreate(value)
                 handleSaveMessageAndImage()
               } else {
                 setMessages(currentMessages => [
@@ -856,56 +1124,9 @@ export function PromptForm({
                 ])
               }
             } else if (currentMode === 'history') {
-              setMessages(currentMessages => [
-                ...currentMessages,
-                {
-                  id: nanoid(),
-                  display: <MessageImageHistory id={-1} /> // -1을 사용하여 모든 데이터를 표시
-                },
-                {
-                  id: nanoid(),
-                  display: "조회할 고유번호를 입력하세요."
-                }
-              ])
-              setCurrentMode('history-action')
+              handleHistory()
             } else if (currentMode === 'history-action') {
-              const historyId = Number(value);
-              const historyItem = getHistoryItem(historyId);
-              if (historyItem) {
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: <MessageImageHistory id={historyId} />
-                  },
-                  {
-                    id: nanoid(),
-                    display: "이미지와 문자를 불러왔습니다."
-                  }
-                ]);
-                setCurrentMode('normal');
-              } else {
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: "해당 고유번호의 데이터를 찾을 수 없습니다."
-                  }
-                ]);
-              }
-            } else if (currentMode === 'tokenInquiry') {
-              setMessages(currentMessages => [
-                ...currentMessages,
-              ]);
-              setCurrentMode('normal')
+              handleHistoryFind(value)
             } else {
               setMessages(currentMessages => [
 
