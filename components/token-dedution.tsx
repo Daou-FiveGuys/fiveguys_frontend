@@ -1,6 +1,6 @@
 'use server'
 
-let tokenBalance = 10 // 초기 토큰 잔액
+let tokenBalance = 20 // 초기 토큰 잔액
 
 export async function getTokenBalance() {
   return tokenBalance
@@ -11,7 +11,7 @@ export async function deductTokens() {
     tokenBalance -= 10
     return true
   }
-  return false
+  else return false
 }
 export async function TokenDisplay() {
     const balance = await getTokenBalance()
