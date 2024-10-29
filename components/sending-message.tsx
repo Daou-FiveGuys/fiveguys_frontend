@@ -11,9 +11,9 @@ interface SendingMessageProps {
   recipient: string;
   isGroup: boolean;
   onAddPhoneNumber: (phoneNumber: string) => void;
+  currentImageUrl: string;
 }
-
-export function SendingMessage({ recipient, isGroup, onAddPhoneNumber }: SendingMessageProps) {
+export function SendingMessage({ recipient, isGroup, currentImageUrl, onAddPhoneNumber }: SendingMessageProps) {
   const samplePhoneNumbers: PhoneNumberData[] = [
     { name: '홍길동', phoneNumber: '01012345678', groupName: '가족' },
     { name: '김철수', phoneNumber: '01087654321', groupName: '친구' },
@@ -21,6 +21,7 @@ export function SendingMessage({ recipient, isGroup, onAddPhoneNumber }: Sending
   ];
 
   const isPhoneNumber = (input: string) => /^\d+$/.test(input);
+  const [currentUrl, setCurrentUrl] = React.useState('');
 
   if (isGroup) {
     const groupExists = samplePhoneNumbers.some(item => item.groupName === recipient);
@@ -57,6 +58,7 @@ export function SendingMessage({ recipient, isGroup, onAddPhoneNumber }: Sending
           <h3 className="text-lg font-semibold mb-2">메시지 전송 완료</h3>
           <p><strong>수신자:</strong> {existingContact.name} ({existingContact.phoneNumber})</p>
           <p>메시지가 성공적으로 전송되었습니다.</p>
+          <img src={currentImageUrl} alt=""></img>
         </div>
       )
     } else {

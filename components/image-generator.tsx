@@ -1,18 +1,18 @@
 import React from 'react'
+import { sampleData } from './message-image-history';
 
 
 interface ImageGeneratorProps {
   selectedImage?: string
   createdMessage?: string  // 새로운 prop 추가
 }
-
+const sampleImages = [
+  { id: '1', src: '/sampleImage1.jpg' },
+  { id: '2', src: '/sampleImage2.jpg' },
+  { id: '3', src: '/sampleImage3.jpg' },
+  { id: '4', src: '/sampleImage4.jpg' }
+]
 export function ImageGenerator({ selectedImage, createdMessage }: ImageGeneratorProps) {
-  const sampleImages = [
-    { id: '1', src: '/sampleImage1.jpg' },
-    { id: '2', src: '/sampleImage2.jpg' },
-    { id: '3', src: '/sampleImage3.jpg' },
-    { id: '4', src: '/sampleImage4.jpg' }
-  ]
 
   // createdMessage 저장 기능 추가
   React.useEffect(() => {
@@ -63,4 +63,19 @@ export function ImageGenerator({ selectedImage, createdMessage }: ImageGenerator
       )}
     </div>
   )
+}
+
+export function returnSeletedImage(value:string){
+  if(value == '1'){
+    return sampleImages[0].src
+  }
+  else if(value == '2'){
+    return sampleImages[1].src
+  }
+  else if(value == '3'){
+    return sampleImages[2].src
+  }
+  else{
+    return sampleImages[3].src
+  }
 }
