@@ -60,3 +60,9 @@ export default function MessageImageHistory({ id }: { id: number }) {
     </div>
   )
 }
+export function getHistoryMessage(id: HistoryItem) {
+    return id.content
+} 
+export function getHistoryImage(id: HistoryItem) {
+    return id.imageUrl
+} 

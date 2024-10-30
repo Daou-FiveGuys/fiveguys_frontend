@@ -33,7 +33,7 @@ import { PhoneNumberDisplay } from './phone-number-display'
 import { MessageSaver } from './message-saver'
 import { ImageSaver } from './image-saver'
 
-import MessageImageHistory, { getHistoryItem } from './message-image-history'
+import MessageImageHistory, { getHistoryItem, getHistoryMessage, getHistoryImage} from './message-image-history'
 import {deductTokens} from './token-dedution'
 import { useNumberManager } from './number-manager'
 import { useNumberLoad } from './number-load'
@@ -528,9 +528,17 @@ export function PromptForm({
     ])
   }
   //이미지 생성 기능 2: 이미지 선택 후 이미지 편집, 보강, 종료 선택 기능.
+  
 
   const [enhancedImg, setEnhancedImg] = React.useState('')
-  const handleImageEnhance = (value:string) => {
+
+  React.useEffect(() => {
+  if (enhancedImg) {
+    
+ }
+}, [enhancedImg]);
+
+  const handleImageEnhance = async (value:string, enhance:string) => {
     // const EnhanceImage = ReturnEnhanceImage()
     // setEnhancedImg(EnhanceImage)
     //handleDeductTokens()
@@ -543,7 +551,7 @@ export function PromptForm({
         },
       {
         id: nanoid(),
-        display: <ImageEnhance imageId={selectedImage} />
+        display: <ImageEnhance enhancedImageSrc={enhance} />
       },
       {
         id: nanoid(),
@@ -653,9 +661,6 @@ export function PromptForm({
     handleImageGeneration()
   }
   const HandleimageEnhancingAction = (value:string) =>{
-    const enhance = ReturnEnhanceImage()
-    setEnhancedImg(enhance)
-    setCurrentImageUrl(enhance)
     setMessages(currentMessages => [
       ...currentMessages,
       {
@@ -724,6 +729,10 @@ export function PromptForm({
     const historyId = Number(value);
     const historyItem = getHistoryItem(historyId);
     if (historyItem) {
+      const historyMsg = getHistoryMessage(historyItem) 
+      const histroyImg = getHistoryImage(historyItem)
+      setLastCreatedMessage(historyMsg)
+      setCurrentImageUrl(histroyImg)
       setMessages(currentMessages => [
         ...currentMessages,
         {
@@ -732,13 +741,21 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: <MessageImageHistory id={historyId} />
+          display: <ImageSaver imageUrl={histroyImg} saveNum={saveNum} />
         },
+        {
+          id: nanoid(),
+          display: <MessageSaver message={{ userInput: "", createdMessage: historyMsg }} saveNum={saveNum} />
+        },
+        // <MessageImageHistory id={historyId} />
+        
         {
           id: nanoid(),
           display: "이미지와 문자를 불러왔습니다."
         }
       ]);
+      //sssss
+      setSaveNum(prevSaveNum => prevSaveNum + 1)
       setCurrentMode('normal');
     } else {
       setMessages(currentMessages => [
@@ -1027,7 +1044,7 @@ export function PromptForm({
                 setSelectedImage(selectImage)
                 setCurrentImageUrl(selectImage)
                 handleImageAction(value)
-                setCurrentMode('normal') // 또는 다음 단계의 모드
+                //setCurrentMode('normal') // 또는 다음 단계의 모드
               } else {
                 setMessages(currentMessages => [
                   ...currentMessages,
@@ -1049,7 +1066,10 @@ export function PromptForm({
               } else if (value === '이미지 보강') {
                 const hasEnoughTokens = await handleCheckTokens()
                 if(hasEnoughTokens){
-                  handleImageEnhance(value)
+                  const enhance = ReturnEnhanceImage()
+                  console.log(enhance)
+                  setEnhancedImg(enhance)
+                  handleImageEnhance(value, enhance);
                 }
                 else{
                   setMessages(currentMessages => [
@@ -1083,13 +1103,21 @@ export function PromptForm({
               }
             } else if (currentMode === 'image-enhancing-action') {
               if (value.toLowerCase() === '예') {
+                  setCurrentImageUrl(enhancedImg)
                   HandleimageEnhancingAction(value)
               } else if (value.toLowerCase() === '아니오') {
+                setCurrentImageUrl(selectedImage)
                 HandleimageEnhancingCancle(value)
               } else if (value.toLowerCase() === '재보강') {
                 const hasEnoughTokens = await handleCheckTokens()
                 if(hasEnoughTokens){
-                  handleImageEnhance(value)
+                  const enhance = await ReturnEnhanceImage()
+                  flushSync(() => {
+                    setEnhancedImg(enhance)
+                 });
+                 handleImageEnhance(value, enhance);
+
+                  console.log(enhance)
                 }
                 else{
                   setMessages(currentMessages => [
@@ -1104,8 +1132,10 @@ export function PromptForm({
                     }
                   ])
                   if (value.toLowerCase() === '예') {
+                    setCurrentImageUrl(enhancedImg)
                     HandleimageEnhancingAction(value)
                 } else if (value.toLowerCase() === '아니오') {
+                  setCurrentImageUrl(selectedImage)
                   HandleimageEnhancingCancle(value)
                 }
                 }
@@ -1126,7 +1156,7 @@ export function PromptForm({
               if (value === '이미지 편집') {
                 handleImageEdit(value)
               } else if (value.toLowerCase() === '종료') {
-                stopImageCreate(value)
+                setCurrentImageUrl(enhancedImg)
                 handleSaveMessageAndImage()
               } else {
                 setMessages(currentMessages => [

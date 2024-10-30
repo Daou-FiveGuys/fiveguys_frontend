@@ -59,3 +59,15 @@ export default function MessageImageHistory({ id }: { id: number }) {
     </Card>
   )
 }
+export function getHistoryMessage(id: number) {
+  const item = getHistoryItem(id)
+  if(item){
+    return item.content
+  }
+} 
+export function getHistoryImage(id: number) {
+  const item = getHistoryItem(id)
+  if(item){
+    return item.imageUrl
+  }
+} 
