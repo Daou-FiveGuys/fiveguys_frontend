@@ -258,6 +258,7 @@ export function PromptForm({
           display: <SendingMessage 
             recipient={input} 
             isGroup={currentMode === 'send-message-group'}
+            lastCreatedMessage={lastCreatedMessage}
             currentImageUrl={currentImageUrl}
             onAddPhoneNumber={(phoneNumber) => {
               setMessages(currentMessages => [
@@ -464,18 +465,6 @@ export function PromptForm({
     setCurrentMode('normal')
   }
   //전화번호 추가 기능 6: 파일로 전화 번호 저장.
-
-  const handleReenterTopic = () => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: "주제를 다시 입력해 주세요."
-      }
-    ])
-    setCurrentMode('text')
-  }
-  //문자 생성 기능 2: 문자 생성 후 주제 재입력 기능.
 
   const handleRegenerateMessage = () => {
     setMessages(currentMessages => [
@@ -792,22 +781,6 @@ export function PromptForm({
     setCurrentMode('normal')
   }
 
-  const handleErrorTextSave = (value:string) =>{
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <MessageSaver message={{ userInput: lastTextInput, createdMessage: lastCreatedMessage }} saveNum={saveNum} />
-      },
-      {
-        id: nanoid(),
-        display: `메시지가 저장되었습니다 (저장 번호: ${saveNum}).`
-      }
-    ])
-    setSaveNum(prevSaveNum => prevSaveNum + 1)
-    setCurrentMode('normal')
-  }
-
   const handleText = (value:string) =>{
     setLastTextInput(value)
     setMessages(currentMessages => [
@@ -846,6 +819,224 @@ export function PromptForm({
     }
   }, [awaitingReselection])
 
+  const handleReenterTopic = () => {
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: "주제를 다시 입력해 주세요."
+      }
+    ])
+    setCurrentMode('text')
+  }
+  //문자 재생성 기능
+  const handleStopGenerateText = () =>{
+    setCurrentMode('text-action')
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: "이미지 생성, 메시지 저장을 할 수 있습니다."
+      }
+    ])
+  }
+  //문자 생성을 멈추고 이미지 생성, 메시지 저장 선택 단계로 넘어감.
+
+  //
+  //아래부터 예외 관련 함수
+  const handleErrorText = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "토큰이 부족합니다."
+      }
+    ])
+    handleErrorTextSave(value)
+  }
+  const handleErrorTextSave = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <MessageSaver message={{ userInput: lastTextInput, createdMessage: lastCreatedMessage }} saveNum={saveNum} />
+      },
+      {
+        id: nanoid(),
+        display: `메시지가 저장되었습니다 (저장 번호: ${saveNum}).`
+      }
+    ])
+    setSaveNum(prevSaveNum => prevSaveNum + 1)
+    setCurrentMode('normal')
+  }
+  const handleErrorRegenerateText = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "재생성할 토큰이 부족합니다."
+      }
+    ])
+    handleErrorTextSave(value)
+  }
+  const handleErrorTextCreateAction = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "잘못된 입력입니다. '재생성', '주제' 혹은 '메시지 생성 완료'를 입력해주세요."
+      }
+    ])
+  }
+  const handleErrorGenerateImage = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "토큰이 부족합니다."
+      }
+    ])
+    handleErrorTextSave(value)
+  }
+  const handleErrorTextAction = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "잘못된 입력입니다. '이미지 생성' 또는 '메시지 저장'을 입력해주세요."
+      }
+    ])
+  }
+  const handleErrorSendingMessage = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "토큰이 부족합니다."
+      }
+    ])
+    setCurrentMode('normal')
+  }
+  const handleErrorImageSelected = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "잘못된 선택입니다. 0, 1, 2, 3, 4 중 하나를 선택해주세요. (0: 이미지 재생성)"
+      }
+    ])
+  }
+  const handleErrorImage = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "토큰이 부족합니다. 생성된 이미지 중에서 선택해 주세요."
+      }
+    ])
+    setCurrentMode('image-Reselect');
+  }
+  const handleErrorImageReselected = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "잘못된 선택입니다. 1, 2, 3, 4 중 하나를 선택해주세요."
+      }
+    ])
+    // 현재 모드를 유지하여 다시 선택하도록 함
+    setCurrentMode('image-Reselect')
+  }
+  const handleErrorImageAction = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "잘못된 입력입니다. 이미지 편집, 이미지 보강, 종료 중에 하나를 입력하세요."
+      }
+    ])
+  }
+  const handleErrorEnhance = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "토큰이 부족합니다. 보강을 진행하지 않습니다. 이미지 편집, 종료 중에 하나를 입력하세요."
+      }
+    ])
+    HandleimageEnhancingAction(value)
+  }
+  const handleErrorImageEnhancingAction = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "잘못된 입력입니다. '예' 또는 '아니오'로 답해주세요."
+      }
+    ])
+  }
+  const handleErrorImageEnhanceAction = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "잘못된 입력입니다. 이미지 편집, 종료 중에 입력하시오."
+      }
+    ])
+  }
+
   return (
       <form
           ref={formRef}
@@ -870,125 +1061,41 @@ export function PromptForm({
               handleGroupName(value)
             } else if (currentMode === 'text') {
               const hasEnoughTokens = await handleCheckTokens()
-              if(hasEnoughTokens){
-                handleText(value)
-              }
-              else{
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: "토큰이 부족합니다."
-                  }
-                ])
-                handleErrorTextSave(value)
-              }
+              if(hasEnoughTokens) handleText(value)
+              else handleErrorText(value)
               
             } else if (currentMode === 'text-create-action') {
-
                 if (value.toLowerCase() === '재생성') {
                   const hasEnoughTokens = await handleCheckTokens()
-                  if(hasEnoughTokens){
-                  handleRegenerateMessage()
-                  }
-                  else{
-                    setMessages(currentMessages => [
-                      ...currentMessages,
-                      {
-                        id: nanoid(),
-                        display: <UserMessage>{value}</UserMessage>
-                      },
-                      {
-                        id: nanoid(),
-                        display: "재생성할 토큰이 부족합니다."
-                      }
-                    ])
-                    handleErrorTextSave(value)
-                  }
+                  if(hasEnoughTokens)handleRegenerateMessage()
+                  else handleErrorRegenerateText(value)
+
                 } else if (value.toLowerCase() === '주제') {
                   handleReenterTopic()
+
                 } else if (value.toLowerCase() === '메시지 생성 완료') {
-                  setCurrentMode('text-action')
-                  setMessages(currentMessages => [
-                    ...currentMessages,
-                    {
-                      id: nanoid(),
-                      display: "이미지 생성, 메시지 저장을 할 수 있습니다."
-                    }
-                  ])
+                  handleStopGenerateText()
+
                 }else {
-                  setMessages(currentMessages => [
-                    ...currentMessages,
-                    {
-                      id: nanoid(),
-                      display: <UserMessage>{value}</UserMessage>
-                    },
-                    {
-                      id: nanoid(),
-                      display: "잘못된 입력입니다. '재생성', '주제' 혹은 '메시지 생성 완료'를 입력해주세요."
-                    }
-                  ])
+                  handleErrorTextCreateAction(value)
                 }
               
             
-            }else if (currentMode === 'text-action') {
+            } else if (currentMode === 'text-action') {
               if (value.toLowerCase() === '이미지 생성') {
                 const hasEnoughTokens = await handleCheckTokens()
-                if(hasEnoughTokens){
-                  handleImageGeneration()
-                }
-                else{
-                  setMessages(currentMessages => [
-                    ...currentMessages,
-                    {
-                      id: nanoid(),
-                      display: <UserMessage>{value}</UserMessage>
-                    },
-                    {
-                      id: nanoid(),
-                      display: "토큰이 부족합니다."
-                    }
-                  ])
-                  handleErrorTextSave(value)
-                }
-              } else if (value.toLowerCase() === '메시지 저장') {
-                handleTextSave(value)
-              } else {
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: "잘못된 입력입니다. '이미지 생성' 또는 '메시지 저장'을 입력해주세요."
-                  }
-                ])
-              }
+                if(hasEnoughTokens) handleImageGeneration()
+                else handleErrorGenerateImage(value)
+
+              } 
+              else if (value.toLowerCase() === '메시지 저장') handleTextSave(value)
+              else handleErrorTextAction(value)
+
             } else if (currentMode === 'send-message' || currentMode === 'send-message-recipient' || currentMode === 'send-message-group') {
               const hasEnoughTokens = await handleCheckTokens()
-              if(hasEnoughTokens){
-                handleSendMessage(value);
-              }
-              else{
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: "토큰이 부족합니다."
-                  }
-                ])
-                setCurrentMode('normal')
-              }
+              if(hasEnoughTokens) handleSendMessage(value);
+              else handleErrorSendingMessage(value)
+
             } else if (currentMode === 'image-select') {
               if (value === '0') {
                 const hasEnoughTokens = await handleCheckTokens()
@@ -996,74 +1103,32 @@ export function PromptForm({
                   handleImageRegeneration(value)
                   setAwaitingReselection(false)
                 }
-                else{
-                  setMessages(currentMessages => [
-                    ...currentMessages,
-                    {
-                      id: nanoid(),
-                      display: <UserMessage>{value}</UserMessage>
-                    },
-                    {
-                      id: nanoid(),
-                      display: "토큰이 부족합니다. 생성된 이미지 중에서 선택해 주세요."
-                    }
-                  ])
-                  setCurrentMode('image-Reselect');
-                }
-              } else if (['1', '2', '3', '4'].includes(value)) {
-                //setSelectedImage(value)
-                //setCurrentImageUrl(`/sampleImage${value}.jpg`)
+                else handleErrorImage(value)
 
+              } else if (['1', '2', '3', '4'].includes(value)) {
                 const selectImage = returnSeletedImage(value)
                 setSelectedImage(selectImage)
                 setCurrentImageUrl(selectImage)
-
                 handleSelectedImageSave(value)  
                 handleImageAction(value)
                 setCurrentMode('image-action')
-              } else {
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: "잘못된 선택입니다. 0, 1, 2, 3, 4 중 하나를 선택해주세요. (0: 이미지 재생성)"
-                  }
-                ])
-              }
+              } else handleErrorImageSelected(value)
+
             } else if (currentMode === 'image-Reselect') {
               if (['1', '2', '3', '4'].includes(value)) {
-                //setSelectedImage(value)
-                //setCurrentImageUrl(`/sampleImage${value}.jpg`)
                 handleSelectedImageSave(value)  
-
                 const selectImage = returnSeletedImage(value)
                 setSelectedImage(selectImage)
                 setCurrentImageUrl(selectImage)
                 handleImageAction(value)
-                //setCurrentMode('normal') // 또는 다음 단계의 모드
-              } else {
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: "잘못된 선택입니다. 1, 2, 3, 4 중 하나를 선택해주세요."
-                  }
-                ])
-                // 현재 모드를 유지하여 다시 선택하도록 함
-                setCurrentMode('image-Reselect')
-              }
+              } 
+              else handleErrorImageReselected(value)
+
             }else if (currentMode === 'image-action') {
               if (value === '이미지 편집') {
                 handleImageEdit(value)
-              } else if (value === '이미지 보강') {
+              } 
+              else if (value === '이미지 보강') {
                 const hasEnoughTokens = await handleCheckTokens()
                 if(hasEnoughTokens){
                   const enhance = ReturnEnhanceImage()
@@ -1071,43 +1136,19 @@ export function PromptForm({
                   setEnhancedImg(enhance)
                   handleImageEnhance(value, enhance);
                 }
-                else{
-                  setMessages(currentMessages => [
-                    ...currentMessages,
-                    {
-                      id: nanoid(),
-                      display: <UserMessage>{value}</UserMessage>
-                    },
-                    {
-                      id: nanoid(),
-                      display: "토큰이 부족합니다. 보강을 진행하지 않습니다. 이미지 편집, 종료 중에 하나를 입력하세요."
-                    }
-                  ])
-                  HandleimageEnhancingAction(value)
-                }
-              } else if (value.toLowerCase() === '종료') {
-                //stopImageCreate(value)
-                handleSaveMessageAndImage()
-              } else {
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: "잘못된 입력입니다. 이미지 편집, 이미지 보강, 종료 중에 하나를 입력하세요."
-                  }
-                ])
-              }
+                else handleErrorEnhance(value)
+              } else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
+              else handleErrorImageAction(value)
+
             } else if (currentMode === 'image-enhancing-action') {
               if (value.toLowerCase() === '예') {
                   setCurrentImageUrl(enhancedImg)
                   HandleimageEnhancingAction(value)
+
               } else if (value.toLowerCase() === '아니오') {
                 setCurrentImageUrl(selectedImage)
                 HandleimageEnhancingCancle(value)
+
               } else if (value.toLowerCase() === '재보강') {
                 const hasEnoughTokens = await handleCheckTokens()
                 if(hasEnoughTokens){
@@ -1139,38 +1180,16 @@ export function PromptForm({
                   HandleimageEnhancingCancle(value)
                 }
                 }
-              } else {
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: "잘못된 입력입니다. '예' 또는 '아니오'로 답해주세요."
-                  }
-                ])
-              }
+              } else handleErrorImageEnhancingAction(value)
+
             } else if (currentMode === 'image-enhance-action') {
               if (value === '이미지 편집') {
                 handleImageEdit(value)
               } else if (value.toLowerCase() === '종료') {
                 setCurrentImageUrl(enhancedImg)
                 handleSaveMessageAndImage()
-              } else {
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: <UserMessage>{value}</UserMessage>
-                  },
-                  {
-                    id: nanoid(),
-                    display: "잘못된 입력입니다. 이미지 편집, 종료 중에 입력하시오."
-                  }
-                ])
-              }
+              } else handleErrorImageEnhanceAction(value)
+
             } else if (currentMode === 'history') {
               handleHistory()
             } else if (currentMode === 'history-action') {
@@ -1184,7 +1203,6 @@ export function PromptForm({
                   display: <UserMessage>{value}</UserMessage>
                 }
               ])
-
               const responseMessage = await submitUserMessage(value)
               setMessages(currentMessages => [...currentMessages, responseMessage])
             }
