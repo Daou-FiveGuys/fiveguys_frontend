@@ -24,10 +24,10 @@ import { UserTextMessage } from './user-text-message'
 import { ChatHistory } from './chat-history'
 import { TokenInquiry } from './token-inquiry'
 import { SendingMessage } from './sending-message'
-import { ImageGenerator, returnSeletedImage } from './image-generator'
+import { ImageGenerator, returnSelectedImage, showExistingImages } from './image-generator'
 import { ImageEnhance, ReturnEnhanceImage } from './image-enhance'
 
-import { PhoneNumberRecordAtOnce } from './phone-number-record-at-once'
+import { validatePhoneNumberFile, SendPhoneNumberData } from './phone-number-record-at-once'
 import { PhoneNumberDisplay } from './phone-number-display'
 
 import { MessageSaver } from './message-saver'
@@ -91,6 +91,7 @@ export function PromptForm({
   }
   const [samplePhoneNumbers, setSamplePhoneNumbers] = React.useState<PhoneNumberData[]>([{ name: '', phoneNumber: '', groupName: 'default' }])
   const { loadSampleData } = useNumberLoad()
+  const [error, setError] = React.useState<string | null>(null)
 
   const predefinedMessages = [
     { message: "전화번호 저장", response: "전화번호를 입력해주세요.", mode: 'phone' },
@@ -118,31 +119,23 @@ export function PromptForm({
       const reader = new FileReader()
       reader.onload = (e) => {
         const content = e.target?.result as string
-        const { phoneNumbers, errors } = PhoneNumberRecordAtOnce(content)
-        if (errors.length > 0) {
+        if(validatePhoneNumberFile(content).isValid){
+          console.log(1)
+          
           setMessages(currentMessages => [
             ...currentMessages,
             {
               id: nanoid(),
-              display: (
-                <div>
-                  <p>파일 처리 중 오류가 발생했습니다:</p>
-                  <ul>
-                    {errors.map((error, index) => (
-                      <li key={index}>{error}</li>
-                    ))}
-                  </ul>
-                  <p>오류를 수정한 후 다시 시도해주세요.</p>
-                </div>
-              )
+              display: <SendPhoneNumberData content={content} />
             }
           ])
-        } else {
+        }
+        else{
           setMessages(currentMessages => [
             ...currentMessages,
             {
               id: nanoid(),
-              display: <PhoneNumberDisplay phoneNumbers={phoneNumbers} />
+              display: "잘못된 형식입니다."
             }
           ])
         }
@@ -420,11 +413,11 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: <SavePhoneNumber phoneData={newPhoneData} />
+          display: "그룹명을 기본 그룹명으로 하겠습니다."
         },
         {
           id: nanoid(),
-          display: "전화번호가 기본 그룹명으로 저장되었습니다."
+          display: <SavePhoneNumber phoneData={newPhoneData} />
         }
       ])
       setCurrentMode('normal')
@@ -496,7 +489,7 @@ export function PromptForm({
       //추가
       {
         id: nanoid(),
-        display: <ImageGenerator createdMessage={lastCreatedMessage} />
+        display: <ImageGenerator createdMessage={lastCreatedMessage}/>
       },
       {
         id: nanoid(),
@@ -619,7 +612,22 @@ export function PromptForm({
         id: nanoid(),
         display: <ImageGenerator selectedImage={value}/>
       }
+      
     ])
+
+    if(error==""){
+      {
+        setMessages(currentMessages => [
+          ...currentMessages,
+          {
+            id: nanoid(),
+            display: "오류가 발생하여 종료합니다."
+          }
+          
+        ])
+      }
+      setCurrentMode("normal")
+    }
   }
   const stopImageCreate = (value:string) =>{
     //const imageUrl = `/sampleImage${selectedImage}.jpg`
@@ -1036,6 +1044,20 @@ export function PromptForm({
       }
     ])
   }
+  const handleErrorGenerateImageApi = (value:string) =>{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{value}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: "이미지 생성에 실패했습니다."
+      }
+    ])
+    handleErrorTextSave(value)
+  }
 
   return (
       <form
@@ -1083,9 +1105,16 @@ export function PromptForm({
             
             } else if (currentMode === 'text-action') {
               if (value.toLowerCase() === '이미지 생성') {
-                const hasEnoughTokens = await handleCheckTokens()
-                if(hasEnoughTokens) handleImageGeneration()
-                else handleErrorGenerateImage(value)
+                const result = await showExistingImages();
+                console.log(result)
+                if(result) {
+                  const hasEnoughTokens = await handleCheckTokens()
+                  if(hasEnoughTokens){handleImageGeneration()}
+                  else {
+                    handleErrorGenerateImage(value)
+                  }
+                }
+                else handleErrorGenerateImageApi(value)
 
               } 
               else if (value.toLowerCase() === '메시지 저장') handleTextSave(value)
@@ -1106,7 +1135,7 @@ export function PromptForm({
                 else handleErrorImage(value)
 
               } else if (['1', '2', '3', '4'].includes(value)) {
-                const selectImage = returnSeletedImage(value)
+                const selectImage = returnSelectedImage(value)
                 setSelectedImage(selectImage)
                 setCurrentImageUrl(selectImage)
                 handleSelectedImageSave(value)  
@@ -1117,7 +1146,7 @@ export function PromptForm({
             } else if (currentMode === 'image-Reselect') {
               if (['1', '2', '3', '4'].includes(value)) {
                 handleSelectedImageSave(value)  
-                const selectImage = returnSeletedImage(value)
+                const selectImage = returnSelectedImage(value)
                 setSelectedImage(selectImage)
                 setCurrentImageUrl(selectImage)
                 handleImageAction(value)
