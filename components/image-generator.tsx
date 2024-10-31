@@ -1,29 +1,85 @@
-import React from 'react'
-import { sampleData } from './message-image-history';
-
+import React, { useState, useEffect } from 'react'
+import { fetchImageSources } from './image-generator-api'
 
 interface ImageGeneratorProps {
   selectedImage?: string
-  createdMessage?: string  // 새로운 prop 추가
+  createdMessage?: string
 }
-const sampleImages = [
+
+interface ImageData {
+  id: string;
+  src: string;
+}
+
+let initialImages: ImageData[] = [
   { id: '1', src: '/sampleImage1.jpg' },
   { id: '2', src: '/sampleImage2.jpg' },
   { id: '3', src: '/sampleImage3.jpg' },
   { id: '4', src: '/sampleImage4.jpg' }
-]
-export function ImageGenerator({ selectedImage, createdMessage }: ImageGeneratorProps) {
+];
 
-  // createdMessage 저장 기능 추가
-  React.useEffect(() => {
+export async function showExistingImages(): Promise<boolean> {
+  try {
+    const result = await fetchImageSources();
+    if (result === "error") {
+      return false;
+    }
+    // 성공적으로 이미지를 받아온 경우
+    initialImages = result.map((image, index) => ({
+      id: (index + 1).toString(),
+      src: image.src
+    }));
+    return true;
+  } catch (error) {
+    console.error('Error in showExistingImages:', error);
+    return false;
+  }
+}
+
+// function handleImageFetch(imageSources: ImageData[] | "error"): boolean {
+//   if (imageSources === "error") {
+//     return false;
+//   }
+//   // imageSources가 배열이고 길이가 0보다 크면 true 반환
+//   return Array.isArray(imageSources) && imageSources.length > 0;
+// }
+
+export function ImageGenerator({ selectedImage, createdMessage}: ImageGeneratorProps) {
+  const [images, setImages] = useState<ImageData[]>(initialImages);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadImages() {
+      setIsLoading(true);
+      const success = await showExistingImages();
+      if (success) {
+        setImages(initialImages);
+        setError(null);
+      } else {
+        setError('Failed to load images');
+      }
+      setIsLoading(false);
+    }
+    loadImages();
+  }, []);
+
+  useEffect(() => {
     if (createdMessage) {
-      console.log('Saving created message:', createdMessage);
-      // 여기에 실제 저장 로직을 구현할 수 있습니다.
+      console.log('Saving created message:', createdMessage)
     }
   }, [createdMessage]);
 
+  if (isLoading) {
+    return <div>Loading images...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
   if (selectedImage) {
-    const image = sampleImages.find(img => img.id === selectedImage)
+    const image = images.find(img => img.id === selectedImage)
     if (image) {
       return (
         <div className="mt-4">
@@ -45,7 +101,7 @@ export function ImageGenerator({ selectedImage, createdMessage }: ImageGenerator
     <div className="mt-4">
       <h3 className="text-lg font-bold mb-2 text-black">생성된 이미지</h3>
       <div className="grid grid-cols-2 gap-2">
-        {sampleImages.map((image) => (
+        {images.map((image) => (
           <div key={image.id} className="relative">
             <img 
               src={image.src} 
@@ -65,17 +121,7 @@ export function ImageGenerator({ selectedImage, createdMessage }: ImageGenerator
   )
 }
 
-export function returnSeletedImage(value:string){
-  if(value == '1'){
-    return sampleImages[0].src
-  }
-  else if(value == '2'){
-    return sampleImages[1].src
-  }
-  else if(value == '3'){
-    return sampleImages[2].src
-  }
-  else{
-    return sampleImages[3].src
-  }
+export function returnSelectedImage(value: string) {
+  const image = initialImages.find(img => img.id === value);
+  return image ? image.src : '';
 }
