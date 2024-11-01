@@ -225,12 +225,12 @@ export function PromptForm({
             id: nanoid(),
             display: input.toLowerCase() === '한명' ?
                 <BotCard>
-                  <ButtonCommand setInput={setInput} command={'전화번호'}/> 혹은
-                  <ButtonCommand setInput = {setInput} command = {'이름'} /> 을 입력해 주세요.
+                  <ButtonCommand setInput={setInput} command={'전화번호'} ref={inputRef}/> 혹은
+                  <ButtonCommand setInput = {setInput} command = {'이름'} ref={inputRef}/> 을 입력해 주세요.
                 </BotCard>
                  :
                 <BotCard>
-                  <ButtonCommand setInput={setInput} command={'그룹명'}/> 을 입력해 주세요.
+                  <ButtonCommand setInput={setInput} command={'그룹명'} ref={inputRef}/> 을 입력해 주세요.
                 </BotCard>
           }
         ])
@@ -244,7 +244,7 @@ export function PromptForm({
           },
           {
             id: nanoid(),
-            display: <BotCard><ButtonCommand setInput={setInput} command={'한명'} /> 혹은 <ButtonCommand setInput={setInput} command={'단체'} />로 입력해 주세요.</BotCard>
+            display: <BotCard><ButtonCommand setInput={setInput} command={'한명'} ref={inputRef}/> 혹은 <ButtonCommand setInput={setInput} command={'단체'} ref={inputRef}/>로 입력해 주세요.</BotCard>
           }
         ])
       }
@@ -391,7 +391,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: <BotCard>그룹명을 추가하시겠습니까? (<ButtonCommand setInput={setInput} command={'예'} />/<ButtonCommand setInput={setInput} command={'아니오'} />)</BotCard>
+        display: <BotCard>그룹명을 추가하시겠습니까? (<ButtonCommand setInput={setInput} command={'예'} ref={inputRef}/>/<ButtonCommand setInput={setInput} command={'아니오'} ref={inputRef}/>)</BotCard>
       }
     ])
     setCurrentMode('phone-group')
@@ -443,8 +443,8 @@ export function PromptForm({
           display:
               <BotCard>
             잘못된 입력입니다.
-            <ButtonCommand setInput={setInput} command={'예'} /> 또는
-            <ButtonCommand setInput={setInput} command={'아니오'} />로 답해주세요.
+            <ButtonCommand setInput={setInput} command={'예'} ref={inputRef}/> 또는
+            <ButtonCommand setInput={setInput} command={'아니오'} ref={inputRef}/>로 답해주세요.
           </BotCard>
         }
       ])
@@ -488,9 +488,9 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>
-              <ButtonCommand setInput={setInput} command={'주제'} />,
-              <ButtonCommand setInput={setInput} command={'재요청'} />혹은
-              <ButtonCommand setInput={setInput} command={'메시지 생성 완료'} />를 입력해주세요.
+              <ButtonCommand setInput={setInput} command={'주제'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'재요청'} ref={inputRef}/>혹은
+              <ButtonCommand setInput={setInput} command={'메시지 생성 완료'} ref={inputRef}/>를 입력해주세요.
             </BotCard>
       }
     ])
@@ -527,9 +527,9 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>
-              <ButtonCommand setInput={setInput} command={'이미지 편집'} />,
-              <ButtonCommand setInput={setInput} command={'이미지 보강'} />,
-              <ButtonCommand setInput={setInput} command={'종료'} /> 중에 하나를 입력하세요.
+              <ButtonCommand setInput={setInput} command={'이미지 편집'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'이미지 보강'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'종료'} ref={inputRef}/> 중에 하나를 입력하세요.
             </BotCard>
       }
     ])
@@ -564,9 +564,9 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>변경된 이미지를 저장하시겠습니까? (
-              <ButtonCommand setInput={setInput} command={'예'} />/
-              <ButtonCommand setInput={setInput} command={'아니오'} />/
-              <ButtonCommand setInput={setInput} command={'재보강'} />).
+              <ButtonCommand setInput={setInput} command={'예'} ref={inputRef}/>/
+              <ButtonCommand setInput={setInput} command={'아니오'} ref={inputRef}/>/
+              <ButtonCommand setInput={setInput} command={'재보강'} ref={inputRef}/>).
             </BotCard>
       }
     ])
@@ -702,8 +702,8 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>
-              <ButtonCommand setInput={setInput} command={'이미지 편집'} />,
-              <ButtonCommand setInput={setInput} command={'종료'} /> 중에 하나를 입력하세요.
+              <ButtonCommand setInput={setInput} command={'이미지 편집'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'종료'} ref={inputRef}/> 중에 하나를 입력하세요.
             </BotCard>
       }
     ])
@@ -738,8 +738,8 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>
-              <ButtonCommand setInput={setInput} command={'이미지 편집'} />,
-              <ButtonCommand setInput={setInput} command={'종료'} /> 중에 하나를 입력하세요.
+              <ButtonCommand setInput={setInput} command={'이미지 편집'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'종료'} ref={inputRef}/> 중에 하나를 입력하세요.
             </BotCard>
       }
     ])
@@ -846,9 +846,9 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>텍스트 주제 재입력을 원하면
-              <ButtonCommand setInput={setInput} command={'주제'} />, 텍스트 재생성을 원하면
-              <ButtonCommand setInput={setInput} command={'재생성'} />을 입력해주세요. 혹은
-              <ButtonCommand setInput={setInput} command={'메시지 생성 완료'} />를 입력해 주세요.
+              <ButtonCommand setInput={setInput} command={'주제'} ref={inputRef}/>, 텍스트 재생성을 원하면
+              <ButtonCommand setInput={setInput} command={'재생성'} ref={inputRef} />을 입력해주세요. 혹은
+              <ButtonCommand setInput={setInput} command={'메시지 생성 완료'} ref={inputRef}/>를 입력해 주세요.
             </BotCard>
       }
     ])
@@ -866,11 +866,11 @@ export function PromptForm({
           id: nanoid(),
           display:
               <BotCard>
-                <ButtonCommand setInput={setInput} command={'0'} />,
-                <ButtonCommand setInput={setInput} command={'1'} />,
-                <ButtonCommand setInput={setInput} command={'2'} />,
-                <ButtonCommand setInput={setInput} command={'3'} />,
-                <ButtonCommand setInput={setInput} command={'4'} />,
+                <ButtonCommand setInput={setInput} command={'0'} ref={inputRef}/>,
+                <ButtonCommand setInput={setInput} command={'1'} ref={inputRef}/>,
+                <ButtonCommand setInput={setInput} command={'2'} ref={inputRef}/>,
+                <ButtonCommand setInput={setInput} command={'3'} ref={inputRef}/>,
+                <ButtonCommand setInput={setInput} command={'4'} ref={inputRef}/>,
                 중 하나를 선택해주세요. (0: 이미지 재생성)
               </BotCard>
         }
@@ -897,8 +897,8 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>
-              <ButtonCommand setInput={setInput} command={'이미지 생성'} />,
-              <ButtonCommand setInput={setInput} command={'메시지 저장'} />을 할 수 있습니다.
+              <ButtonCommand setInput={setInput} command={'이미지 생성'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'메시지 저장'} ref={inputRef}/>을 할 수 있습니다.
             </BotCard>
       }
     ])
@@ -961,9 +961,9 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>잘못된 입력입니다. 
-              <ButtonCommand setInput={setInput} command={'재생성'} />,
-              <ButtonCommand setInput={setInput} command={'주제'} /> 혹은
-              <ButtonCommand setInput={setInput} command={'메시지 생성 완료'} />를 입력해주세요.
+              <ButtonCommand setInput={setInput} command={'재생성'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'주제'} ref={inputRef}/> 혹은
+              <ButtonCommand setInput={setInput} command={'메시지 생성 완료'} ref={inputRef}/>를 입력해주세요.
             </BotCard>
       }
     ])
@@ -993,8 +993,8 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>잘못된 입력입니다.
-              <ButtonCommand setInput={setInput} command={'이미지 생성'} /> 또는
-              <ButtonCommand setInput={setInput} command={'메시지 저장'} /> 를 입력해주세요.
+              <ButtonCommand setInput={setInput} command={'이미지 생성'} ref={inputRef}/> 또는
+              <ButtonCommand setInput={setInput} command={'메시지 저장'} ref={inputRef}/> 를 입력해주세요.
             </BotCard>
       }
     ])
@@ -1024,11 +1024,11 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>잘못된 선택입니다.
-              <ButtonCommand setInput={setInput} command={'0'} />,
-              <ButtonCommand setInput={setInput} command={'1'} />,
-              <ButtonCommand setInput={setInput} command={'2'} />,
-              <ButtonCommand setInput={setInput} command={'3'} />,
-              <ButtonCommand setInput={setInput} command={'4'} />,
+              <ButtonCommand setInput={setInput} command={'0'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'1'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'2'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'3'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'4'} ref={inputRef}/>,
               중 하나를 선택해주세요. (0: 이미지 재생성)
             </BotCard>
       }
@@ -1059,11 +1059,11 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>잘못된 선택입니다.
-              <ButtonCommand setInput={setInput} command={'0'} />,
-              <ButtonCommand setInput={setInput} command={'1'} />,
-              <ButtonCommand setInput={setInput} command={'2'} />,
-              <ButtonCommand setInput={setInput} command={'3'} />,
-              <ButtonCommand setInput={setInput} command={'4'} />,
+              <ButtonCommand setInput={setInput} command={'0'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'1'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'2'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'3'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'4'} ref={inputRef}/>,
               중 하나를 선택해주세요. (0: 이미지 재생성)
             </BotCard>
       }
@@ -1082,9 +1082,9 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>잘못된 입력입니다.
-              <ButtonCommand setInput={setInput} command={'이미지 편집'} />,
-              <ButtonCommand setInput={setInput} command={'이미지 보강'} />,
-              <ButtonCommand setInput={setInput} command={'종료'} /> 중에 하나를 입력하세요.
+              <ButtonCommand setInput={setInput} command={'이미지 편집'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'이미지 보강'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'종료'} ref={inputRef}/> 중에 하나를 입력하세요.
             </BotCard>
       }
     ])
@@ -1100,8 +1100,8 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>토큰이 부족합니다.
-              <ButtonCommand setInput={setInput} command={'이미지 편집'} />,
-              <ButtonCommand setInput={setInput} command={'종료'} /> 중에 하나를 입력하세요.
+              <ButtonCommand setInput={setInput} command={'이미지 편집'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'종료'} ref={inputRef}/> 중에 하나를 입력하세요.
             </BotCard>
       }
     ])
@@ -1118,8 +1118,8 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>잘못된 입력입니다.
-              <ButtonCommand setInput={setInput} command={'예'} />,
-              <ButtonCommand setInput={setInput} command={'아니오'} />로 답해주세요.
+              <ButtonCommand setInput={setInput} command={'예'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'아니오'} ref={inputRef}/>로 답해주세요.
             </BotCard>
       }
     ])
@@ -1135,8 +1135,8 @@ export function PromptForm({
         id: nanoid(),
         display:
             <BotCard>잘못된 입력입니다.
-              <ButtonCommand setInput={setInput} command={'이미지 편집'} />,
-              <ButtonCommand setInput={setInput} command={'종료'} />중에 입력하시오.
+              <ButtonCommand setInput={setInput} command={'이미지 편집'} ref={inputRef}/>,
+              <ButtonCommand setInput={setInput} command={'종료'} ref={inputRef}/>중에 입력하시오.
             </BotCard>
       }
     ])

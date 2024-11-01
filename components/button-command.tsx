@@ -4,6 +4,7 @@ import {Button, ButtonProps} from "@/components/ui/button";
 interface ButtonCommandProps extends ButtonProps {
     setInput: Dispatch<SetStateAction<string>>;
     command: string;
+    ref: React.RefObject<HTMLTextAreaElement>
 }
 
 /**
