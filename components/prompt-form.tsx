@@ -916,7 +916,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "토큰이 부족합니다."
+        display: <BotCard>토큰이 부족합니다.</BotCard>
       }
     ])
     handleErrorTextSave(value)
@@ -930,7 +930,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: `메시지가 저장되었습니다 (저장 번호: ${saveNum}).`
+        display: <BotCard>메시지가 저장되었습니다 (저장 번호: ${saveNum}).</BotCard>
       }
     ])
     setSaveNum(prevSaveNum => prevSaveNum + 1)
@@ -945,7 +945,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "재생성할 토큰이 부족합니다."
+        display: <BotCard>재생성할 토큰이 부족합니다.</BotCard>
       }
     ])
     handleErrorTextSave(value)
@@ -977,7 +977,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "토큰이 부족합니다."
+        display: <BotCard>토큰이 부족합니다.</BotCard>
       }
     ])
     handleErrorTextSave(value)
@@ -1008,7 +1008,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "토큰이 부족합니다."
+        display: <BotCard>토큰이 부족합니다.</BotCard>
       }
     ])
     setCurrentMode('normal')
@@ -1043,7 +1043,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "토큰이 부족합니다. 생성된 이미지 중에서 선택해 주세요."
+        display: <BotCard>토큰이 부족합니다. 생성된 이미지 중에서 선택해 주세요.</BotCard>
       }
     ])
     setCurrentMode('image-Reselect');
@@ -1150,7 +1150,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "이미지 생성에 실패했습니다."
+        display: <BotCard>이미지 생성에 실패했습니다.</BotCard>
       }
     ])
     handleErrorTextSave(value)
