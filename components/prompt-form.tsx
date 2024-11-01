@@ -200,7 +200,7 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: <BotCard>어떤 내용의 <ButtonCommand setInput={setInput} command={'문자'} /> 를 생성할까요?</BotCard>
+          display: <BotCard>{response}</BotCard>
         }
       ])
       setCurrentMode(mode)
