@@ -7,7 +7,7 @@ import ReactDOM from 'react-dom';
 
 import { useActions, useUIState } from 'ai/rsc'
 
-import { UserMessage } from './stocks/message'
+import {BotCard, UserMessage} from './stocks/message'
 import { type AI } from '@/lib/chat/actions'
 import { Button } from '@/components/ui/button'
 import { IconArrowElbow, IconPlus } from '@/components/ui/icons'
@@ -135,7 +135,7 @@ export function PromptForm({
             ...currentMessages,
             {
               id: nanoid(),
-              display: "잘못된 형식입니다."
+              display: <BotCard>잘못된 형식입니다.</BotCard>
             }
           ])
         }
@@ -159,7 +159,7 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: response
+          display: <BotCard>response</BotCard>
         },
         {
           id: nanoid(),
@@ -176,7 +176,7 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: response
+          display: <BotCard>{response}</BotCard>
         },
         {
           id: nanoid(),
@@ -184,7 +184,7 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: "조회할 고유번호를 입력하세요."
+          display: <BotCard>조회할 고유번호를 입력하세요.</BotCard>
         }
       ])
       setCurrentMode('history-action')
@@ -198,7 +198,7 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: response
+          display: <BotCard>{response}</BotCard>
         }
       ])
       setCurrentMode(mode)
@@ -234,7 +234,7 @@ export function PromptForm({
           },
           {
             id: nanoid(),
-            display: "한명 혹은 단체로 입력해 주세요."
+            display: <BotCard>한명 혹은 단체로 입력해 주세요.</BotCard>
           }
         ])
       }
@@ -258,7 +258,7 @@ export function PromptForm({
                 ...currentMessages,
                 {
                   id: nanoid(),
-                  display: "새로운 전화번호를 추가합니다. 전화번호를 입력해주세요."
+                  display: <BotCard>새로운 전화번호를 추가합니다. 전화번호를 입력해주세요.</BotCard>
                 }
               ])
               setMessageRecipient(phoneNumber)
@@ -284,7 +284,7 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: "파일을 첨부해주세요."
+          display: <BotCard>파일을 첨부해주세요.</BotCard>
         }
       ])
       setCurrentMode('bulk-save')
@@ -302,7 +302,7 @@ export function PromptForm({
           },
           {
             id: nanoid(),
-            display: "올바른 이름 형식이 아닙니다. 11자리 숫자를 입력하세요."
+            display: <BotCard>올바른 이름 형식이 아닙니다. 11자리 숫자를 입력하세요.</BotCard>
           }
         ])
         return;
@@ -330,7 +330,7 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: "이미 존재하는 전화번호입니다."
+          display: <BotCard>이미 존재하는 전화번호입니다.</BotCard>
         }
       ])
       setCurrentMode('normal')
@@ -344,7 +344,7 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: "이름을 입력해주세요."
+          display: <BotCard>이름을 입력해주세요.</BotCard>
         }
       ])
       setCurrentMode('phone-name')
@@ -362,7 +362,7 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: "올바른 이름 형식이 아닙니다. 영어나 한글로 입력해주세요."
+          display: <BotCard>올바른 이름 형식이 아닙니다. 영어나 한글로 입력해주세요.</BotCard>
         }
       ])
       return;
@@ -381,7 +381,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "그룹명을 추가하시겠습니까? (예/아니오)"
+        display: <BotCard>그룹명을 추가하시겠습니까? (예/아니오)</BotCard>
       }
     ])
     setCurrentMode('phone-group')
@@ -398,7 +398,7 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: "그룹명을 입력해주세요."
+          display: <BotCard>그룹명을 입력해주세요.</BotCard>
         }
       ])
       setCurrentMode('phone-group-input')
@@ -413,7 +413,7 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: "그룹명을 기본 그룹명으로 하겠습니다."
+          display: <BotCard>그룹명을 기본 그룹명으로 하겠습니다.</BotCard>
         },
         {
           id: nanoid(),
@@ -430,7 +430,7 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: "잘못된 입력입니다. '예' 또는 '아니오'로 답해주세요."
+          display: <BotCard>잘못된 입력입니다. '예' 또는 '아니오'로 답해주세요.</BotCard>
         }
       ])
     }
@@ -452,7 +452,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "전화번호가 저장되었습니다."
+        display: <BotCard>전화번호가 저장되었습니다.</BotCard>
       }
     ])
     setCurrentMode('normal')
@@ -471,7 +471,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "주제, 재요청혹은 메시지 생성 완료를 입력해주세요."
+        display: <BotCard>주제, 재요청혹은 메시지 생성 완료를 입력해주세요.</BotCard>
       }
     ])
     setCurrentMode('text-create-action')
@@ -493,7 +493,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "0, 1, 2, 3, 4번 중 하나를 선택해주세요. (0: 이미지 재생성)"
+        display: <BotCard>0, 1, 2, 3, 4번 중 하나를 선택해주세요. (0: 이미지 재생성)</BotCard>
       }
     ])
     setCurrentMode('image-select')
@@ -505,7 +505,7 @@ export function PromptForm({
       ...currentMessages,
       {
         id: nanoid(),
-        display: "이미지 편집, 이미지 보강, 종료 중에 하나를 입력하세요."
+        display: <BotCard>이미지 편집, 이미지 보강, 종료 중에 하나를 입력하세요.</BotCard>
       }
     ])
   }
@@ -537,7 +537,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "변경된 이미지를 저장하시겠습니까? (예/아니오/재보강)."
+        display: <BotCard>변경된 이미지를 저장하시겠습니까? (예/아니오/재보강).</BotCard>
       }
     ])
     setCurrentMode('image-enhancing-action')
@@ -554,7 +554,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "이미지 편집 페이지로 이동합니다."
+        display: <BotCard>이미지 편집 페이지로 이동합니다.</BotCard>
       }
       //추가 2번
     ])
@@ -565,7 +565,7 @@ export function PromptForm({
         ...currentMessages,
         {
           id: nanoid(),
-          display: "편집할 이미지가 없습니다. 먼저 이미지를 선택해주세요."
+          display: <BotCard>편집할 이미지가 없습니다. 먼저 이미지를 선택해주세요.</BotCard>
         }
       ])
     }
@@ -586,7 +586,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: `메시지와 이미지가 저장되었습니다 (저장 번호: ${saveNum}). 새로운 대화를 시작하려면 아무 메시지나 입력해주세요.`
+        display: <BotCard>`메시지와 이미지가 저장되었습니다 (저장 번호: ${saveNum}). 새로운 대화를 시작하려면 아무 메시지나 입력해주세요.`</BotCard>
       }
     ])
     setSaveNum(prevSaveNum => prevSaveNum + 1)
@@ -621,7 +621,7 @@ export function PromptForm({
           ...currentMessages,
           {
             id: nanoid(),
-            display: "오류가 발생하여 종료합니다."
+            display: <BotCard>오류가 발생하여 종료합니다.</BotCard>
           }
           
         ])
@@ -652,7 +652,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "이미지를 재생성합니다."
+        display: <BotCard>이미지를 재생성합니다.</BotCard>
       }
     ])
     handleImageGeneration()
@@ -666,11 +666,11 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "향상된 이미지가 저장되었습니다."
+        display: <BotCard>향상된 이미지가 저장되었습니다.</BotCard>
       },
       {
         id: nanoid(),
-        display: "이미지 편집, 종료 중에 하나를 입력하세요."
+        display: <BotCard>이미지 편집, 종료 중에 하나를 입력하세요.</BotCard>
       }
     ])
     setCurrentMode('image-enhance-action')
@@ -684,7 +684,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "토큰이 부족합니다."
+        display: <BotCard>토큰이 부족합니다.</BotCard>
       }
     ])
     handleTextSave(value)
@@ -698,11 +698,11 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "이미지가 저장되지 않았습니다."
+        display: <BotCard>이미지가 저장되지 않았습니다.</BotCard>
       },
       {
         id: nanoid(),
-        display: "이미지 편집, 종료 중에 하나를 입력하세요."
+        display: <BotCard>이미지 편집, 종료 중에 하나를 입력하세요.</BotCard>
       }
     ])
     setCurrentMode('image-enhance-action')
@@ -716,7 +716,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "조회할 고유번호를 입력하세요."
+        display: <BotCard>"조회할 고유번호를 입력하세요."</BotCard>
       }
     ])
     setCurrentMode('history-action')
@@ -748,7 +748,7 @@ export function PromptForm({
         
         {
           id: nanoid(),
-          display: "이미지와 문자를 불러왔습니다."
+          display: <BotCard>이미지와 문자를 불러왔습니다.</BotCard>
         }
       ]);
       //sssss
@@ -763,7 +763,7 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: "해당 고유번호의 데이터를 찾을 수 없습니다."
+          display: <BotCard>해당 고유번호의 데이터를 찾을 수 없습니다.</BotCard>
         }
       ]);
     }
@@ -782,7 +782,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: `메시지가 저장되었습니다 (저장 번호: ${saveNum}).`
+        display: <BotCard>`메시지가 저장되었습니다 (저장 번호: ${saveNum}).`</BotCard>
       }
     ])
     setSaveNum(prevSaveNum => prevSaveNum + 1)
@@ -806,7 +806,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "텍스트 주제 재입력을 원하면 주제, 텍스트 재생성을 원하면 재생성을 입력해주세요. 혹은 메시지 생성 완료를 입력해 주세요."
+        display: <BotCard>텍스트 주제 재입력을 원하면 주제, 텍스트 재생성을 원하면 재생성을 입력해주세요. 혹은 메시지 생성 완료를 입력해 주세요.</BotCard>
       }
     ])
     setCurrentMode('text-create-action')
@@ -821,7 +821,7 @@ export function PromptForm({
         ...currentMessages,
         {
           id: nanoid(),
-          display: "0, 1, 2, 3, 4 중 하나를 선택해주세요. (0: 이미지 재생성)"
+          display: <BotCard>0, 1, 2, 3, 4 중 하나를 선택해주세요. (0: 이미지 재생성)</BotCard>
         }
       ])
     }
@@ -832,7 +832,7 @@ export function PromptForm({
       ...currentMessages,
       {
         id: nanoid(),
-        display: "주제를 다시 입력해 주세요."
+        display: <BotCard>주제를 다시 입력해 주세요.</BotCard>
       }
     ])
     setCurrentMode('text')
@@ -844,7 +844,7 @@ export function PromptForm({
       ...currentMessages,
       {
         id: nanoid(),
-        display: "이미지 생성, 메시지 저장을 할 수 있습니다."
+        display: <BotCard>이미지 생성, 메시지 저장을 할 수 있습니다.</BotCard>
       }
     ])
   }
@@ -904,7 +904,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "잘못된 입력입니다. '재생성', '주제' 혹은 '메시지 생성 완료'를 입력해주세요."
+        display: <BotCard>잘못된 입력입니다. '재생성', '주제' 혹은 '메시지 생성 완료'를 입력해주세요.</BotCard>
       }
     ])
   }
