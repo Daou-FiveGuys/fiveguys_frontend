@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
+import { getPhoneDataList } from './phonedatalist';
 
 interface PhoneNumberData {
   name: string;
@@ -46,4 +47,32 @@ export function SavePhoneNumber({ phoneData }: SavePhoneNumberProps) {
       {saveStatus === 'error' && <p className="mt-2 text-red-600">오류: {errorMessage}</p>}
     </div>
   )
+}
+
+export async function comparePhoneNumber({ phoneData }: SavePhoneNumberProps): Promise<{ isValid: boolean; errors: string[] }> {
+  const errors: string[] = []
+
+  try {
+    const phoneList = await getPhoneDataList()
+    console.log(phoneList)
+    
+    if (phoneList instanceof Error) {
+      errors.push('전화번호 목록을 가져오는데 실패했습니다: ' + phoneList.message)
+    } else {
+      const isDuplicate = phoneList.some(item => '1' !== phoneData.phoneNumber)// const isDuplicate = phoneList.some(item => item.phoneNumber === phoneData.phoneNumber)
+      //동작함
+      //but item에 phoneNumber가 없으면 그냥 종료되는 듯. error 발생하지도 않음.
+      if (isDuplicate) {
+        errors.push('이미 존재하는 전화번호입니다')
+      }
+    }
+  } catch (error) {
+    console.log(error)
+    errors.push('알 수 없는 오류가 발생했습니다: ' + (error instanceof Error ? error.message : String(error)))
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  }
 }
