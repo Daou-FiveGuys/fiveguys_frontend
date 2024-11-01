@@ -223,7 +223,15 @@ export function PromptForm({
           },
           {
             id: nanoid(),
-            display: input.toLowerCase() === '한명' ? "전화번호 혹은 이름을 입력해 주세요." : "그룹명을 입력해 주세요."
+            display: input.toLowerCase() === '한명' ?
+                <BotCard>
+                  <ButtonCommand setInput={setInput} command={'전화번호'}/> 혹은
+                  <ButtonCommand setInput = {setInput} command = {'이름'} /> 을 입력해 주세요.
+                </BotCard>
+                 :
+                <BotCard>
+                  <ButtonCommand setInput={setInput} command={'그룹명'}/> 을 입력해 주세요.
+                </BotCard>
           }
         ])
         setCurrentMode(input.toLowerCase() === '한명' ? 'send-message-recipient' : 'send-message-group')
@@ -236,7 +244,7 @@ export function PromptForm({
           },
           {
             id: nanoid(),
-            display: <BotCard>한명 혹은 단체로 입력해 주세요.</BotCard>
+            display: <BotCard><ButtonCommand setInput={setInput} command={'한명'} /> 혹은 <ButtonCommand setInput={setInput} command={'단체'} />로 입력해 주세요.</BotCard>
           }
         ])
       }
@@ -383,7 +391,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: <BotCard>그룹명을 추가하시겠습니까? (예/아니오)</BotCard>
+        display: <BotCard>그룹명을 추가하시겠습니까? (<ButtonCommand setInput={setInput} command={'예'} />/<ButtonCommand setInput={setInput} command={'아니오'} />)</BotCard>
       }
     ])
     setCurrentMode('phone-group')
@@ -432,7 +440,12 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: <BotCard>잘못된 입력입니다. '예' 또는 '아니오'로 답해주세요.</BotCard>
+          display:
+              <BotCard>
+            잘못된 입력입니다.
+            <ButtonCommand setInput={setInput} command={'예'} /> 또는
+            <ButtonCommand setInput={setInput} command={'아니오'} />로 답해주세요.
+          </BotCard>
         }
       ])
     }
@@ -473,7 +486,12 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: <BotCard>주제, 재요청혹은 메시지 생성 완료를 입력해주세요.</BotCard>
+        display:
+            <BotCard>
+              <ButtonCommand setInput={setInput} command={'주제'} />,
+              <ButtonCommand setInput={setInput} command={'재요청'} />혹은
+              <ButtonCommand setInput={setInput} command={'메시지 생성 완료'} />를 입력해주세요.
+            </BotCard>
       }
     ])
     setCurrentMode('text-create-action')
@@ -507,7 +525,12 @@ export function PromptForm({
       ...currentMessages,
       {
         id: nanoid(),
-        display: <BotCard>이미지 편집, 이미지 보강, 종료 중에 하나를 입력하세요.</BotCard>
+        display:
+            <BotCard>
+              <ButtonCommand setInput={setInput} command={'이미지 편집'} />,
+              <ButtonCommand setInput={setInput} command={'이미지 보강'} />,
+              <ButtonCommand setInput={setInput} command={'종료'} /> 중에 하나를 입력하세요.
+            </BotCard>
       }
     ])
   }
@@ -539,7 +562,12 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: <BotCard>변경된 이미지를 저장하시겠습니까? (예/아니오/재보강).</BotCard>
+        display:
+            <BotCard>변경된 이미지를 저장하시겠습니까? (
+              <ButtonCommand setInput={setInput} command={'예'} />/
+              <ButtonCommand setInput={setInput} command={'아니오'} />/
+              <ButtonCommand setInput={setInput} command={'재보강'} />).
+            </BotCard>
       }
     ])
     setCurrentMode('image-enhancing-action')
@@ -672,7 +700,11 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: <BotCard>이미지 편집, 종료 중에 하나를 입력하세요.</BotCard>
+        display:
+            <BotCard>
+              <ButtonCommand setInput={setInput} command={'이미지 편집'} />,
+              <ButtonCommand setInput={setInput} command={'종료'} /> 중에 하나를 입력하세요.
+            </BotCard>
       }
     ])
     setCurrentMode('image-enhance-action')
@@ -704,7 +736,11 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: <BotCard>이미지 편집, 종료 중에 하나를 입력하세요.</BotCard>
+        display:
+            <BotCard>
+              <ButtonCommand setInput={setInput} command={'이미지 편집'} />,
+              <ButtonCommand setInput={setInput} command={'종료'} /> 중에 하나를 입력하세요.
+            </BotCard>
       }
     ])
     setCurrentMode('image-enhance-action')
@@ -808,7 +844,12 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: <BotCard>텍스트 주제 재입력을 원하면 주제, 텍스트 재생성을 원하면 재생성을 입력해주세요. 혹은 메시지 생성 완료를 입력해 주세요.</BotCard>
+        display:
+            <BotCard>텍스트 주제 재입력을 원하면
+              <ButtonCommand setInput={setInput} command={'주제'} />, 텍스트 재생성을 원하면
+              <ButtonCommand setInput={setInput} command={'재생성'} />을 입력해주세요. 혹은
+              <ButtonCommand setInput={setInput} command={'메시지 생성 완료'} />를 입력해 주세요.
+            </BotCard>
       }
     ])
     setCurrentMode('text-create-action')
@@ -823,7 +864,15 @@ export function PromptForm({
         ...currentMessages,
         {
           id: nanoid(),
-          display: <BotCard>0, 1, 2, 3, 4 중 하나를 선택해주세요. (0: 이미지 재생성)</BotCard>
+          display:
+              <BotCard>
+                <ButtonCommand setInput={setInput} command={'0'} />,
+                <ButtonCommand setInput={setInput} command={'1'} />,
+                <ButtonCommand setInput={setInput} command={'2'} />,
+                <ButtonCommand setInput={setInput} command={'3'} />,
+                <ButtonCommand setInput={setInput} command={'4'} />,
+                중 하나를 선택해주세요. (0: 이미지 재생성)
+              </BotCard>
         }
       ])
     }
@@ -846,7 +895,11 @@ export function PromptForm({
       ...currentMessages,
       {
         id: nanoid(),
-        display: <BotCard>이미지 생성, 메시지 저장을 할 수 있습니다.</BotCard>
+        display:
+            <BotCard>
+              <ButtonCommand setInput={setInput} command={'이미지 생성'} />,
+              <ButtonCommand setInput={setInput} command={'메시지 저장'} />을 할 수 있습니다.
+            </BotCard>
       }
     ])
   }
@@ -906,7 +959,12 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: <BotCard>잘못된 입력입니다. '재생성', '주제' 혹은 '메시지 생성 완료'를 입력해주세요.</BotCard>
+        display:
+            <BotCard>잘못된 입력입니다. 
+              <ButtonCommand setInput={setInput} command={'재생성'} />,
+              <ButtonCommand setInput={setInput} command={'주제'} /> 혹은
+              <ButtonCommand setInput={setInput} command={'메시지 생성 완료'} />를 입력해주세요.
+            </BotCard>
       }
     ])
   }
@@ -933,7 +991,11 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "잘못된 입력입니다. '이미지 생성' 또는 '메시지 저장'을 입력해주세요."
+        display:
+            <BotCard>잘못된 입력입니다.
+              <ButtonCommand setInput={setInput} command={'이미지 생성'} /> 또는
+              <ButtonCommand setInput={setInput} command={'메시지 저장'} /> 를 입력해주세요.
+            </BotCard>
       }
     ])
   }
@@ -960,7 +1022,15 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "잘못된 선택입니다. 0, 1, 2, 3, 4 중 하나를 선택해주세요. (0: 이미지 재생성)"
+        display:
+            <BotCard>잘못된 선택입니다.
+              <ButtonCommand setInput={setInput} command={'0'} />,
+              <ButtonCommand setInput={setInput} command={'1'} />,
+              <ButtonCommand setInput={setInput} command={'2'} />,
+              <ButtonCommand setInput={setInput} command={'3'} />,
+              <ButtonCommand setInput={setInput} command={'4'} />,
+              중 하나를 선택해주세요. (0: 이미지 재생성)
+            </BotCard>
       }
     ])
   }
@@ -987,7 +1057,15 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "잘못된 선택입니다. 1, 2, 3, 4 중 하나를 선택해주세요."
+        display:
+            <BotCard>잘못된 선택입니다.
+              <ButtonCommand setInput={setInput} command={'0'} />,
+              <ButtonCommand setInput={setInput} command={'1'} />,
+              <ButtonCommand setInput={setInput} command={'2'} />,
+              <ButtonCommand setInput={setInput} command={'3'} />,
+              <ButtonCommand setInput={setInput} command={'4'} />,
+              중 하나를 선택해주세요. (0: 이미지 재생성)
+            </BotCard>
       }
     ])
     // 현재 모드를 유지하여 다시 선택하도록 함
@@ -1002,7 +1080,12 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "잘못된 입력입니다. 이미지 편집, 이미지 보강, 종료 중에 하나를 입력하세요."
+        display:
+            <BotCard>잘못된 입력입니다.
+              <ButtonCommand setInput={setInput} command={'이미지 편집'} />,
+              <ButtonCommand setInput={setInput} command={'이미지 보강'} />,
+              <ButtonCommand setInput={setInput} command={'종료'} /> 중에 하나를 입력하세요.
+            </BotCard>
       }
     ])
   }
@@ -1015,7 +1098,11 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "토큰이 부족합니다. 보강을 진행하지 않습니다. 이미지 편집, 종료 중에 하나를 입력하세요."
+        display:
+            <BotCard>토큰이 부족합니다.
+              <ButtonCommand setInput={setInput} command={'이미지 편집'} />,
+              <ButtonCommand setInput={setInput} command={'종료'} /> 중에 하나를 입력하세요.
+            </BotCard>
       }
     ])
     HandleimageEnhancingAction(value)
@@ -1029,7 +1116,11 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "잘못된 입력입니다. '예' 또는 '아니오'로 답해주세요."
+        display:
+            <BotCard>잘못된 입력입니다.
+              <ButtonCommand setInput={setInput} command={'예'} />,
+              <ButtonCommand setInput={setInput} command={'아니오'} />로 답해주세요.
+            </BotCard>
       }
     ])
   }
@@ -1042,7 +1133,11 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "잘못된 입력입니다. 이미지 편집, 종료 중에 입력하시오."
+        display:
+            <BotCard>잘못된 입력입니다.
+              <ButtonCommand setInput={setInput} command={'이미지 편집'} />,
+              <ButtonCommand setInput={setInput} command={'종료'} />중에 입력하시오.
+            </BotCard>
       }
     ])
   }
