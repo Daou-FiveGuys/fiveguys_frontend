@@ -37,6 +37,8 @@ import MessageImageHistory, { getHistoryItem, getHistoryMessage, getHistoryImage
 import {deductTokens} from './token-dedution'
 import { useNumberManager } from './number-manager'
 import { useNumberLoad } from './number-load'
+import {Dispatch, SetStateAction} from "react";
+import {ButtonCommand} from "@/components/button-command";
 
 
 interface PhoneNumberData {
@@ -50,7 +52,7 @@ export function PromptForm({
   setInput
 }: {
   input: string
-  setInput: (value: string) => void
+  setInput: Dispatch<SetStateAction<string>>
 }) {
   const router = useRouter()
   
@@ -198,7 +200,7 @@ export function PromptForm({
         },
         {
           id: nanoid(),
-          display: <BotCard>{response}</BotCard>
+          display: <BotCard>어떤 내용의 <ButtonCommand setInput={setInput} command={'문자'} /> 를 생성할까요?</BotCard>
         }
       ])
       setCurrentMode(mode)
