@@ -17,10 +17,10 @@ export function ChatList({ messages, session, isShared }: ChatList) {
   }
 
   return (
-    <div className="relative mx-auto max-w-2xl px-4">
+    <div className="relative mx-auto overflow-y-scroll max-h-[45rem] scroll-behavior-smooth scrollbar-hide max-w-none px-[46rem]">
       {!isShared && !session ? (
         <>
-          <div className="group relative mb-4 flex items-start md:-ml-12">
+          <div className="group relative mb-4 flex items-start ml-2">
             <div className="bg-background flex size-[25px] shrink-0 select-none items-center justify-center rounded-md border shadow-sm">
               <ExclamationTriangleIcon />
             </div>
@@ -43,7 +43,7 @@ export function ChatList({ messages, session, isShared }: ChatList) {
       ) : null}
 
       {messages.map((message, index) => (
-        <div key={message.id}>
+        <div key={message.id} className="ml-2">
           {React.isValidElement(message.display) ? (
             message.display
           ) : (
