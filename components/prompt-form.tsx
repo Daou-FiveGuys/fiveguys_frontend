@@ -58,13 +58,14 @@ export function PromptForm({
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
-  const [currentMode, setCurrentMode] = React.useState<'phone-group-noninput'| 'text-create-action'|'image-Reselect'|'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'image-enhance-action'| 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'|'image-enhancing-action'| 'history-action' >('normal')
+  const [currentMode, setCurrentMode] = React.useState<'seed-select'|'phone-group-noninput'| 'text-create-action'|'image-Reselect'|'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'image-enhance-action'| 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'|'image-enhancing-action'| 'history-action' >('normal')
   const [selectedImage, setSelectedImage] = React.useState('');
   const [phoneData, setPhoneData] = React.useState<PhoneNumberData>({ name: '', phoneNumber: '', groupName: 'default' })
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   type Action = 'text-image-select' | 'text-action-save' | 'text-action-generate' | 'send-message' | 'image-edit' | 'image-enhance' | 'image-save'
   const [message, setMessage] = React.useState('')
   const { getNextNumber } = useNumberManager()
+  const [selectedSeed, setSelectedSeed] = React.useState('');
   const handleGetNumber = () => {
     const newNumber = getNextNumber()
     setSaveNum(newNumber)
@@ -522,12 +523,29 @@ export function PromptForm({
   }
   //이미지 생성 기능 1: 이미지 4장 생성 기능.
 
+  const handleImageReSeed = (seed:string) =>{
+    console.log(selectedSeed);
+    setMessages(currentMessages => [
+      ...currentMessages,
+      //추가
+      {
+        id: nanoid(),
+        display: <ImageGenerator createdMessage={lastCreatedMessage} seed={seed}/>
+      },
+      {
+        id: nanoid(),
+        display: "0, 1, 2, 3, 4번 중 하나를 선택해주세요. (0: 이미지 재생성)"
+      }
+    ])
+    setCurrentMode('image-select')
+  }
+
   const handleImageAction = (value:string) => {
     setMessages(currentMessages => [
       ...currentMessages,
       {
         id: nanoid(),
-        display: "이미지 편집, 이미지 보강, 종료 중에 하나를 입력하세요."
+        display: "이미지 재생성, 이미지 편집, 이미지 보강, 종료 중에 하나를 입력하세요."
       }
     ])
   }
@@ -1213,9 +1231,11 @@ export function PromptForm({
                 else handleErrorImage(value)
 
               } else if (['1', '2', '3', '4'].includes(value)) {
-                const selectImage = returnSelectedImage(value)
-                setSelectedImage(selectImage)
-                setCurrentImageUrl(selectImage)
+                const {src, seed} = returnSelectedImage(value)
+                console.log(src)
+                setSelectedSeed(seed)
+                setSelectedImage(src)
+                setCurrentImageUrl(src)
                 handleSelectedImageSave(value)  
                 handleImageAction(value)
                 setCurrentMode('image-action')
@@ -1224,10 +1244,13 @@ export function PromptForm({
             } else if (currentMode === 'image-Reselect') {
               if (['1', '2', '3', '4'].includes(value)) {
                 handleSelectedImageSave(value)  
-                const selectImage = returnSelectedImage(value)
-                setSelectedImage(selectImage)
-                setCurrentImageUrl(selectImage)
+                const {src, seed} = returnSelectedImage(value)
+                setSelectedSeed(seed)
+                console.log(src)
+                setSelectedImage(src)
+                setCurrentImageUrl(src)
                 handleImageAction(value)
+                setCurrentMode('image-action')
               } 
               else handleErrorImageReselected(value)
 
@@ -1246,7 +1269,18 @@ export function PromptForm({
                   }
                 }
                 else handleErrorEnhance(value)
-              } else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
+              } else if(value === '이미지 재생성'){
+                const hasEnoughTokens = await handleCheckTokens()
+                console.log(selectedSeed)
+                if(hasEnoughTokens){
+                  if(selectedSeed !== ""){
+                    handleImageReSeed(selectedSeed)
+                  }
+                  else{}
+                }
+                else{}
+              }
+              else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
               else handleErrorImageAction(value)
 
             } else if (currentMode === 'image-enhancing-action') {

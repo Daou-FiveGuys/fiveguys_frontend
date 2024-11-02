@@ -1,34 +1,37 @@
 import React, { useState, useEffect } from 'react'
-import { fetchImageSources } from './image-generator-api'
+import { fetchImageSources, reFetchImageSources } from './image-generator-api'
 
 interface ImageGeneratorProps {
   selectedImage?: string
   createdMessage?: string
+  seed?: string
 }
 
 interface ImageData {
   id: string;
   src: string;
+  seed: string;
 }
 
 // 전역 변수로 initialImages 선언
 let initialImages: ImageData[] = [
-  { id: '1', src: '/sampleImage1.jpg' },
-  { id: '2', src: '/sampleImage2.jpg' },
-  { id: '3', src: '/sampleImage3.jpg' },
-  { id: '4', src: '/sampleImage4.jpg' }
+  { id: '1', src: '/sampleImage1.jpg', seed: '' },
+  { id: '2', src: '/sampleImage2.jpg', seed: '' },
+  { id: '3', src: '/sampleImage3.jpg', seed: '' },
+  { id: '4', src: '/sampleImage4.jpg', seed: '' }
 ];
 
-export async function showExistingImages(): Promise<boolean> {
+export async function showExistingImages(seed?: string): Promise<boolean> {
   try {
-    const result = await fetchImageSources();
+    const result = seed ? await reFetchImageSources(seed) : await fetchImageSources();
     if (result === "error") {
       return false;
     }
     // 성공적으로 이미지를 받아온 경우 initialImages 업데이트
     initialImages = result.map((image, index) => ({
       id: (index + 1).toString(),
-      src: image.src
+      src: image.src,
+      seed: image.seed
     }));
     return true;
   } catch (error) {
@@ -37,15 +40,16 @@ export async function showExistingImages(): Promise<boolean> {
   }
 }
 
-export function ImageGenerator({ selectedImage, createdMessage}: ImageGeneratorProps) {
+export function ImageGenerator({ selectedImage, createdMessage, seed }: ImageGeneratorProps) {
   const [images, setImages] = useState<ImageData[]>(initialImages);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0); // 추가된 상태
 
   useEffect(() => {
     async function loadImages() {
       setIsLoading(true);
-      const success = await showExistingImages();
+      const success = await showExistingImages(seed);
       if (success) {
         setImages(initialImages); // 업데이트된 initialImages 사용
         setError(null);
@@ -53,9 +57,10 @@ export function ImageGenerator({ selectedImage, createdMessage}: ImageGeneratorP
         setError('Failed to load images');
       }
       setIsLoading(false);
+      setRefreshKey(prevKey => prevKey + 1); // 추가된 코드
     }
     loadImages();
-  }, []);
+  }, [seed, createdMessage]); // createdMessage를 의존성 배열에 추가
 
   useEffect(() => {
     if (createdMessage) {
@@ -116,5 +121,6 @@ export function ImageGenerator({ selectedImage, createdMessage}: ImageGeneratorP
 
 export function returnSelectedImage(value: string) {
   const image = initialImages.find(img => img.id === value);
-  return image ? image.src : '';
+  console.log(image)
+  return image ? {src:image.src, seed:image.id}:{src:'s',seed:'a'};
 }
