@@ -58,8 +58,8 @@ export async function validatePhoneNumberFile(fileContent: string): Promise<Vali
       } else {
         phoneDataList.forEach((data) => {
           console.log(data)
-          // if (phoneNumberSet.has(data.phoneNumber)) { 실제 코드
-            if (true ) {// 연습용
+          //if (phoneNumberSet.has(data.phoneNumber)) { //실제 코드
+            if (false ) {// 연습용
               console.log(1)
             errors.push(`전화번호 ${data.phoneNumber}는 이미 존재하는 번호입니다.`);
           }
@@ -91,7 +91,14 @@ export function SendPhoneNumberData({ content }: SendPhoneNumberDataProps): Reac
 
     const sendPhoneNumbers = async (phoneNumbers: PhoneNumberData[]) => {
       try {
-        const response = await axios.post('https://your-api-endpoint.com/save-phone-numbers', phoneNumbers)
+        const response = await axios.post('https://your-api-endpoint.com/save-phone-numbers', phoneNumbers,{
+          headers: {
+            'Content-Type': 'application/json', // JSON 형식임을 명시
+          // 'Authorization': 'Bearer YOUR_API_TOKEN', // API 토큰 추가
+          // userId: 'user123',
+          // password: 'your_password', // 인증 정보를 데이터에 포함하는 경우
+          },
+        })
         return response.data
       } catch (error) {
         throw new Error('서버 통신 중 오류가 발생했습니다.')

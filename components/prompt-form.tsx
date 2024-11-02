@@ -472,15 +472,11 @@ export function PromptForm({
     setCurrentMode('normal')
   }
   //전화번호 추가 기능 6: 파일로 전화 번호 저장.
-  const handleGroupNonName = (groupName:string) =>{
-    const newPhoneData = { ...phoneData, groupName }
+  const handleGroupNonName = () =>{
+    const newPhoneData = { ...phoneData, groupName:'default' }
     setSamplePhoneNumbers(prev => [...prev, newPhoneData])
     setMessages(currentMessages => [
       ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{groupName}</UserMessage>
-      },
       {
         id: nanoid(),
         display: <SavePhoneNumber phoneData={newPhoneData} />
@@ -1151,7 +1147,7 @@ export function PromptForm({
                 const result = await comparePhoneNumber({ phoneData: newPhoneData })
                 console.log(result.errors)
                 if(result.isValid){
-                 handleGroupNonName(value)
+                 handleGroupNonName()
                 }
                 else{
                  handleErrorPhoneNumberSaveApi(value)

@@ -19,7 +19,14 @@ export function SavePhoneNumber({ phoneData }: SavePhoneNumberProps) {
   const savePhoneNumbers = async (data: PhoneNumberData) => {
     setSaveStatus('saving')
     try {
-      const response = await axios.post('https://your-api-endpoint.com/save-phone-number', data)
+      const response = await axios.post("https://jsonplaceholder.typicode.com/users", data, {
+        headers: {
+          'Content-Type': 'application/json', // JSON 형식임을 명시
+          // 'Authorization': 'Bearer YOUR_API_TOKEN', // API 토큰 추가
+          // userId: 'user123',
+          // password: 'your_password', // 인증 정보를 데이터에 포함하는 경우
+        },
+      })
       if (response.status === 200) {
         setSaveStatus('success')
       } else {
@@ -59,7 +66,7 @@ export async function comparePhoneNumber({ phoneData }: SavePhoneNumberProps): P
     if (phoneList instanceof Error) {
       errors.push('전화번호 목록을 가져오는데 실패했습니다: ' + phoneList.message)
     } else {
-      const isDuplicate = phoneList.some(item => '1' !== phoneData.phoneNumber)// const isDuplicate = phoneList.some(item => item.phoneNumber === phoneData.phoneNumber)
+      const isDuplicate = phoneList.some(item => '1' === phoneData.phoneNumber)// const isDuplicate = phoneList.some(item => item.phoneNumber === phoneData.phoneNumber)
       //동작함
       //but item에 phoneNumber가 없으면 그냥 종료되는 듯. error 발생하지도 않음.
       if (isDuplicate) {
@@ -76,3 +83,10 @@ export async function comparePhoneNumber({ phoneData }: SavePhoneNumberProps): P
     errors
   }
 }
+
+// response 객체는 다음과 같은 정보를 포함합니다:
+
+// response.data: 서버에서 반환한 데이터. (예: 저장된 전화번호 정보)
+// response.status: HTTP 응답 상태 코드. 예를 들어, 200은 요청이 성공했음을 의미합니다.
+// response.statusText: 상태 코드에 대한 설명.
+// response.headers: 응답 헤더 정보.
