@@ -37,7 +37,7 @@ import MessageImageHistory, { getHistoryItem, getHistoryMessage, getHistoryImage
 import {deductTokens} from './token-dedution'
 import { useNumberManager } from './number-manager'
 import { useNumberLoad } from './number-load'
-import {Dispatch, SetStateAction} from "react";
+import {Dispatch, KeyboardEvent, SetStateAction} from "react";
 import {ButtonCommand} from "@/components/button-command";
 
 
@@ -71,6 +71,30 @@ export function PromptForm({
     const newNumber = getNextNumber()
     setSaveNum(newNumber)
   }
+
+  // Enter - Focusing - Text Area
+  React.useEffect(() => {
+    const handleKeyDownFocus = (event: Event) => {
+      if ((event as unknown as KeyboardEvent).key === 'Enter') {
+        // Enter to focusing textArea
+        if (document.activeElement !== inputRef.current) {
+          event.preventDefault()
+          if (inputRef.current) {
+            inputRef.current.focus()
+          }
+        } else {
+          event.preventDefault() // now focusing, skippp
+        }
+      }
+    }
+
+    // global event
+    window.addEventListener('keydown', handleKeyDownFocus)
+
+    // unmount
+    return () => { window.removeEventListener('keydown', handleKeyDownFocus) }
+  }, []);
+
   React.useEffect(() => {
     // 컴포넌트 마운트 시 즉시 번호를 받아옵니다.
     const initialNumber = getNextNumber()
