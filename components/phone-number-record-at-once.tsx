@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import React from "react";
+import { getPhoneDataList } from './phonedatalist';
 interface PhoneNumberData {
   name: string;
   phoneNumber: string;
@@ -25,7 +26,7 @@ interface SendPhoneNumberDataProps {
 }
 
 // 파일 내용을 검증하는 함수
-export function validatePhoneNumberFile(fileContent: string): ValidationResult {
+export async function validatePhoneNumberFile(fileContent: string): Promise<ValidationResult> {
   const lines = fileContent.split('\n')
   const errors: string[] = []
   const phoneNumberSet = new Set<string>()
@@ -49,6 +50,26 @@ export function validatePhoneNumberFile(fileContent: string): ValidationResult {
     }
   })
 
+    // Add new functionality to use getPhoneDataList
+    try {
+      const phoneDataList = await getPhoneDataList();
+      if (phoneDataList instanceof Error) {
+        errors.push(`전화번호 데이터 가져오기 오류: ${phoneDataList.message}`);
+      } else {
+        phoneDataList.forEach((data) => {
+          console.log(data)
+          //if (phoneNumberSet.has(data.phoneNumber)) { //실제 코드
+            if (false ) {// 연습용
+              console.log(1)
+            errors.push(`전화번호 ${data.phoneNumber}는 이미 존재하는 번호입니다.`);
+          }
+        });
+      }
+    } catch (error) {
+      console.log(2)
+      errors.push(`전화번호 데이터 가져오기 중 예기치 않은 오류가 발생했습니다: ${error instanceof Error ? error.message : String(error)}`);
+    }
+
   return { isValid: errors.length === 0, errors };
 }
 
@@ -70,7 +91,14 @@ export function SendPhoneNumberData({ content }: SendPhoneNumberDataProps): Reac
 
     const sendPhoneNumbers = async (phoneNumbers: PhoneNumberData[]) => {
       try {
-        const response = await axios.post<ServerResponse>('https://your-api-endpoint.com/save-phone-numbers', phoneNumbers)
+        const response = await axios.post('https://your-api-endpoint.com/save-phone-numbers', phoneNumbers,{
+          headers: {
+            'Content-Type': 'application/json', // JSON 형식임을 명시
+          // 'Authorization': 'Bearer YOUR_API_TOKEN', // API 토큰 추가
+          // userId: 'user123',
+          // password: 'your_password', // 인증 정보를 데이터에 포함하는 경우
+          },
+        })
         return response.data
       } catch (error) {
         throw new Error('서버 통신 중 오류가 발생했습니다.')
