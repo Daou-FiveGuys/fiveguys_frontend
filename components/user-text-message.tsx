@@ -13,16 +13,17 @@ const createdMessages = [
 ]
 
 export function UserTextMessage({ message, onCreatedMessage }: UserTextMessageProps) {
+  const [lastCreatedMessage, setLastCreatedMessage] = React.useState(message)
   const randomCreatedMessage = useMemo(() => {
     const msg = createdMessages[Math.floor(Math.random() * createdMessages.length)];
-    onCreatedMessage(msg);
+    setLastCreatedMessage(msg);
     return msg;
   }, [onCreatedMessage]);
 
   return (
     <div className="bg-blue-100 p-4 rounded-md">
       <p className="font-medium text-black">사용자 메시지:</p>
-      <p className="text-black mb-2">{message}</p>
+      <p className="text-black mb-2">{lastCreatedMessage}</p>
       <p className="text-gray-600 italic mb-4">{randomCreatedMessage}</p>
     </div>
   )
