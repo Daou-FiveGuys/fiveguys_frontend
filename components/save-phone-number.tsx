@@ -30,7 +30,7 @@ export function SavePhoneNumber({ phoneData }: SavePhoneNumberProps) {
       if (response.status === 200) {
         setSaveStatus('success')
       } else {
-        throw new Error('전화번호 저장에 실패했습니다')
+        throw new Error('전화번호 전송 중에 실패했습니다')
       }
     } catch (error) {
       setSaveStatus('error')
@@ -70,6 +70,7 @@ export async function comparePhoneNumber({ phoneData }: SavePhoneNumberProps): P
       //동작함
       //but item에 phoneNumber가 없으면 그냥 종료되는 듯. error 발생하지도 않음.
       if (isDuplicate) {
+        // if (true) { //실험용
         errors.push('이미 존재하는 전화번호입니다')
       }
     }

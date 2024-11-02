@@ -142,10 +142,10 @@ export function PromptForm({
         } else {
           setMessages((currentMessages) => [
             ...currentMessages,
-            {
+            ...result.errors.map(error => ({
               id: nanoid(),
-              display: "잘못된 형식입니다.",
-            },
+              display: error,
+            }))
           ]);
         }
       } catch (error) {
@@ -334,25 +334,25 @@ export function PromptForm({
   //전화번호 추가 기능 1: 전화번호 파일 추가(파일 업로드까지) + 전화번호 추가 기능(전번 입력까지).
 
   const handlePhoneNumber = (number: string) => {
-    const existingNumber = samplePhoneNumbers.find(item => item.phoneNumber === number)
-    if (existingNumber) {
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{number}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: <SavePhoneNumber phoneData={existingNumber} />
-        },
-        {
-          id: nanoid(),
-          display: "이미 존재하는 전화번호입니다."
-        }
-      ])
-      setCurrentMode('normal')
-    } else {
+    //const existingNumber = samplePhoneNumbers.find(item => item.phoneNumber === number)
+    //if (existingNumber) {
+      // setMessages(currentMessages => [
+      //   ...currentMessages,
+      //   {
+      //     id: nanoid(),
+      //     display: <UserMessage>{number}</UserMessage>
+      //   },
+      //   {
+      //     id: nanoid(),
+      //     display: <SavePhoneNumber phoneData={existingNumber} />
+      //   },
+      //   {
+      //     id: nanoid(),
+      //     display: "이미 존재하는 전화번호입니다."
+      //   }
+      // ])
+      // setCurrentMode('normal')
+    //} else {
       setPhoneData(prev => ({ ...prev, phoneNumber: number }))
       setMessages(currentMessages => [
         ...currentMessages,
@@ -366,7 +366,7 @@ export function PromptForm({
         }
       ])
       setCurrentMode('phone-name')
-    }
+    //}
   }
   //전화번호 추가 기능 2: 전화번호 존재 여부 확인.
 
@@ -463,10 +463,6 @@ export function PromptForm({
       {
         id: nanoid(),
         display: <SavePhoneNumber phoneData={newPhoneData} />
-      },
-      {
-        id: nanoid(),
-        display: "전화번호가 저장되었습니다."
       }
     ])
     setCurrentMode('normal')
@@ -480,10 +476,6 @@ export function PromptForm({
       {
         id: nanoid(),
         display: <SavePhoneNumber phoneData={newPhoneData} />
-      },
-      {
-        id: nanoid(),
-        display: "전화번호가 저장되었습니다."
       }
     ])
     setCurrentMode('normal')
@@ -627,7 +619,8 @@ export function PromptForm({
   //`ImageSaver` 컴포넌트를 사용해 `currentImageUrl`을 저장합니다.
 
   const handleCheckTokens = async () => {
-    const result = await deductTokens()
+    // const result = await deductTokens()
+    const result = true
     return result;
   }
 
@@ -1083,22 +1076,22 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: "이미지 생성에 실패했습니다."
+        display: "이미지 생성하는 중에 오류가 발생했습니다."
       }
     ])
     handleErrorTextSave(value)
   }
-  const handleErrorPhoneNumberSaveApi = (value:string) =>{
+  const handleErrorPhoneNumberCompare = (value:string, errors:string[]) =>{
     setMessages(currentMessages => [
       ...currentMessages,
       {
         id: nanoid(),
         display: <UserMessage>{value}</UserMessage>
       },
-      {
+      ...errors.map(error => ({
         id: nanoid(),
-        display: "전화번호 저장에 실패했습니다."
-      }
+        display: error,
+      }))
     ])
     setCurrentMode('normal')
   }
@@ -1131,7 +1124,7 @@ export function PromptForm({
                 handleGroupName(value)
                }
                else{
-                handleErrorPhoneNumberSaveApi(value)
+                handleErrorPhoneNumberCompare(value, result.errors)
                }
 
             } else if (currentMode === 'phone-group-noninput') {
@@ -1150,7 +1143,7 @@ export function PromptForm({
                  handleGroupNonName()
                 }
                 else{
-                 handleErrorPhoneNumberSaveApi(value)
+                  handleErrorPhoneNumberCompare(value, result.errors)
                 }
               }else if(value =="아니오"){
                 setMessages(currentMessages => [
@@ -1189,14 +1182,15 @@ export function PromptForm({
             
             } else if (currentMode === 'text-action') {
               if (value.toLowerCase() === '이미지 생성') {
-                const result = await showExistingImages();
-                console.log(result)
-                if(result) {
-                  const hasEnoughTokens = await handleCheckTokens()
-                  if(hasEnoughTokens){handleImageGeneration()}
+                const hasEnoughTokens = await handleCheckTokens()
+                //console.log(result)
+                if(hasEnoughTokens) {
+                  const result = await showExistingImages();
+                  if(result){handleImageGeneration()}
                   else {
                     handleErrorGenerateImage(value)
                   }
+                  handleImageGeneration()
                 }
                 else handleErrorGenerateImageApi(value)
 
@@ -1244,10 +1238,12 @@ export function PromptForm({
               else if (value === '이미지 보강') {
                 const hasEnoughTokens = await handleCheckTokens()
                 if(hasEnoughTokens){
-                  const enhance = ReturnEnhanceImage()
+                  const enhance = await ReturnEnhanceImage(currentImageUrl)
                   console.log(enhance)
-                  setEnhancedImg(enhance)
-                  handleImageEnhance(value, enhance);
+                  if(enhance !== ""){
+                    setEnhancedImg(enhance);
+                    handleImageEnhance(value, enhance);
+                  }
                 }
                 else handleErrorEnhance(value)
               } else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
@@ -1265,7 +1261,7 @@ export function PromptForm({
               } else if (value.toLowerCase() === '재보강') {
                 const hasEnoughTokens = await handleCheckTokens()
                 if(hasEnoughTokens){
-                  const enhance = await ReturnEnhanceImage()
+                  const enhance = await ReturnEnhanceImage(currentImageUrl)
                   flushSync(() => {
                     setEnhancedImg(enhance)
                  });

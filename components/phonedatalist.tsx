@@ -8,7 +8,7 @@ interface PhoneNumberData {
 
 export async function getPhoneDataList(): Promise<PhoneNumberData[] | Error> {
     try {
-      const response = await axios.get<PhoneNumberData[]>("https://jsonplaceholder.typicode.com/users")
+      const response = await axios.get<PhoneNumberData[]>("https://jsonplaceholder.typicode.com/users")//"https://jsonplaceholder.typicode.com/users"
       return response.data
     } catch (error) {
       if (axios.isAxiosError(error)) {

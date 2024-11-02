@@ -1,4 +1,4 @@
-import React from 'react'
+import axios from 'axios'
 
 interface ImageEnhanceProps {
   enhancedImageSrc: string
@@ -17,9 +17,17 @@ export function ImageEnhance({ enhancedImageSrc }: ImageEnhanceProps) {
     </div>
   )
 }
-export function ReturnEnhanceImage(){
-  const image = `/sampleImage${random}.jpg`;
-  random++;
-  if(random==5)random=1;
-  return image
+export async function ReturnEnhanceImage(imageSrc: string): Promise<string> {
+  try {
+    const response = await axios.post('https://your-api-endpoint.com/enhance', { image: imageSrc })
+    if (response.data && response.data.enhancedImageSrc) {
+      return response.data.enhancedImageSrc
+    } else {
+      console.error('Enhanced image source not found in response')
+      return ""
+    }
+  } catch (error) {
+    console.error('Error enhancing image:', error)
+    return ""
+  }
 }

@@ -11,6 +11,7 @@ interface ImageData {
   src: string;
 }
 
+// 전역 변수로 initialImages 선언
 let initialImages: ImageData[] = [
   { id: '1', src: '/sampleImage1.jpg' },
   { id: '2', src: '/sampleImage2.jpg' },
@@ -24,7 +25,7 @@ export async function showExistingImages(): Promise<boolean> {
     if (result === "error") {
       return false;
     }
-    // 성공적으로 이미지를 받아온 경우
+    // 성공적으로 이미지를 받아온 경우 initialImages 업데이트
     initialImages = result.map((image, index) => ({
       id: (index + 1).toString(),
       src: image.src
@@ -36,14 +37,6 @@ export async function showExistingImages(): Promise<boolean> {
   }
 }
 
-// function handleImageFetch(imageSources: ImageData[] | "error"): boolean {
-//   if (imageSources === "error") {
-//     return false;
-//   }
-//   // imageSources가 배열이고 길이가 0보다 크면 true 반환
-//   return Array.isArray(imageSources) && imageSources.length > 0;
-// }
-
 export function ImageGenerator({ selectedImage, createdMessage}: ImageGeneratorProps) {
   const [images, setImages] = useState<ImageData[]>(initialImages);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,7 +47,7 @@ export function ImageGenerator({ selectedImage, createdMessage}: ImageGeneratorP
       setIsLoading(true);
       const success = await showExistingImages();
       if (success) {
-        setImages(initialImages);
+        setImages(initialImages); // 업데이트된 initialImages 사용
         setError(null);
       } else {
         setError('Failed to load images');
