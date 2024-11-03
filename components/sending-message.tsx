@@ -41,6 +41,8 @@ export function SendingMessage({ recipient, isGroup, lastCreatedMessage, current
 
       setSendingStatus('sending')
       try {
+        console.log(lastCreatedMessage)
+        console.log(currentImageUrl)
         const response = await axios.post('/api/send-message', {
           recipient: phoneNumberToSend,
           message: lastCreatedMessage,
