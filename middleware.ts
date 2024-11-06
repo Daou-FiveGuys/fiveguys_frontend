@@ -12,12 +12,14 @@ export default NextAuth(authConfig).auth
 // This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
   // List of paths that don't require authentication
-  const publicPaths = ['/login', '/register']
+  const publicPaths = ['/login', '/signup']
 
   // Check if the requested path is public
   const isPublicPath = publicPaths.some(path =>
     request.nextUrl.pathname.startsWith(path)
   )
+
+  // TODO 액세스 토큰 검증 로직 구현 or 액세스 토큰 검증 api 추가
 
   const access_token = request.cookies.get('access_token')
   if (access_token && !request.url.includes('/verify')) {
