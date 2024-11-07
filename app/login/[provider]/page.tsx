@@ -49,7 +49,7 @@ export default function CallBack({ params, searchParams }: CallBackProps) {
           setCookie('access_token', access_token, {
             httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 60 * 30,
+            maxAge: 60 * 60,
             path: '/'
           })
           router.push('/')

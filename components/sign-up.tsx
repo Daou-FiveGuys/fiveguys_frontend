@@ -114,7 +114,7 @@ export default function SignUpForm() {
               setCookie('access_token', accessToken, {
                 httpOnly: false,
                 secure: process.env.NODE_ENV === 'production',
-                maxAge: 60 * 30,
+                maxAge: 60 * 60,
                 path: '/'
               })
             }

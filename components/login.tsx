@@ -56,7 +56,7 @@ export default function LoginForm() {
               setCookie('access_token', accessToken, {
                 httpOnly: false,
                 secure: process.env.NODE_ENV === 'production',
-                maxAge: 60 * 30,
+                maxAge: 60 * 60,
                 path: '/'
               })
             }
@@ -141,6 +141,7 @@ export default function LoginForm() {
                 Google로 로그인
               </Button>
             </Link>
+            <div className="m-2"></div>
             <Link
               href={`https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${process.env.NEXT_PUBLIC_NAVER_CLIENT_ID}&state=${process.env.NEXT_PUBLIC_NAVER_CLIENT_STATE}&redirect_uri=${process.env.NEXT_PUBLIC_NAVER_REDIRECT_URI}`}
             >

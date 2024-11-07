@@ -6,49 +6,84 @@ import axios from 'axios'
 import { setCookie } from 'cookies-next'
 import { decode } from 'js-base64'
 import next from 'next'
+import jwt_decode from 'jwt-decode'
+const JWT_SECRET = process.env.JWT_SECRET_KEY!
+
+const PUBLIC_PATHS = ['/login', '/signup']
+const ROLE_USER_NOT_ACCEESSABLE_PATHS = ['/verify', '/signup', '/login']
+const ROLE_VISITOR_ACCESSABLE_PATHS = ['/verify']
+
+function isTokenExpired(exp: string) {
+  const currentTime = Math.floor(Date.now() / 1000) // 현재 시간 (초)
+  return Number(exp) < currentTime // 만료 시간과 비교
+}
+
+const matchUrl = (request: NextRequest, paths: string[]) => {
+  return paths.some(path => request.nextUrl.pathname.startsWith(path))
+}
 
 export default NextAuth(authConfig).auth
-
 // This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
-  // List of paths that don't require authentication
-  const publicPaths = ['/login', '/signup']
-
   // Check if the requested path is public
-  const isPublicPath = publicPaths.some(path =>
-    request.nextUrl.pathname.startsWith(path)
-  )
-
-  // TODO 액세스 토큰 검증 로직 구현 or 액세스 토큰 검증 api 추가
+  const isPublicPath = matchUrl(request, PUBLIC_PATHS)
 
   const access_token = request.cookies.get('access_token')
-  if (access_token && !request.url.includes('/verify')) {
-    try {
+  try {
+    if (access_token) {
+      // 토큰 검증
       const payload = access_token.value.split('.')[1]
       const decodedPayload = decode(payload)
-      const payloadObject = JSON.parse(decodedPayload)
+      const jsonObject = JSON.parse(decodedPayload)
+      const role = jsonObject.auth[0].authority
+      const isExpired = isTokenExpired(jsonObject.exp)
 
-      if (payloadObject.auth[0].authority === 'ROLE_VISITOR') {
-        return NextResponse.redirect(new URL('/verify', request.url))
+      if (isExpired) {
+        await axios
+          .get(
+            'http://hansung-fiveguys.duckdns.org:8080/api/v1/oauth/refresh-token',
+            {
+              headers: {
+                Authorization: `Bearer ${access_token}`
+              },
+              withCredentials: true
+            }
+          )
+          .then(res => {
+            if (res.data.code === 200) {
+              setCookie('access_token', access_token, {
+                httpOnly: false,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 60 * 60,
+                path: '/'
+              })
+              return NextResponse.redirect('/')
+            }
+            setCookie('access_token', '', { maxAge: -1 })
+            return NextResponse.redirect('/login')
+          })
+          .catch(err => {
+            setCookie('access_token', '', { maxAge: -1 })
+            return NextResponse.redirect('/login')
+          })
+      } else {
+        // mathurl : 해당되면 true
+        if (
+          role === 'ROLE_USER' &&
+          matchUrl(request, ROLE_USER_NOT_ACCEESSABLE_PATHS)
+        ) {
+          return NextResponse.redirect(new URL('/', request.url))
+        } else if (
+          role === 'ROLE_VISITOR' &&
+          !matchUrl(request, ROLE_VISITOR_ACCESSABLE_PATHS)
+        ) {
+          return NextResponse.redirect(new URL('verify', request.url))
+        }
       }
-    } catch (err) {
-      console.log(err)
+    } else if (!isPublicPath) {
+      return NextResponse.redirect(new URL('/login', request.url))
     }
-  } else if (access_token && request.url.includes('/verify')) {
-    const payload = access_token.value.split('.')[1]
-    const decodedPayload = decode(payload)
-    const payloadObject = JSON.parse(decodedPayload)
-    if (payloadObject.auth[0].authority === 'ROLE_USER') {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
-  }
-
-  if (access_token && request.url.includes('login')) {
-    return NextResponse.redirect(new URL('/', request.url))
-  }
-
-  if (!access_token && !isPublicPath) {
-    // Redirect to login page if there's no session and the path is not public
+  } catch (err) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
