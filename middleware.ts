@@ -3,15 +3,9 @@ import { authConfig } from './auth.config'
 import { NextRequest, NextResponse } from 'next/server'
 import { access } from 'fs'
 import axios from 'axios'
-import { setCookie } from 'cookies-next'
+import { getCookie, getCookies, setCookie } from 'cookies-next'
 import { decode } from 'js-base64'
 import next from 'next'
-import jwt_decode from 'jwt-decode'
-const JWT_SECRET = process.env.JWT_SECRET_KEY!
-
-const PUBLIC_PATHS = ['/login', '/signup']
-const ROLE_USER_NOT_ACCEESSABLE_PATHS = ['/verify', '/signup', '/login']
-const ROLE_VISITOR_ACCESSABLE_PATHS = ['/verify']
 
 function isTokenExpired(exp: string) {
   const currentTime = Math.floor(Date.now() / 1000) // 현재 시간 (초)
@@ -25,10 +19,14 @@ const matchUrl = (request: NextRequest, paths: string[]) => {
 export default NextAuth(authConfig).auth
 // This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
+  const PUBLIC_PATHS = ['/login', '/signup']
+  const ROLE_USER_NOT_ACCEESSABLE_PATHS = ['/verify', '/signup', '/login']
+  const ROLE_VISITOR_ACCESSABLE_PATHS = ['/verify']
   // Check if the requested path is public
   const isPublicPath = matchUrl(request, PUBLIC_PATHS)
 
   const access_token = request.cookies.get('access_token')
+  console.log(access_token)
   try {
     if (access_token) {
       // 토큰 검증
@@ -37,7 +35,7 @@ export async function middleware(request: NextRequest) {
       const jsonObject = JSON.parse(decodedPayload)
       const role = jsonObject.auth[0].authority
       const isExpired = isTokenExpired(jsonObject.exp)
-
+      console.log(isExpired)
       if (isExpired) {
         await axios
           .get(
@@ -51,6 +49,7 @@ export async function middleware(request: NextRequest) {
           )
           .then(res => {
             if (res.data.code === 200) {
+              setCookie('access_token', '', { maxAge: -1 })
               setCookie('access_token', access_token, {
                 httpOnly: false,
                 secure: process.env.NODE_ENV === 'production',
@@ -59,7 +58,6 @@ export async function middleware(request: NextRequest) {
               })
               return NextResponse.redirect('/')
             }
-            setCookie('access_token', '', { maxAge: -1 })
             return NextResponse.redirect('/login')
           })
           .catch(err => {
@@ -80,10 +78,12 @@ export async function middleware(request: NextRequest) {
           return NextResponse.redirect(new URL('verify', request.url))
         }
       }
-    } else if (!isPublicPath) {
+    }
+    if (!access_token && !isPublicPath) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
   } catch (err) {
+    console.log(err)
     return NextResponse.redirect(new URL('/login', request.url))
   }
 

@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { setCookie } from 'cookies-next'
+import { NextResponse } from 'next/server'
 
 interface CallBackProps {
   params: { provider: string }
@@ -39,26 +40,28 @@ export default function CallBack({ params, searchParams }: CallBackProps) {
     }
 
     const getAccessToken = async () => {
-      try {
-        const response = await axios.get(
+      await axios
+        .get(
           `http://hansung-fiveguys.duckdns.org:8080/api/v1/oauth/${provider}?${query}`,
           { withCredentials: true }
         )
-        const { access_token } = response.data.data.accessToken
-        if (response.data.code === 200) {
-          setCookie('access_token', access_token, {
-            httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 60 * 60,
-            path: '/'
-          })
-          router.push('/')
-        } else {
-          console.error('Error response:', response.data)
-        }
-      } catch (error) {
-        console.log(error)
-      }
+        .then(res => {
+          const access_token = res.data.data.accessToken
+          if (res.data.code === 200) {
+            setCookie('access_token', access_token, {
+              httpOnly: false,
+              secure: process.env.NODE_ENV === 'production',
+              maxAge: 60 * 60,
+              path: '/'
+            })
+            router.push('/')
+          } else {
+            console.error('Error response:', res.data)
+          }
+        })
+        .catch(err => {
+          console.log(err)
+        })
     }
     getAccessToken()
     isCalled.current = true // Set the ref to true to prevent further calls
