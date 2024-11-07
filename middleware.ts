@@ -26,7 +26,6 @@ export async function middleware(request: NextRequest) {
   const isPublicPath = matchUrl(request, PUBLIC_PATHS)
 
   const access_token = request.cookies.get('access_token')
-  console.log(access_token)
   try {
     if (access_token) {
       // 토큰 검증
@@ -35,7 +34,6 @@ export async function middleware(request: NextRequest) {
       const jsonObject = JSON.parse(decodedPayload)
       const role = jsonObject.auth[0].authority
       const isExpired = isTokenExpired(jsonObject.exp)
-      console.log(isExpired)
       if (isExpired) {
         await axios
           .get(
