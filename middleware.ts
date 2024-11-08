@@ -15,7 +15,7 @@ const matchUrl = (request: NextRequest, paths: string[]): boolean => {
 // 미들웨어
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const PUBLIC_PATHS = ['/login', '/signup']
-  const BASE_URL = 'http://localhost:3000'
+  const BASE_URL = 'http://hansung-fiveguys.duckdns.org/'
 
   const access_token = request.cookies.get('access_token')
 
