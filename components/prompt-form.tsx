@@ -1593,94 +1593,6 @@ export function PromptForm({
               e.target['message']?.blur()
             }
 
-            const value = input.trim()
-            setInput('')
-            if (!value) return
-
-            if (currentMode === 'phone') {
-              handlePhone(value)
-            } else if (currentMode === 'phone-name') {
-              handlePhoneName(value)
-            } else if (currentMode === 'phone-group') {
-              handleGroupNameResponse(value)
-            } else if (currentMode === 'phone-group-input') {
-               const newPhoneData = { ...phoneData, value }
-               const result = await comparePhoneNumber({ phoneData: newPhoneData })
-               console.log(result.errors)
-               if(result.isValid){
-                handleGroupName(value)
-               }
-               else{
-                handleErrorPhoneNumberCompare(value, result.errors)
-               }
-
-            } else if (currentMode === 'phone-group-noninput') {
-              setMessages(currentMessages => [
-                ...currentMessages,
-                {
-                  id: nanoid(),
-                  display: <UserMessage>{value}</UserMessage>
-                }
-              ])
-              if(value =="예"){
-                const newPhoneData = { ...phoneData, groupName:'default' }
-                const result = await comparePhoneNumber({ phoneData: newPhoneData })
-                console.log(result.errors)
-                if(result.isValid){
-                 handleGroupNonName()
-                }
-                else{
-                  handleErrorPhoneNumberCompare(value, result.errors)
-                }
-              }else if(value =="아니오"){
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: "그룹명을 추가하시겠습니까? (예/아니오)"
-                  }
-                ])
-                setCurrentMode('phone-group')
-              }
-              else{
-                //나중에...
-              }
-            } else if (currentMode === 'text') {
-              const hasEnoughTokens = await handleCheckTokens()
-              if(hasEnoughTokens) handleText(value)
-              else handleErrorText(value)
-              
-            } else if (currentMode === 'text-create-action') {
-                if (value.toLowerCase() === '재생성') {
-                  const hasEnoughTokens = await handleCheckTokens()
-                  if(hasEnoughTokens)handleRegenerateMessage()
-                  else handleErrorRegenerateText(value)
-
-                } else if (value.toLowerCase() === '주제') {
-                  handleReenterTopic()
-
-                } else if (value.toLowerCase() === '메시지 생성 완료') {
-                  handleStopGenerateText()
-
-                }else {
-                  handleErrorTextCreateAction(value)
-                }
-              
-            
-            } else if (currentMode === 'text-action') {
-              if (value.toLowerCase() === '이미지 생성') {
-                const hasEnoughTokens = await handleCheckTokens()
-                //console.log(result)
-                if(hasEnoughTokens) {
-                  const result = await showExistingImages();
-                  if(result){handleImageGeneration()}
-                  else {
-                    handleErrorGenerateImage(value)
-                  }
-                  handleImageGeneration()
-                }
-                else handleErrorGenerateImageApi(value)
-
 
         const value = input.trim()
         setInput('')
@@ -1742,8 +1654,8 @@ export function PromptForm({
             } else handleErrorImage(value)
           } else if (['1', '2', '3', '4'].includes(value)) {
             const selectImage = returnSelectedImage(value)
-            setSelectedImage(selectImage)
-            setCurrentImageUrl(selectImage)
+            setSelectedImage(selectImage.src)
+            setCurrentImageUrl(selectImage.src)
             handleSelectedImageSave(value)
             handleImageAction(value)
             setCurrentMode('image-action')
@@ -1752,8 +1664,8 @@ export function PromptForm({
           if (['1', '2', '3', '4'].includes(value)) {
             handleSelectedImageSave(value)
             const selectImage = returnSelectedImage(value)
-            setSelectedImage(selectImage)
-            setCurrentImageUrl(selectImage)
+            setSelectedImage(selectImage.src)
+            setCurrentImageUrl(selectImage.src)
             handleImageAction(value)
           } else handleErrorImageReselected(value)
         } else if (currentMode === 'image-action') {
@@ -1762,7 +1674,7 @@ export function PromptForm({
           } else if (value === '이미지 보강') {
             const hasEnoughTokens = await handleCheckTokens()
             if (hasEnoughTokens) {
-              const enhance = ReturnEnhanceImage()
+              const enhance = await ReturnEnhanceImage(selectedImage)
               console.log(enhance)
               setEnhancedImg(enhance)
               handleImageEnhance(value, enhance)
@@ -1779,7 +1691,7 @@ export function PromptForm({
           } else if (value.toLowerCase() === '재보강') {
             const hasEnoughTokens = await handleCheckTokens()
             if (hasEnoughTokens) {
-              const enhance = await ReturnEnhanceImage()
+              const enhance = await ReturnEnhanceImage(selectedImage)
               flushSync(() => {
                 setEnhancedImg(enhance)
               })
@@ -1796,125 +1708,6 @@ export function PromptForm({
                 handleImageAction(value)
                 setCurrentMode('image-action')
               } else handleErrorImageSelected(value)
-
-
-            } else if (currentMode === 'image-Reselect') {
-              if (['1', '2', '3', '4'].includes(value)) {
-                handleSelectedImageSave(value)  
-                const {src, seed} = returnSelectedImage(value)
-                setSelectedSeed(seed)
-                console.log(src)
-                setSelectedImage(src)
-                setCurrentImageUrl(src)
-                handleImageAction(value)
-                setCurrentMode('image-action')
-              } 
-              else handleErrorImageReselected(value)
-
-            }else if (currentMode === 'image-action') {
-              if (value === '이미지 편집') {
-                handleImageEdit(value)
-              } 
-              else if (value === '이미지 보강') {
-                const hasEnoughTokens = await handleCheckTokens()
-                if(hasEnoughTokens){
-                  const enhance = await ReturnEnhanceImage(currentImageUrl)
-                  console.log(enhance)
-                  if(enhance !== ""){
-                    setEnhancedImg(enhance);
-                    handleImageEnhance(value, enhance);
-                  }
-                }
-                else handleErrorEnhance(value)
-              } else if(value === '이미지 재생성'){
-                const hasEnoughTokens = await handleCheckTokens()
-                console.log(selectedSeed)
-                if(hasEnoughTokens){
-                  if(selectedSeed !== ""){
-                    handleImageReSeed(selectedSeed)
-                  }
-                  else{}
-                }
-                else{}
-              }
-              else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
-              else handleErrorImageAction(value)
-
-            } else if (currentMode === 'image-enhancing-action') {
-              if (value.toLowerCase() === '예') {
-                  setCurrentImageUrl(enhancedImg)
-                  HandleimageEnhancingAction(value)
-
-              } else if (value.toLowerCase() === '아니오') {
-                setCurrentImageUrl(selectedImage)
-                HandleimageEnhancingCancle(value)
-
-              } else if (value.toLowerCase() === '재보강') {
-                const hasEnoughTokens = await handleCheckTokens()
-                if(hasEnoughTokens){
-                  const enhance = await ReturnEnhanceImage(currentImageUrl)
-                  flushSync(() => {
-                    setEnhancedImg(enhance)
-                 });
-                 handleImageEnhance(value, enhance);
-
-                  console.log(enhance)
-                }
-                else{
-                  setMessages(currentMessages => [
-                    ...currentMessages,
-                    {
-                      id: nanoid(),
-                      display: <UserMessage>{value}</UserMessage>
-                    },
-                    {
-                      id: nanoid(),
-                      display: "토큰이 부족합니다. 보강을 진행하지 않습니다. 현재 이미지로 보강하시겠습니까?"
-                    }
-                  ])
-                  if (value.toLowerCase() === '예') {
-                    setCurrentImageUrl(enhancedImg)
-                    HandleimageEnhancingAction(value)
-                } else if (value.toLowerCase() === '아니오') {
-                  setCurrentImageUrl(selectedImage)
-                  HandleimageEnhancingCancle(value)
-                }
-                }
-              } else handleErrorImageEnhancingAction(value)
-
-            } else if (currentMode === 'image-enhance-action') {
-              if (value === '이미지 편집') {
-                handleImageEdit(value)
-              } else if (value.toLowerCase() === '종료') {
-                setCurrentImageUrl(enhancedImg)
-                handleSaveMessageAndImage()
-              } else handleErrorImageEnhanceAction(value)
-
-            } else if (currentMode === 'history') {
-              handleHistory()
-            } else if (currentMode === 'history-action') {
-              handleHistoryFind(value)
-            } else {
-              setMessages(currentMessages => [
-                ...currentMessages,
-                {
-                  id: nanoid(),
-                  display: <UserMessage>{value}</UserMessage>
-                },
-                {
-                  id: nanoid(),
-                  display:
-                    '토큰이 부족합니다. 보강을 진행하지 않습니다. 현재 이미지로 보강하시겠습니까?'
-                }
-              ])
-              if (value.toLowerCase() === '예') {
-                setCurrentImageUrl(enhancedImg)
-                HandleimageEnhancingAction(value)
-              } else if (value.toLowerCase() === '아니오') {
-                setCurrentImageUrl(selectedImage)
-                HandleimageEnhancingCancle(value)
-              }
-            }
           } else handleErrorImageEnhancingAction(value)
         } else if (currentMode === 'image-enhance-action') {
           if (value === '이미지 편집') {
