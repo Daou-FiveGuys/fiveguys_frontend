@@ -54,7 +54,7 @@ export default function CallBack({ params, searchParams }: CallBackProps) {
               maxAge: 60 * 60,
               path: '/'
             })
-            redirect('http://hansung-fiveguys.duckdns.org/')
+            router.push('/')
           } else {
             console.error('Error response:', res.data)
           }
