@@ -96,7 +96,7 @@ export default function SignUpForm() {
     const trySignup = async () => {
       await axios
         .post(
-          `http://hansung-fiveguys.duckdns.org:8080/api/v1/user`,
+          `http://hansung-fiveguys.duckdns.org:8080/api/v1/user/signup`,
           {
             name: `${name}`,
             email: `${email}`,
