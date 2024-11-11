@@ -41,7 +41,10 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     }
     if (role === 'ROLE_VISITOR' && !matchUrl(request, ['/verify']))
       return NextResponse.redirect(new URL(`${BASE_URL}/verify`, request.url))
-    if (role === 'ROLE_USER' && matchUrl(request, ['/login', 'signup']))
+    if (
+      role === 'ROLE_USER' &&
+      matchUrl(request, ['/login', '/signup', '/verify'])
+    )
       return NextResponse.redirect(new URL(`${BASE_URL}/`, request.url))
   } catch (error) {
     console.error('Error decoding token:', error)
