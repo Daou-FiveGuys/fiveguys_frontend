@@ -22,7 +22,7 @@ export async function generateMetadata({
     return {}
   }
 
-  const chat = await getChat(params.id, session.user.id)
+  const chat = await getChat(params.id, session.user?.id)
 
   if (!chat || 'error' in chat) {
     redirect('/')
