@@ -118,7 +118,7 @@ export default function SignUpForm() {
                 path: '/'
               })
             }
-            redirect('http://hansung-fiveguys.duckdns.org')
+            redirect('http://hansung-fiveguys.duckdns.org/')
           } else {
             setError('오류가 발생했습니다.')
           }
