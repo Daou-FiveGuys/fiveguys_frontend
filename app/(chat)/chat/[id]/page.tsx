@@ -18,11 +18,11 @@ export async function generateMetadata({
 }: ChatPageProps): Promise<Metadata> {
   const session = await auth()
 
-  if (session === null || session.user === undefined) {
+  if (!session?.user || session.user === undefined || session.user.id === undefined) {
     return {}
   }
 
-  const chat = await getChat(params.id, session.user?.id)
+  const chat = await getChat(params.id, session.user.id)
 
   if (!chat || 'error' in chat) {
     redirect('/')
