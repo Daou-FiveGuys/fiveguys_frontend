@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import axios from 'axios'
 import { setCookie } from 'cookies-next'
 
@@ -118,7 +118,7 @@ export default function SignUpForm() {
                 path: '/'
               })
             }
-            router.push('/')
+            redirect('http://hansung-fiveguys.duckdns.org/')
           } else {
             setError('오류가 발생했습니다.')
           }

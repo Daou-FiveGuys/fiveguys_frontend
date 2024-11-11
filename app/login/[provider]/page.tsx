@@ -1,7 +1,7 @@
 'use client'
 
 import axios from 'axios'
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { setCookie } from 'cookies-next'
 import { NextResponse } from 'next/server'
@@ -54,7 +54,7 @@ export default function CallBack({ params, searchParams }: CallBackProps) {
               maxAge: 60 * 60,
               path: '/'
             })
-            router.push('/')
+            redirect('http://hansung-fiveguys.duckdns.org/')
           } else {
             console.error('Error response:', res.data)
           }
