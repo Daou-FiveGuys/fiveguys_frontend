@@ -1,121 +1,267 @@
-"use client"
+'use client'
 
-import React, { useState } from 'react'
-import { Square, Flame, Pencil, Type, Eraser, Palette, Circle, Triangle, Music, ThumbsUp, ImageIcon, Save } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Canvas, CanvasOptions, Circle, Triangle, Rect, Object as FabricObject, PencilBrush } from 'fabric'
 import { Button } from "@/components/ui/button"
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
-import { useRouter } from 'next/navigation'
+import { Card, CardContent } from "@/components/ui/card"
+import { Circle as CircleIcon, Pen, Square, Triangle as TriangleIcon, Eraser, ChevronDown } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ChromePicker, ColorResult } from 'react-color'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
-interface EditPageProps {
-  imageid: string
-}
+const thicknesses = [1, 2, 3, 5, 8, 13, 21, 34, 40]
 
-export default function ImageEditorForm({ imageid }: EditPageProps) {
-  const [selectedTool, setSelectedTool] = useState<string | null>(null)
-  const router = useRouter()
+export default function ImageEditor() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [canvas, setCanvas] = useState<Canvas | null>(null)
+  const [activeShape, setActiveShape] = useState<string | null>(null)
+  const [currentColor, setCurrentColor] = useState('#000000')
+  const [currentThickness, setCurrentThickness] = useState(5)
+  const [recentColors, setRecentColors] = useState<string[]>([])
 
-  const tools = [
-    { name: '도형', icon: <Square /> },
-    { name: '아이콘', icon: <Flame /> },
-    { name: '이미지 수정', icon: <ImageIcon /> },
-    { name: '연필', icon: <Pencil /> },
-    { name: '텍스트', icon: <Type /> },
-    { name: '지우개', icon: <Eraser /> },
-    { name: '색상', icon: <Palette /> },
-  ]
+  useEffect(() => {
+    if (canvasRef.current) {
+      const options: Partial<CanvasOptions> = {
+        width: 800,
+        height: 600,
+        backgroundColor: '#f0f0f0'
+      }
+      const fabricCanvas = new Canvas(canvasRef.current, options)
+      fabricCanvas.isDrawingMode = false
+      setCanvas(fabricCanvas)
 
-  const handleToolClick = (toolName: string) => {
-    setSelectedTool(selectedTool === toolName ? null : toolName)
-  }
+      return () => {
+        fabricCanvas.dispose()
+      }
+    }
+  }, [])
 
-  const handleSave = () => {
-    // Here you would typically save the edited image
-    // For now, we'll just navigate back
-    router.back()
-  }
+  const addShape = (shape: string) => {
+    if (!canvas) return
 
-  const renderToolOptions = () => {
-    switch (selectedTool) {
-      case '도형':
-        return (
-          <div className="grid grid-cols-3 gap-2">
-            <Button variant="outline" size="icon"><Circle /></Button>
-            <Button variant="outline" size="icon"><Square /></Button>
-            <Button variant="outline" size="icon"><Triangle /></Button>
-          </div>
-        )
-      case '아이콘':
-        return (
-          <div className="grid grid-cols-3 gap-2">
-            <Button variant="outline" size="icon"><Flame /></Button>
-            <Button variant="outline" size="icon"><Music /></Button>
-            <Button variant="outline" size="icon"><ThumbsUp /></Button>
-          </div>
-        )
-      case '이미지 수정':
-        return (
-          <div className="space-y-2">
-            <Button variant="outline" className="w-full"><ImageIcon /></Button>
-            <Button variant="outline" className="w-full"><ImageIcon /></Button>
-            <Button variant="outline" className="w-full">AI</Button>
-          </div>
-        )
-      case '텍스트':
-        return (
-          <div className="space-y-2">
-            <Button variant="outline" className="w-full">글꼴 선택</Button>
-            <Button variant="outline" className="w-full">크기 조절</Button>
-          </div>
-        )
+    let fabricShape: FabricObject
+
+    const shapeOptions = {
+      fill: 'transparent',
+      stroke: currentColor,
+      strokeWidth: currentThickness,
+      left: 100,
+      top: 100
+    }
+
+    switch (shape) {
+      case 'circle':
+        fabricShape = new Circle({
+          ...shapeOptions,
+          radius: 50,
+        })
+        break
+      case 'triangle':
+        fabricShape = new Triangle({
+          ...shapeOptions,
+          width: 100,
+          height: 100,
+        })
+        break
+      case 'rectangle':
+        fabricShape = new Rect({
+          ...shapeOptions,
+          width: 100,
+          height: 100,
+        })
+        break
       default:
-        return null
+        return
+    }
+
+    canvas.add(fabricShape)
+    canvas.renderAll()
+    setActiveShape(shape)
+  }
+  //도형 추가 기능
+
+  const enableDrawing = () => {
+    if (!canvas) return
+
+    canvas.isDrawingMode = true
+    canvas.freeDrawingBrush = new PencilBrush(canvas)
+    if (canvas.freeDrawingBrush) {
+      canvas.freeDrawingBrush.width = currentThickness
+      canvas.freeDrawingBrush.color = currentColor
+    }
+    setActiveShape('pen')
+  }
+  //펜 기능
+
+  const disableDrawing = () => {
+    if (!canvas) return
+
+    canvas.isDrawingMode = false
+    setActiveShape(null)
+  }
+  
+
+  const enableErasing = () => {
+    if (!canvas) return
+
+    canvas.isDrawingMode = false
+    canvas.off('mouse:down') 
+    canvas.on('mouse:down', function(options) {
+      if (options.target) {
+        canvas.remove(options.target)
+        canvas.renderAll()
+      }
+    })
+    setActiveShape('eraser')
+  }
+  //지우기 기능
+
+  const disableErasing = () => {
+    if (!canvas) return
+
+    canvas.off('mouse:down') 
+  }
+
+  useEffect(() => {
+    if (!canvas) return
+
+    const handleSelection = () => {
+      if (activeShape !== 'eraser') {
+        canvas.selection = true
+        canvas.forEachObject((obj) => {
+          obj.selectable = true
+        })
+      } else {
+        canvas.selection = false
+        canvas.forEachObject((obj) => {
+          obj.selectable = false
+        })
+      }
+    }
+
+    handleSelection()
+
+  }, [canvas, activeShape])
+
+  useEffect(() => {
+    if (canvas && canvas.freeDrawingBrush) {
+      canvas.freeDrawingBrush.color = currentColor
+      canvas.freeDrawingBrush.width = currentThickness
+    }
+  }, [canvas, currentColor, currentThickness])
+
+  const handleColorChange = (color: ColorResult, event: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentColor(color.hex)
+    // Only add to recent colors if it's not from dragging (i.e., if it's a complete change)
+    if (event.type === 'change') {
+      setRecentColors(prevColors => {
+        const newColors = [color.hex, ...prevColors.filter(c => c !== color.hex)]
+        return newColors.slice(0, 6)
+      })
     }
   }
+  //색상 파커에 색상 추가(다 안채워진 상태)
+
+  const handleColorChangeComplete = (color: ColorResult) => {
+    setCurrentColor(color.hex)
+    setRecentColors(prevColors => {
+      const newColors = [color.hex, ...prevColors.filter(c => c !== color.hex)]
+      return newColors.slice(0, 6)
+    })
+  }
+  //색상 파커에 색상 추가(전부 채워진 상태)
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      <div className="flex-1 flex">
-        <div className="flex-1 p-4">
-          <div className="w-full h-full bg-white border-2 border-gray-300 rounded-lg shadow-md overflow-hidden">
-            <img 
-              src={`/sampleImage${imageid}.jpg`} 
-              alt={`Image ${imageid}`} 
-              className="w-full h-full object-contain"
-            />
-          </div>
-        </div>
-        <div className="w-20 bg-white shadow-lg flex flex-col items-center py-4 space-y-4">
-          {tools.map((tool) => (
-            <Button
-              key={tool.name}
-              variant={selectedTool === tool.name ? "default" : "outline"}
-              size="icon"
-              onClick={() => handleToolClick(tool.name)}
-            >
-              {tool.icon}
-            </Button>
-          ))}
-        </div>
-      </div>
-      <div className="bg-white p-4 shadow-lg flex justify-between items-center">
-        <Button onClick={handleSave} className="flex items-center space-x-2">
-          <Save className="w-4 h-4" />
-          <span>저장</span>
-        </Button>
-        {selectedTool && (
+    <Card className="w-full max-w-4xl mx-auto">
+      <CardContent className="p-6">
+        <div className="flex space-x-4 mb-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-[100px]">
+                <Square className="mr-2 h-4 w-4" />
+                도형
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => { addShape('circle'); disableDrawing(); disableErasing() }}>
+                <CircleIcon className="mr-2 h-4 w-4" />
+                원
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => { addShape('triangle'); disableDrawing(); disableErasing() }}>
+                <TriangleIcon className="mr-2 h-4 w-4" />
+                삼각형
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => { addShape('rectangle'); disableDrawing(); disableErasing() }}>
+                <Square className="mr-2 h-4 w-4" />
+                사각형
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button onClick={() => { enableDrawing(); disableErasing() }} variant={activeShape === 'pen' ? 'default' : 'outline'}>
+            <Pen className="mr-2 h-4 w-4" /> 펜
+          </Button>
+          <Button onClick={() => { enableErasing(); disableDrawing() }} variant={activeShape === 'eraser' ? 'default' : 'outline'}>
+            <Eraser className="mr-2 h-4 w-4" /> 지우개
+          </Button>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline">옵션</Button>
+              <Button variant="outline" className="w-[80px]">
+                <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: currentColor }} />
+                색상
+              </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80">
-              <div className="space-y-4">
-                <h4 className="font-medium leading-none">{selectedTool} 옵션</h4>
-                {renderToolOptions()}
-              </div>
+            <PopoverContent className="w-[225px]">
+              <ChromePicker
+                color={currentColor}
+                onChange={handleColorChange}
+                onChangeComplete={handleColorChangeComplete}
+                disableAlpha={true}
+                styles={{
+                  default: {
+                    picker: { boxShadow: 'none', border: 'none', width: '100%' },
+                  }
+                }}
+              />
+              {recentColors.length > 0 && (
+                <div className="mt-4 w-full">
+                  <p className="text-sm font-medium mb-2">최근 사용한 색상</p>
+                  <div className="flex gap-2 justify-between">
+                    {recentColors.map((color, index) => (
+                      <button
+                        key={index}
+                        className="w-[32px] h-[32px] rounded-full border border-gray-300"
+                        style={{ backgroundColor: color }}
+                        onClick={() => handleColorChangeComplete({ hex: color } as ColorResult)}
+                        title={`색상: ${color}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </PopoverContent>
           </Popover>
-        )}
-      </div>
-    </div>
+          <Select onValueChange={(value) => setCurrentThickness(Number(value))}>
+            <SelectTrigger className="w-[100px]">
+              <SelectValue placeholder="굵기" />
+            </SelectTrigger>
+            <SelectContent>
+              {thicknesses.map((thickness) => (
+                <SelectItem key={thickness} value={thickness.toString()}>
+                  {thickness}px
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <canvas ref={canvasRef} />
+      </CardContent>
+    </Card>
   )
 }
