@@ -26,6 +26,9 @@ import {
   TriangleIcon,
   Eraser,
   ChevronDown,
+  HammerIcon,
+  Wand2Icon,
+  EyeOffIcon,
   Crop,
   Image
 } from 'lucide-react'
@@ -55,6 +58,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
+import { EyeClosedIcon } from '@radix-ui/react-icons'
 
 const thicknesses = [1, 2, 3, 5, 8, 13, 21, 34, 40]
 
@@ -453,6 +457,8 @@ export default function ImageEditor() {
   const [isMovingObject, setIsMovingObject] = useState<boolean>(false)
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const textRef = useRef<fabric.IText | null>(null) // text 객체를 추적하는 ref
+  // const [isMasking, setIsMasking] = useState(false)
+
   const [apiTextData, setApiTextData] = useState([
     '안녕하세요! 😊',
     '방학을 맞이하여 한성대학교에서 코딩 캠프를 진행합니다!',
@@ -664,6 +670,7 @@ export default function ImageEditor() {
     disableErasing()
     disableMoveObject()
     disableAddText()
+    disableAITool()
   }
 
   /**
@@ -700,6 +707,48 @@ export default function ImageEditor() {
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [canvas, isTyping])
+
+  /**
+   *
+   *
+   *
+   *
+   * 김상준 추가
+   */
+  const [isMasking, setIsMasking] = useState(false) // 이미지 수정 상태
+  const [isRemoveText, setIsRemoveText] = useState(false)
+  const [selectedApi, setSelectedApi] = useState<string | null>('imggen') // 텍스트 제거 API 선택 상태
+  const [maskingPenThickness, setMaskingPenThickness] = useState(3)
+  const [isAITool, setIsAITool] = useState(false)
+
+  const disableAITool = () => {
+    setIsMasking(false)
+    setIsRemoveText(false)
+    setIsAITool(false)
+  }
+
+  const handleMaskingClick = () => {
+    setIsMasking(true)
+    setIsRemoveText(false)
+  }
+
+  const handleTextRemovalClick = () => {
+    setIsMasking(false)
+    setIsRemoveText(true)
+    setSelectedApi('imggen')
+  }
+
+  useEffect(() => {
+    const preventDefault = (e: TouchEvent) => e.preventDefault()
+
+    // 모든 touchmove 이벤트를 막음
+    document.addEventListener('touchmove', preventDefault, { passive: false })
+
+    // 컴포넌트가 언마운트될 때 이벤트 제거
+    return () => {
+      document.removeEventListener('touchmove', preventDefault)
+    }
+  }, [])
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -842,7 +891,7 @@ export default function ImageEditor() {
           >
             <Eraser className="mr-2 h-4 w-4" /> 지우개
           </Button>
-          <Button
+          {/* <Button
             onClick={toggleMasking}
             variant={activeShape === 'mask' || maskRect ? 'default' : 'outline'}
           >
@@ -852,7 +901,6 @@ export default function ImageEditor() {
               : activeShape === 'mask'
                 ? '마스킹 취소'
                 : '마스킹'}
-            {/* activeShape = 클릭된 모드 */}
           </Button>
           {maskInfo && (
             <ImageEditModal
@@ -860,7 +908,120 @@ export default function ImageEditor() {
               onEdit={handleImageEdit}
               onClose={clearMasks}
             />
-          )}
+          )} */}
+          <div className="flex">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  onClick={() => {
+                    disableAll()
+                    setIsAITool(true)
+                  }}
+                  variant={isAITool ? 'default' : 'outline'}
+                  className="h-9 flex items-center justify-center whitespace-nowrap"
+                >
+                  <HammerIcon className="mr-2 h-4 w-4" />
+                  AI 도구
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="flex-col w-full items-center justify-center space-y-2 p-2">
+                {/* 이미지 수정 버튼 */}
+                <div className="flex items-center space-x-0">
+                  <Button
+                    onClick={handleMaskingClick}
+                    variant={isMasking ? 'default' : 'outline'}
+                    className="h-9 flex items-center justify-center p-2 rounded-r-none"
+                  >
+                    <Wand2Icon className="mr-2 h-4 w-4" />
+                    이미지 수정
+                  </Button>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        className="h-9 w-auto flex items-center justify-center text-lg p-0 rounded-l-none"
+                        variant="outline"
+                      >
+                        ⌄
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="flex flex-col w-full items-center justify-center space-y-2 p-2">
+                      <p className="text-sm font-medium">펜 굵기 선택</p>
+                      <div className="flex space-x-2">
+                        {[1, 3, 5, 8, 10].map(thickness => (
+                          <button
+                            key={thickness}
+                            onClick={() => setMaskingPenThickness(thickness)}
+                            className={`h-8 w-8 rounded-full border flex items-center justify-center ${
+                              maskingPenThickness === thickness
+                                ? 'bg-gray-300'
+                                : ''
+                            }`}
+                          >
+                            {thickness}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* 텍스트 제거 버튼 */}
+                <div className="flex items-center space-x-0">
+                  <Button
+                    onClick={handleTextRemovalClick}
+                    variant={isRemoveText === true ? 'default' : 'outline'}
+                    className="h-9 flex items-center justify-center p-2 rounded-r-none"
+                  >
+                    <EyeClosedIcon className="mr-2 h-4 w-4" />
+                    텍스트 제거
+                  </Button>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        className="h-9 w-auto flex items-center justify-center text-lg p-0 rounded-l-none"
+                        variant="outline"
+                      >
+                        ⌄
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="flex-col w-full items-center justify-center space-y-2 p-2">
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={() => setSelectedApi('imggen')}
+                          className={`h-8 w-auto px-4 rounded border`}
+                          variant={
+                            isRemoveText === true && selectedApi === 'imggen'
+                              ? 'default'
+                              : 'outline'
+                          }
+                        >
+                          ImgGen
+                        </Button>
+                        <Button
+                          onClick={() => setSelectedApi('photoroom')}
+                          className={`h-8 w-auto px-4 rounded border`}
+                          variant={
+                            isRemoveText === true && selectedApi === 'photoroom'
+                              ? 'default'
+                              : 'outline'
+                          }
+                        >
+                          PhotoRoom
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* {
+          
+          여기까지 추가입니다 
+          
+          
+          } */}
           <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
               <Button
