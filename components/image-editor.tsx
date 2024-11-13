@@ -891,24 +891,6 @@ export default function ImageEditor() {
           >
             <Eraser className="mr-2 h-4 w-4" /> 지우개
           </Button>
-          {/* <Button
-            onClick={toggleMasking}
-            variant={activeShape === 'mask' || maskRect ? 'default' : 'outline'}
-          >
-            <Crop className="mr-2 h-4 w-4" />{' '}
-            {maskRect
-              ? '마스크 지우기'
-              : activeShape === 'mask'
-                ? '마스킹 취소'
-                : '마스킹'}
-          </Button>
-          {maskInfo && (
-            <ImageEditModal
-              maskInfo={maskInfo}
-              onEdit={handleImageEdit}
-              onClose={clearMasks}
-            />
-          )} */}
           <div className="flex">
             <Popover>
               <PopoverTrigger asChild>
