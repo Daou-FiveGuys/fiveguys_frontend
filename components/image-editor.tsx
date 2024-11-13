@@ -15,7 +15,7 @@ import * as fabric from 'fabric'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
-  Circle as CircleIcon,
+  CircleIcon,
   Hand as HandIcon,
   ItalicIcon,
   BoldIcon,
@@ -23,9 +23,11 @@ import {
   LetterTextIcon,
   Pen,
   Square,
-  Triangle as TriangleIcon,
+  TriangleIcon,
   Eraser,
-  ChevronDown
+  ChevronDown,
+  Crop,
+  Image
 } from 'lucide-react'
 import {
   Popover,
@@ -46,8 +48,61 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog'
 
 const thicknesses = [1, 2, 3, 5, 8, 13, 21, 34, 40]
+
+interface MaskInfo {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+//마스킹 정보 인터페이스.
+
+const ImageEditModal = ({
+  maskInfo,
+  onEdit,
+  onClose
+}: {
+  maskInfo: MaskInfo
+  onEdit: () => void
+  onClose: () => void
+}) => {
+  return (
+    <Dialog
+      onOpenChange={open => {
+        if (!open) onClose()
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button variant="outline" onClick={onEdit}>
+          <Image className="mr-2 h-4 w-4" />
+          이미지 수정
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>이미지 수정</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div>마스킹 영역 정보:</div>
+          <div>Left: {maskInfo.left}</div>
+          <div>Top: {maskInfo.top}</div>
+          <div>Width: {maskInfo.width}</div>
+          <div>Height: {maskInfo.height}</div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+//이미지 수정 버튼 클릭 시 수행되는 함수.
 
 export default function ImageEditor() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -56,6 +111,8 @@ export default function ImageEditor() {
   const [currentColor, setCurrentColor] = useState('#000000')
   const [currentThickness, setCurrentThickness] = useState(5)
   const [recentColors, setRecentColors] = useState<string[]>([])
+  const [maskRect, setMaskRect] = useState<Rect | null>(null)
+  const [maskInfo, setMaskInfo] = useState<MaskInfo | null>(null)
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -142,13 +199,27 @@ export default function ImageEditor() {
     if (!canvas) return
 
     canvas.isDrawingMode = false
-    canvas.off('mouse:down')
-    canvas.on('mouse:down', function (options) {
-      if (options.target) {
-        canvas.remove(options.target)
-        canvas.renderAll()
-      }
+    canvas.selection = true
+    canvas.forEachObject(obj => {
+      obj.selectable = true
     })
+
+    const eraseObject = () => {
+      const activeObject = canvas.getActiveObject()
+      if (activeObject) {
+        canvas.remove(activeObject)
+        if (activeObject === maskRect) {
+          setMaskRect(null)
+          setMaskInfo(null)
+        }
+        canvas.discardActiveObject()
+        canvas.requestRenderAll()
+      }
+    }
+
+    canvas.on('selection:created', eraseObject)
+    canvas.on('selection:updated', eraseObject)
+    canvas.defaultCursor = 'crosshair'
     setActiveShape('eraser')
   }
   //지우기 기능
@@ -156,14 +227,147 @@ export default function ImageEditor() {
   const disableErasing = () => {
     if (!canvas) return
 
+    canvas.off('selection:created')
+    canvas.off('selection:updated')
+    canvas.defaultCursor = 'default'
+    setActiveShape(null)
+  }
+
+  const toggleMasking = () => {
+    if (!canvas) return
+
+    if (maskRect) {
+      clearMasks()
+    } else if (activeShape !== 'mask') {
+      enableMasking()
+    } else {
+      disableMasking()
+    }
+  }
+  //마스킹 상태 관리
+
+  const enableMasking = () => {
+    if (!canvas || maskRect) return
+
+    setActiveShape('mask')
+    canvas.isDrawingMode = false
+    canvas.selection = false
+    canvas.forEachObject(obj => {
+      obj.selectable = false
+      if (obj !== maskRect) {
+        obj.opacity = 0
+      }
+    })
+
+    let startX = 0
+    let startY = 0
+    let isDown = false
+    let newRect: Rect | null = null
+
+    canvas.on('mouse:down', options => {
+      if (maskRect) {
+        canvas.remove(maskRect)
+        canvas.requestRenderAll()
+      }
+
+      const pointer = canvas.getPointer(options.e as MouseEvent)
+      isDown = true
+      startX = pointer.x
+      startY = pointer.y
+
+      newRect = new Rect({
+        left: startX,
+        top: startY,
+        width: 0,
+        height: 0,
+        fill: 'rgba(0,0,0,0.3)',
+        stroke: 'black',
+        strokeWidth: 1
+      })
+
+      canvas.add(newRect)
+      canvas.requestRenderAll()
+    })
+
+    canvas.on('mouse:move', options => {
+      if (!isDown || !newRect) return
+      const pointer = canvas.getPointer(options.e as MouseEvent)
+
+      const width = Math.abs(pointer.x - startX)
+      const height = Math.abs(pointer.y - startY)
+
+      newRect.set({
+        width: width,
+        height: height,
+        left: Math.min(startX, pointer.x),
+        top: Math.min(startY, pointer.y)
+      })
+
+      canvas.requestRenderAll()
+    })
+
+    canvas.on('mouse:up', () => {
+      isDown = false
+      if (newRect) {
+        setMaskRect(newRect)
+        setMaskInfo({
+          left: newRect.left || 0,
+          top: newRect.top || 0,
+          width: newRect.width || 0,
+          height: newRect.height || 0
+        })
+        canvas.requestRenderAll()
+        disableMasking()
+      }
+    })
+  }
+  // 마스킹 기능
+
+  const disableMasking = () => {
+    if (!canvas) return
+
     canvas.off('mouse:down')
+    canvas.off('mouse:move')
+    canvas.off('mouse:up')
+
+    if (activeShape === 'mask') {
+      setActiveShape(null)
+    }
+  }
+
+  const clearMasks = () => {
+    if (canvas && maskRect) {
+      canvas.remove(maskRect)
+      setMaskRect(null)
+      setMaskInfo(null)
+      canvas.forEachObject(obj => {
+        obj.opacity = 1
+      })
+      canvas.renderAll()
+    }
+  }
+
+  const handleImageEdit = () => {
+    if (canvas) {
+      canvas.forEachObject(obj => {
+        if (obj !== maskRect) {
+          obj.opacity = 1
+        }
+      })
+      canvas.renderAll()
+    }
   }
 
   useEffect(() => {
     if (!canvas) return
 
     const handleSelection = () => {
-      if (activeShape !== 'eraser') {
+      if (activeShape !== 'eraser' && activeShape !== 'mask') {
+        canvas.selection = true
+        canvas.forEachObject(obj => {
+          obj.selectable = true
+        })
+      } else if (activeShape === 'eraser') {
         canvas.selection = true
         canvas.forEachObject(obj => {
           obj.selectable = true
@@ -191,7 +395,6 @@ export default function ImageEditor() {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setCurrentColor(color.hex)
-    // Only add to recent colors if it's not from dragging (i.e., if it's a complete change)
     if (event.type === 'change') {
       setRecentColors(prevColors => {
         const newColors = [
@@ -202,7 +405,6 @@ export default function ImageEditor() {
       })
     }
   }
-  //색상 파커에 색상 추가(다 안채워진 상태)
 
   const handleColorChangeComplete = (color: ColorResult) => {
     setCurrentColor(color.hex)
@@ -497,16 +699,20 @@ export default function ImageEditor() {
             <DropdownMenuContent>
               <DropdownMenuItem
                 onSelect={() => {
-                  disableAll()
                   addShape('circle')
+                  disableDrawing()
+                  disableErasing()
+                  disableMasking()
                 }}
               >
                 <CircleIcon className="mr-2 h-4 w-4" />원
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => {
-                  disableAll()
                   addShape('triangle')
+                  disableDrawing()
+                  disableErasing()
+                  disableMasking()
                 }}
               >
                 <TriangleIcon className="mr-2 h-4 w-4" />
@@ -514,8 +720,10 @@ export default function ImageEditor() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => {
-                  disableAll()
                   addShape('rectangle')
+                  disableDrawing()
+                  disableErasing()
+                  disableMasking()
                 }}
               >
                 <Square className="mr-2 h-4 w-4" />
@@ -523,395 +731,117 @@ export default function ImageEditor() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                onClick={() => {
+                  enableDrawing()
+                  disableErasing()
+                  disableMasking()
+                }}
+                variant={activeShape === 'pen' ? 'default' : 'outline'}
+              >
+                <Pen className="mr-2 h-4 w-4" /> 펜
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <div className="flex space-x-2 p-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-[80px]">
+                      <div
+                        className="w-4 h-4 rounded-full mr-2"
+                        style={{ backgroundColor: currentColor }}
+                      />
+                      색상
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[225px]">
+                    <ChromePicker
+                      color={currentColor}
+                      onChange={handleColorChange}
+                      onChangeComplete={handleColorChangeComplete}
+                      disableAlpha={true}
+                      styles={{
+                        default: {
+                          picker: {
+                            boxShadow: 'none',
+                            border: 'none',
+                            width: '100%'
+                          }
+                        }
+                      }}
+                    />
+                    {recentColors.length > 0 && (
+                      <div className="mt-4 w-full">
+                        <p className="text-sm font-medium mb-2">
+                          최근 사용한 색상
+                        </p>
+                        <div className="flex gap-2 justify-between">
+                          {recentColors.map((color, index) => (
+                            <button
+                              key={index}
+                              className="w-[32px] h-[32px] rounded-full border border-gray-300"
+                              style={{ backgroundColor: color }}
+                              onClick={() =>
+                                handleColorChangeComplete({
+                                  hex: color
+                                } as ColorResult)
+                              }
+                              title={`색상: ${color}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+                <Select
+                  onValueChange={value => setCurrentThickness(Number(value))}
+                >
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue placeholder="굵기" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {thicknesses.map(thickness => (
+                      <SelectItem key={thickness} value={thickness.toString()}>
+                        {thickness}px
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </PopoverContent>
+          </Popover>
           <Button
             onClick={() => {
-              disableAll()
-              enableDrawing()
-            }}
-            variant={activeShape === 'pen' ? 'default' : 'outline'}
-          >
-            <Pen className="mr-2 h-4 w-4" /> 펜
-          </Button>
-          <Button
-            onClick={() => {
-              disableAll()
               enableErasing()
+              disableDrawing()
+              disableMasking()
             }}
             variant={activeShape === 'eraser' ? 'default' : 'outline'}
           >
             <Eraser className="mr-2 h-4 w-4" /> 지우개
           </Button>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-[80px]">
-                <div
-                  className="w-4 h-4 rounded-full mr-2"
-                  style={{ backgroundColor: currentColor }}
-                />
-                색상
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[225px]">
-              <ChromePicker
-                color={currentColor}
-                onChange={handleColorChange}
-                onChangeComplete={handleColorChangeComplete}
-                disableAlpha={true}
-                styles={{
-                  default: {
-                    picker: { boxShadow: 'none', border: 'none', width: '100%' }
-                  }
-                }}
-              />
-              {recentColors.length > 0 && (
-                <div className="mt-4 w-full">
-                  <p className="text-sm font-medium mb-2">최근 사용한 색상</p>
-                  <div className="flex gap-2 justify-between">
-                    {recentColors.map((color, index) => (
-                      <button
-                        key={index}
-                        className="w-[32px] h-[32px] rounded-full border border-gray-300"
-                        style={{ backgroundColor: color }}
-                        onClick={() =>
-                          handleColorChangeComplete({
-                            hex: color
-                          } as ColorResult)
-                        }
-                        title={`색상: ${color}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </PopoverContent>
-          </Popover>
-          <Select onValueChange={value => setCurrentThickness(Number(value))}>
-            <SelectTrigger className="w-[100px]">
-              <SelectValue placeholder="굵기" />
-            </SelectTrigger>
-            <SelectContent>
-              {thicknesses.map(thickness => (
-                <SelectItem key={thickness} value={thickness.toString()}>
-                  {thickness}px
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                onClick={() => {
-                  if (!isAddingText) {
-                    disableAll()
-                    enableAddText()
-                  }
-                }}
-                variant={activeShape === 'text' ? 'default' : 'outline'}
-              >
-                <LetterTextIcon className="mr-2 h-4 w-4" />
-                텍스트
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-[225px] mt-2 relative left-0"
-              style={{ top: '100%', left: '0' }} // PopoverContent가 버튼 아래에 나타나도록 설정
-            >
-              <div className="space-y-2">
-                {' '}
-                <div className="flex space-x-2 items-center justify-center">
-                  <Button
-                    onClick={() => {
-                      setIsBold(!isBold)
-                    }}
-                    variant={isBold === true ? 'default' : 'outline'}
-                    className="h-10 w-10 flex items-center justify-center text-lg p-3"
-                  >
-                    <BoldIcon />
-                  </Button>
-
-                  <Button
-                    onClick={() => {
-                      setIsUnderline(!isUnderline)
-                    }}
-                    variant={isUnderline === true ? 'default' : 'outline'}
-                    className="h-10 w-10 flex items-center justify-center text-lg"
-                  >
-                    <span className="underline">_</span>
-                  </Button>
-
-                  <Button
-                    onClick={() => {
-                      setIsItalic(!isItalic)
-                    }}
-                    variant={isItalic === true ? 'default' : 'outline'}
-                    className="h-10 w-10 flex items-center justify-center text-lg p-3"
-                  >
-                    <ItalicIcon />
-                  </Button>
-                  <div className="flex">
-                    <Button
-                      onClick={() => {
-                        setIsHighlighter(!isHighlighter)
-                      }}
-                      variant={isHighlighter === true ? 'default' : 'outline'}
-                      className="h-10 w-8 flex items-center justify-center text-lg p-2 rounded-r-none"
-                    >
-                      <HighlighterIcon />
-                    </Button>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          className="h-10 w-auto flex items-center justify-center text-lg p-0 rounded-l-none"
-                          variant={'outline'}
-                        >
-                          ⌄
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="flex justify-center">
-                        <ChromePicker
-                          color={{
-                            r: highlighterColor.r || 0,
-                            g: highlighterColor.g || 0,
-                            b: highlighterColor.b || 0,
-                            a: highlighterColor.a || 1
-                          }}
-                          onChange={color =>
-                            setHighlighterColor({
-                              r: color.rgb.r ?? 0,
-                              g: color.rgb.g ?? 0,
-                              b: color.rgb.b ?? 0,
-                              a: color.rgb.a ?? 1
-                            })
-                          }
-                          onChangeComplete={color =>
-                            setHighlighterColor({
-                              r: color.rgb.r ?? 0,
-                              g: color.rgb.g ?? 0,
-                              b: color.rgb.b ?? 0,
-                              a: color.rgb.a ?? 1
-                            })
-                          }
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Select
-                    value={font.toString()}
-                    onValueChange={value => setFont(value)}
-                  >
-                    <SelectTrigger className="w-[100px] max-w-[120px] truncate">
-                      <SelectValue placeholder={font == '' ? '폰트' : font} />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px] overflow-y-auto scroll-smooth">
-                      <SelectItem value="Arial" style={{ fontFamily: 'Arial' }}>
-                        Arial
-                      </SelectItem>
-                      <SelectItem
-                        value="Courier New"
-                        style={{ fontFamily: 'Courier New' }}
-                      >
-                        Courier New
-                      </SelectItem>
-                      <SelectItem
-                        value="Times New Roman"
-                        style={{ fontFamily: 'Times New Roman' }}
-                      >
-                        Times New Roman
-                      </SelectItem>
-                      <SelectItem
-                        value="경기천년바탕"
-                        style={{ fontFamily: '경기천년바탕' }}
-                      >
-                        경기천년바탕
-                      </SelectItem>
-                      <SelectItem
-                        value="조선100년체"
-                        style={{ fontFamily: '조선100년체' }}
-                      >
-                        조선100년체
-                      </SelectItem>
-                      <SelectItem
-                        value="고운돋움-Regular"
-                        style={{ fontFamily: '고운돋움-Regular' }}
-                      >
-                        고운돋움-Regular
-                      </SelectItem>
-                      <SelectItem
-                        value="프리텐다드"
-                        style={{ fontFamily: '프리텐다드' }}
-                      >
-                        프리텐다드
-                      </SelectItem>
-                      <SelectItem
-                        value="에스코어드림"
-                        style={{ fontFamily: '에스코어드림' }}
-                      >
-                        에스코어드림
-                      </SelectItem>
-                      <SelectItem
-                        value="문경감홍사과"
-                        style={{ fontFamily: '문경감홍사과' }}
-                      >
-                        문경감홍사과
-                      </SelectItem>
-                      <SelectItem
-                        value="베이글팻"
-                        style={{ fontFamily: '베이글팻' }}
-                      >
-                        베이글팻
-                      </SelectItem>
-                      <SelectItem
-                        value="주아체"
-                        style={{ fontFamily: '주아체' }}
-                      >
-                        주아체
-                      </SelectItem>
-                      <SelectItem
-                        value="양진체"
-                        style={{ fontFamily: '양진체' }}
-                      >
-                        양진체
-                      </SelectItem>
-                      <SelectItem
-                        value="쿠키런"
-                        style={{ fontFamily: '쿠키런' }}
-                      >
-                        쿠키런
-                      </SelectItem>
-                      <SelectItem
-                        value="태나다체"
-                        style={{ fontFamily: '태나다체' }}
-                      >
-                        태나다체
-                      </SelectItem>
-                      <SelectItem
-                        value="강원교육튼튼체"
-                        style={{ fontFamily: '강원교육튼튼체' }}
-                      >
-                        강원교육튼튼체
-                      </SelectItem>
-                      <SelectItem
-                        value="설립체 유건욱"
-                        style={{ fontFamily: '설립체 유건욱' }}
-                      >
-                        설립체 유건욱
-                      </SelectItem>
-                      <SelectItem
-                        value="롯데리아 딱붙어체"
-                        style={{ fontFamily: '롯데리아 딱붙어체' }}
-                      >
-                        롯데리아 딱붙어체
-                      </SelectItem>
-                      <SelectItem
-                        value="어그로체"
-                        style={{ fontFamily: '어그로체' }}
-                      >
-                        어그로체
-                      </SelectItem>
-                      <SelectItem
-                        value="파셜산스-Regular"
-                        style={{ fontFamily: '파셜산스-Regular' }}
-                      >
-                        파셜산스-Regular
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {/* 글꼴 크기 선택 */}
-                  <Select
-                    value={fontSize.toString()}
-                    onValueChange={value => setFontSize(Number(value))}
-                  >
-                    <SelectTrigger className="w-[100px] max-w-[120px] truncate">
-                      <SelectValue placeholder="크기" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="12">12px</SelectItem>
-                      <SelectItem value="16">16px</SelectItem>
-                      <SelectItem value="20">20px</SelectItem>
-                      <SelectItem value="24">24px</SelectItem>
-                      <SelectItem value="32">32px</SelectItem>
-                      <SelectItem value="48">48px</SelectItem>
-                      <SelectItem value="60">60px</SelectItem>
-                      <SelectItem value="72">72px</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        className="h-9 w-10 p-0 flex items-center justify-center"
-                        variant={'outline'}
-                      >
-                        {/* 색상 원 */}
-                        <div
-                          style={{
-                            backgroundColor: currentTextColor,
-                            borderRadius: '50%',
-                            aspectRatio: '1', // 정사각형 비율 유지
-                            width: '80%', // 버튼 크기에 따라 자동으로 크기 조정
-                            height: '80%' // 제거하거나 유지해도 좋음 (aspectRatio로 이미 크기 비율이 고정됨)
-                          }}
-                        />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="flex justify-center p-2">
-                      <ChromePicker
-                        color={{
-                          r:
-                            parseInt(
-                              currentTextColor.slice(5).split(',')[0].trim()
-                            ) || 0,
-                          g:
-                            parseInt(
-                              currentTextColor.slice(5).split(',')[1].trim()
-                            ) || 0,
-                          b:
-                            parseInt(
-                              currentTextColor.slice(5).split(',')[2].trim()
-                            ) || 0,
-                          a:
-                            parseFloat(
-                              currentTextColor.slice(5).split(',')[3].trim()
-                            ) || 1
-                        }}
-                        onChange={handleTextColorChange}
-                        onChangeComplete={handleTextColorChangeComplete}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div
-                  className={`mt-2 overflow-y-scroll bg-gray-800 p-2 rounded-lg space-y-2`}
-                  style={{
-                    height:
-                      apiTextData && apiTextData.length > 0
-                        ? `${Math.min(apiTextData.length * 60, 250)}px`
-                        : '2.5rem'
-                  }}
-                >
-                  {apiTextData && apiTextData.length > 0 ? (
-                    apiTextData.map((text, index) => (
-                      <Button
-                        key={index}
-                        onClick={value => {
-                          addTextByButton(apiTextData[index])
-                        }}
-                        className="w-full max-w-full h-auto px-2 py-1 border border-gray-500 text-white rounded-md whitespace-normal overflow-hidden break-words"
-                        variant="outline"
-                      >
-                        {text}
-                      </Button>
-                    ))
-                  ) : (
-                    <div className="text-white flex items-center justify-center">
-                      추천 문구가 없습니다.
-                    </div>
-                  )}
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+          <Button
+            onClick={toggleMasking}
+            variant={activeShape === 'mask' || maskRect ? 'default' : 'outline'}
+          >
+            <Crop className="mr-2 h-4 w-4" />{' '}
+            {maskRect
+              ? '마스크 지우기'
+              : activeShape === 'mask'
+                ? '마스킹 취소'
+                : '마스킹'}
+            {/* activeShape = 클릭된 모드 */}
+          </Button>
+          {maskInfo && (
+            <ImageEditModal
+              maskInfo={maskInfo}
+              onEdit={handleImageEdit}
+              onClose={clearMasks}
+            />
+          )}
         </div>
         <canvas ref={canvasRef} />
       </CardContent>
