@@ -37,13 +37,7 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <>
-      <head>
-        <meta
-          name="viewport"
-          content="width=device-width,initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-        />
-      </head>
+    <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
           'font-sans antialiased',
@@ -65,6 +59,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <TailwindIndicator />
         </Providers>
       </body>
-    </>
+    </html>
   )
 }
