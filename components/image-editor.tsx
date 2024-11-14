@@ -64,6 +64,8 @@ import Modal from './modal'
 import { Separator } from '@radix-ui/react-dropdown-menu'
 import ImageAIEdit from './image-processing'
 import SaveEditedImage from './image-save'
+import { Input } from './ui/input'
+import { object } from 'zod'
 
 const thicknesses = [1, 2, 3, 5, 8, 13, 21, 34, 40]
 
@@ -945,6 +947,7 @@ export default function ImageEditor() {
   const confirmToolSwitch = () => {
     disableAll()
     if (pendingTool) enableTool(pendingTool) // 전환할 도구 활성화
+    setInpaintPrompt('')
     setPendingTool(null) // 초기화
     setShowConfirmationModal(false) // 모달 닫기
   }
@@ -967,21 +970,25 @@ export default function ImageEditor() {
   const [isInpainting, setIsInpainting] = useState(false)
   const [isRemovingText, setIsRemovingText] = useState(false)
   const [isUpscaling, setIsUpscaling] = useState(false)
+  const [inpaintPrompt, setInpaintPrompt] = useState('')
   const modes = [
     {
       mode: 'inpaint',
       isProcessing: isInpainting,
-      setIsProcessing: setIsInpainting
+      setIsProcessing: setIsInpainting,
+      prompt: inpaintPrompt
     },
     {
       mode: 'removeText',
       isProcessing: isRemovingText,
-      setIsProcessing: setIsRemovingText
+      setIsProcessing: setIsRemovingText,
+      prompt: null
     },
     {
       mode: 'upscale',
       isProcessing: isUpscaling,
-      setIsProcessing: setIsUpscaling
+      setIsProcessing: setIsUpscaling,
+      prompt: null
     }
   ]
   const [isDone, setIsDone] = useState(false)
@@ -1791,6 +1798,20 @@ export default function ImageEditor() {
           />
         </div>
         <Separator className="p-2" />
+        {isMasking && (
+          <>
+            <textarea
+              value={inpaintPrompt}
+              onChange={event => {
+                setInpaintPrompt(event.target.value)
+              }}
+              className="w-full p-2 border rounded resize-none"
+              style={{ height: '4rem', overflowY: 'auto' }}
+              placeholder="내용을 입력하세요..."
+            />
+            <Separator className="p-1" />
+          </>
+        )}
         <div className="flex justify-end">
           {!isMasking && !isRemoveText && !isUpscale && (
             <>
@@ -1800,8 +1821,8 @@ export default function ImageEditor() {
               <Separator className="p-1" />
             </>
           )}
-
           <Button
+            disabled={isMasking && inpaintPrompt.length === 0}
             onClick={() => {
               if (isMasking && !isInpainting) {
                 setIsInpainting(true)
@@ -1833,6 +1854,7 @@ export default function ImageEditor() {
             canvas={canvas}
             isProcessing={isProcessing}
             setIsProcessing={setIsProcessing}
+            prompt={inpaintPrompt}
             mode={mode}
           />
         ))}

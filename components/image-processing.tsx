@@ -8,13 +8,15 @@ interface YourComponentProps {
   isProcessing: boolean
   setIsProcessing: React.Dispatch<React.SetStateAction<boolean>>
   mode: string
+  prompt: string | null
 }
 
 const ImageAIEdit: React.FC<YourComponentProps> = ({
   canvas,
   isProcessing,
   setIsProcessing,
-  mode
+  mode,
+  prompt
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newImageUrl, setNewImageUrl] = useState<string | null>(null)
