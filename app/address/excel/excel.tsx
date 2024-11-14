@@ -14,7 +14,7 @@ import {
   SelectContent,
   SelectItem,
   SelectValue,
-} from 'components/ui/select' // Select 컴포넌트 경로
+} from 'components/ui/select'
 
 export default function Excel() {
     let data: string[][] = [];
@@ -75,7 +75,7 @@ export default function Excel() {
                         <SelectTrigger className="w-[150px]">
                             <SelectValue placeholder="Group by" />
                         </SelectTrigger>
-                        <SelectContent className="z-50"> {/* 높은 z-index 적용 */}
+                        <SelectContent className="z-50">
                             {groupData.map((group) => (
                                 <SelectItem key={group.groupsId} value={group.groupsId.toString()}>
                                     {group.groupsName}
@@ -88,7 +88,7 @@ export default function Excel() {
                 )}
             </div> <br /> <br />
 
-            <div id="hot-app" className="relative z-10" /> <br /> <br /> {/* z-index 낮게 설정 */}
+            <div id="hot-app" className="relative z-10" /> <br /> <br />
 
             <ExcelDownloadButton tableRef={contactTableRef} /> <br /> <br />
 
