@@ -323,6 +323,10 @@ export default function AddressBook() {
           })
         )
         setFolders(updatedFolders)
+        setCurrentFolder(prev => ({
+          ...prev,
+          addresses: [...prev.addresses, address]
+        }))
         setNewAddress({})
         setIsAddingAddress(false)
       } catch (error) {
@@ -348,6 +352,12 @@ export default function AddressBook() {
         })
       )
       setFolders(updatedFolders)
+      setCurrentFolder(prev => ({
+        ...prev,
+        addresses: prev.addresses.map(addr =>
+          addr.id === address.id ? address : addr
+        )
+      }))
     } catch (error) {
       console.error('Failed to update address:', error)
     } finally {
@@ -368,6 +378,10 @@ export default function AddressBook() {
         })
       )
       setFolders(updatedFolders)
+      setCurrentFolder(prev => ({
+        ...prev,
+        addresses: prev.addresses.filter(addr => addr.id !== addressId)
+      }))
     } catch (error) {
       console.error('Failed to delete address:', error)
     } finally {
@@ -488,12 +502,12 @@ export default function AddressBook() {
           </div>
           <Breadcrumb>
             {getBreadcrumbPath(currentFolder).map((folder, index, array) => (
-              <BreadcrumbItem key={folder.id}>
-                <BreadcrumbLink onClick={() => setCurrentFolder(folder)}>
-                  {folder.name}
-                </BreadcrumbLink>
-                {index < array.length - 1 && <BreadcrumbSeparator />}
-              </BreadcrumbItem>
+                <BreadcrumbItem key={folder.id}>
+                  <BreadcrumbLink onClick={() => setCurrentFolder(folder)}>
+                    {folder.name}
+                  </BreadcrumbLink>
+                  {index < array.length - 1 && <BreadcrumbSeparator />}
+                </BreadcrumbItem>
             ))}
           </Breadcrumb>
           {searchResults.length > 0 ? (
