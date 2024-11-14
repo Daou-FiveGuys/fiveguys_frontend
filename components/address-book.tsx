@@ -703,6 +703,8 @@ function AddressListView({
             className="rounded text-blue-500 focus:ring-blue-500"
           />
         </div>
+        <span className="font-bold flex-grow-0 w-1/3">이름</span>
+        <span className="font-bold w-1/3">휴대폰</span>
         <CustomSelect
           value={sortOrder}
           onChange={(value: 'name' | 'phone') => setSortOrder(value)}
@@ -712,8 +714,6 @@ function AddressListView({
           ]}
           className="w-40"
         />
-        <span className="font-bold flex-grow">이름</span>
-        <span className="font-bold w-1/3">휴대폰</span>
         <span className="w-24"></span>
       </div>
       <AnimatePresence>
@@ -734,7 +734,7 @@ function AddressListView({
                 className="rounded text-blue-500 focus:ring-blue-500"
               />
             </div>
-            <span className="flex-grow">{address.name}</span>
+            <span className="flex-grow-0 w-1/3">{address.name}</span>
             <span className="w-1/3">{address.phoneNumber}</span>
             <div className="w-24 flex space-x-2">
               <Button
