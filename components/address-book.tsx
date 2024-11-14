@@ -486,11 +486,6 @@ export default function AddressBook() {
               주소 추가
             </Button>
           </div>
-          <div className="flex items-center space-x-4 mb-4 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
-            <span className="font-bold flex-grow">이름</span>
-            <span className="font-bold w-1/3">휴대폰</span>
-            <span className="w-24"></span>
-          </div>
           <Breadcrumb>
             {getBreadcrumbPath(currentFolder).map((folder, index, array) => (
               <BreadcrumbItem key={folder.id}>
