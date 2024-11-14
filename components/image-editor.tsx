@@ -63,6 +63,7 @@ import { EyeClosedIcon } from '@radix-ui/react-icons'
 import Modal from './modal'
 import { Separator } from '@radix-ui/react-dropdown-menu'
 import ImageAIEdit from './image-processing'
+import SaveEditedImage from './image-save'
 
 const thicknesses = [1, 2, 3, 5, 8, 13, 21, 34, 40]
 
@@ -1004,6 +1005,7 @@ export default function ImageEditor() {
       setIsProcessing: setIsUpscaling
     }
   ]
+  const [isDone, setIsDone] = useState(false)
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -1546,6 +1548,9 @@ export default function ImageEditor() {
               if (isUpscale && !isUpscaling) {
                 setIsUpscaling(true)
               }
+              if (!isMasking && !isRemoveText && !isUpscale) {
+                setIsDone(true)
+              }
             }}
             className="w-full"
           >
@@ -1567,6 +1572,13 @@ export default function ImageEditor() {
             mode={mode}
           />
         ))}
+        {isDone && (
+          <SaveEditedImage
+            canvas={canvas}
+            isDone={isDone}
+            setIsDone={setIsDone}
+          />
+        )}
       </CardContent>
     </Card>
   )
