@@ -124,17 +124,43 @@ export default function ImageEditor() {
 
   useEffect(() => {
     if (canvasElementRef.current) {
-      const options: Partial<CanvasOptions> = {
-        width: 800,
-        height: 600,
-        backgroundColor: '#f0f0f0'
+      const initializeCanvas = () => {
+        const parent = canvasElementRef.current!.parentElement
+        const width = parent?.offsetWidth || 800
+        const height = width * 0.6666
+
+        const options = {
+          width,
+          height,
+          backgroundColor: '#f0f0f0'
+        }
+
+        const fabricCanvas = new Canvas(
+          canvasElementRef.current as HTMLCanvasElement,
+          options
+        )
+        fabricCanvas.isDrawingMode = false
+        setCanvas(fabricCanvas)
+
+        return fabricCanvas
       }
-      const fabricCanvas = new Canvas(canvasElementRef.current, options)
-      fabricCanvas.isDrawingMode = false
-      setCanvas(fabricCanvas)
+
+      const fabricCanvas = initializeCanvas()
+
+      const handleResize = () => {
+        const parent = canvasElementRef.current?.parentElement
+        const width = parent?.offsetWidth || 800
+        const height = width * 0.6666
+
+        fabricCanvas.setDimensions({ width, height })
+        fabricCanvas.renderAll()
+      }
+
+      window.addEventListener('resize', handleResize)
 
       return () => {
         fabricCanvas.dispose()
+        window.removeEventListener('resize', handleResize)
       }
     }
   }, [])
@@ -924,11 +950,12 @@ export default function ImageEditor() {
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardContent className="p-6">
-        <div className="flex space-x-4 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 mb-4">
           <Button
             onClick={() => {
               handleToolSwitch('move')
             }}
+            className="w-full text-sm p-2 h-9"
             variant={activeShape === 'move' ? 'default' : 'outline'}
           >
             <HandIcon className="mr-2 h-4 w-4" />
@@ -936,7 +963,7 @@ export default function ImageEditor() {
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-[100px]">
+              <Button variant="outline" className="w-full text-sm p-2 h-9">
                 <Square className="mr-2 h-4 w-4" />
                 도형
                 <ChevronDown className="ml-2 h-4 w-4" />
@@ -969,6 +996,7 @@ export default function ImageEditor() {
             </DropdownMenuContent>
           </DropdownMenu>
           <Button
+            className="w-full text-sm p-2 h-9"
             onClick={() => {
               handleToolSwitch('pen')
             }}
@@ -1052,6 +1080,7 @@ export default function ImageEditor() {
             )}
           </Popover>
           <Button
+            className="w-full text-sm p-2 h-9"
             onClick={() => {
               handleToolSwitch('eraser')
             }}
@@ -1069,7 +1098,8 @@ export default function ImageEditor() {
                     }
                   }}
                   variant={isAITool ? 'default' : 'outline'}
-                  className="h-9 flex items-center justify-center whitespace-nowrap"
+                  className="w-full text-sm p-2 h-9"
+                  // className="h-9 w-full flex items-center justify-center whitespace-nowrap"
                 >
                   <HammerIcon className="mr-2 h-4 w-4" />
                   AI 도구
@@ -1209,6 +1239,7 @@ export default function ImageEditor() {
           >
             <PopoverTrigger asChild>
               <Button
+                className="w-full text-sm p-2 h-9"
                 onClick={() => {
                   if (!isAddingText) {
                     handleToolSwitch('addText')
@@ -1426,7 +1457,12 @@ export default function ImageEditor() {
             onCancel={cancelToolSwitch}
           />
         )}
-        <canvas ref={canvasElementRef} />
+        <div className="relative w-full h-0 pb-[66.66%] bg-gray-200">
+          <canvas
+            ref={canvasElementRef}
+            className="absolute top-0 left-0 w-full h-full"
+          />
+        </div>
       </CardContent>
     </Card>
   )
