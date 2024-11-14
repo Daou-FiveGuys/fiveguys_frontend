@@ -88,43 +88,18 @@ class CustomPencilBrush extends fabric.PencilBrush {
   }
 }
 
-const ImageEditModal = ({
-  maskInfo,
-  onEdit,
-  onClose
-}: {
-  maskInfo: MaskInfo
-  onEdit: () => void
-  onClose: () => void
-}) => {
-  return (
-    <Dialog
-      onOpenChange={open => {
-        if (!open) onClose()
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button variant="outline" onClick={onEdit}>
-          <Image className="mr-2 h-4 w-4" />
-          이미지 수정
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>이미지 수정</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div>마스킹 영역 정보:</div>
-          <div>Left: {maskInfo.left}</div>
-          <div>Top: {maskInfo.top}</div>
-          <div>Width: {maskInfo.width}</div>
-          <div>Height: {maskInfo.height}</div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
+type ShapeType = 'circle' | 'triangle' | 'rectangle'
+
+interface ShapeOptions {
+  fill: string
+  stroke: string
+  strokeWidth: number
+  left: number
+  top: number
+  width?: number
+  height?: number
+  radius?: number
 }
-//이미지 수정 버튼 클릭 시 수행되는 함수.
 
 export default function ImageEditor() {
   const canvasElementRef = useRef<HTMLCanvasElement | null>(null)
@@ -133,6 +108,7 @@ export default function ImageEditor() {
   const [activeShape, setActiveShape] = useState<string | null>(null)
   const [currentColor, setCurrentColor] = useState('#000000')
   const [currentThickness, setCurrentThickness] = useState(5)
+  const [currentShapeThickness, setCurrentShapeThickness] = useState(5)
   const [recentColors, setRecentColors] = useState<string[]>([])
   const [maskRect, setMaskRect] = useState<Rect | null>(null)
   const [maskInfo, setMaskInfo] = useState<MaskInfo | null>(null)
@@ -185,48 +161,48 @@ export default function ImageEditor() {
     }
   }, [])
 
-  const addShape = (shape: string) => {
-    if (!canvas) return
+  // const addShape = (shape: string) => {
+  //   if (!canvas) return
 
-    let fabricShape: FabricObject
+  //   let fabricShape: FabricObject
 
-    const shapeOptions = {
-      fill: 'transparent',
-      stroke: currentColor,
-      strokeWidth: currentThickness,
-      left: 100,
-      top: 100
-    }
+  //   const shapeOptions = {
+  //     fill: 'transparent',
+  //     stroke: currentColor,
+  //     strokeWidth: currentThickness,
+  //     left: 100,
+  //     top: 100
+  //   }
 
-    switch (shape) {
-      case 'circle':
-        fabricShape = new Circle({
-          ...shapeOptions,
-          radius: 50
-        })
-        break
-      case 'triangle':
-        fabricShape = new Triangle({
-          ...shapeOptions,
-          width: 100,
-          height: 100
-        })
-        break
-      case 'rectangle':
-        fabricShape = new Rect({
-          ...shapeOptions,
-          width: 100,
-          height: 100
-        })
-        break
-      default:
-        return
-    }
+  //   switch (shape) {
+  //     case 'circle':
+  //       fabricShape = new Circle({
+  //         ...shapeOptions,
+  //         radius: 50
+  //       })
+  //       break
+  //     case 'triangle':
+  //       fabricShape = new Triangle({
+  //         ...shapeOptions,
+  //         width: 100,
+  //         height: 100
+  //       })
+  //       break
+  //     case 'rectangle':
+  //       fabricShape = new Rect({
+  //         ...shapeOptions,
+  //         width: 100,
+  //         height: 100
+  //       })
+  //       break
+  //     default:
+  //       return
+  //   }
 
-    canvas.add(fabricShape)
-    canvas.renderAll()
-    setActiveShape(shape)
-  }
+  //   canvas.add(fabricShape)
+  //   canvas.renderAll()
+  //   setActiveShape(shape)
+  // }
   //도형 추가 기능
 
   const enableDrawing = () => {
@@ -928,7 +904,7 @@ export default function ImageEditor() {
       case 'circle':
       case 'triangle':
       case 'rectangle':
-        addShape(tool)
+        setSelectedShape(tool)
         break
       case 'pen':
         enableDrawing()
@@ -978,6 +954,9 @@ export default function ImageEditor() {
     setShowConfirmationModal(false) // 모달 닫기
   }
 
+  const [currentShapeColor, setCurrentShapeColor] =
+    useState('rgba(0, 0, 0, 255)')
+
   useEffect(() => {
     if (!canvas) return
     if (canvas.freeDrawingBrush) {
@@ -1006,6 +985,201 @@ export default function ImageEditor() {
     }
   ]
   const [isDone, setIsDone] = useState(false)
+  const [selectedShape, setSelectedShape] = useState<string | null>(null)
+  const [isFillEnabled, setIsFillEnabled] = useState(false)
+
+  useEffect(() => {
+    if (!canvas || !selectedShape) return
+
+    // 드래그 선택 상자 비활성화
+    canvas.selection = false
+
+    let isDrawing = false
+    let startX = 0
+    let startY = 0
+    let shapeInstance: fabric.Object | null = null
+    let isDragged = false // 드래그 여부 확인 변수
+
+    const onMouseDown = (
+      event: fabric.TPointerEventInfo<fabric.TPointerEvent>
+    ) => {
+      if (!(event.e instanceof MouseEvent)) return
+
+      // 클릭한 위치에 객체가 있는지 확인
+      const target = canvas.findTarget(
+        event as unknown as fabric.TPointerEvent
+      ) as fabric.Object
+      if (target) {
+        canvas.setActiveObject(target)
+        canvas.renderAll()
+        return
+      }
+
+      isDrawing = true
+      isDragged = false // 드래그 여부 초기화
+      const pointer = canvas.getPointer(event.e)
+      startX = pointer.x
+      startY = pointer.y
+    }
+
+    const onMouseMove = (
+      event: fabric.TPointerEventInfo<fabric.TPointerEvent>
+    ) => {
+      if (!isDrawing || !(event.e instanceof MouseEvent)) return
+
+      isDragged = true // 드래그 중임을 표시
+      const pointer = canvas.getPointer(event.e)
+
+      if (!shapeInstance) {
+        // 도형의 초기 크기를 1x1로 설정
+        const shapeOptions: ShapeOptions = {
+          fill: isFillEnabled ? currentShapeColor : 'transparent',
+          stroke: currentShapeColor,
+          strokeWidth: currentShapeThickness,
+          left: startX,
+          top: startY
+        }
+
+        switch (selectedShape) {
+          case 'circle':
+            shapeInstance = new fabric.Circle({
+              ...shapeOptions,
+              radius: 1
+            })
+            break
+          case 'triangle':
+            shapeInstance = new fabric.Triangle({
+              ...shapeOptions,
+              width: 1,
+              height: 1
+            })
+            break
+          case 'rectangle':
+            shapeInstance = new fabric.Rect({
+              ...shapeOptions,
+              width: 1,
+              height: 1
+            })
+            break
+          default:
+            return
+        }
+        canvas.add(shapeInstance)
+        canvas.setActiveObject(shapeInstance)
+      }
+
+      // 드래그에 따른 도형 크기 조정
+      if (
+        shapeInstance instanceof fabric.Circle &&
+        selectedShape === 'circle'
+      ) {
+        const radius =
+          Math.max(Math.abs(pointer.x - startX), Math.abs(pointer.y - startY)) /
+          2
+        shapeInstance.set({
+          radius,
+          left: startX - radius,
+          top: startY - radius
+        } as Partial<fabric.Circle>)
+      } else if (shapeInstance) {
+        shapeInstance.set({
+          width: Math.abs(pointer.x - startX),
+          height: Math.abs(pointer.y - startY),
+          left: pointer.x < startX ? pointer.x : startX,
+          top: pointer.y < startY ? pointer.y : startY
+        })
+      }
+
+      shapeInstance.setCoords()
+      canvas.renderAll()
+    }
+
+    const onMouseUp = () => {
+      if (!isDragged && !shapeInstance) {
+        // 드래그 없이 클릭만 했다면 기본 크기로 도형 생성
+        const shapeOptions: ShapeOptions = {
+          fill: isFillEnabled ? currentShapeColor : 'transparent',
+          stroke: currentShapeColor,
+          strokeWidth: currentShapeThickness,
+          left: startX,
+          top: startY,
+          width: 50,
+          height: 50
+        }
+
+        switch (selectedShape) {
+          case 'circle':
+            shapeInstance = new fabric.Circle({
+              ...shapeOptions,
+              radius: 25 // 기본 크기 50x50에 맞게 설정
+            })
+            break
+          case 'triangle':
+            shapeInstance = new fabric.Triangle(shapeOptions)
+            break
+          case 'rectangle':
+            shapeInstance = new fabric.Rect(shapeOptions)
+            break
+          default:
+            return
+        }
+
+        canvas.add(shapeInstance)
+        canvas.setActiveObject(shapeInstance)
+        canvas.renderAll()
+      }
+
+      isDrawing = false
+      shapeInstance = null
+    }
+
+    canvas.on('mouse:down', onMouseDown)
+    canvas.on('mouse:move', onMouseMove)
+    canvas.on('mouse:up', onMouseUp)
+
+    return () => {
+      canvas.off('mouse:down', onMouseDown)
+      canvas.off('mouse:move', onMouseMove)
+      canvas.off('mouse:up', onMouseUp)
+    }
+  }, [
+    canvas,
+    selectedShape,
+    isFillEnabled,
+    currentShapeColor,
+    currentShapeThickness
+  ])
+
+  const handleShapeColorChange = (color: ColorResult) => {
+    const { r, g, b, a } = color.rgb
+    setCurrentShapeColor(`rgba(${r}, ${g}, ${b}, ${a})`)
+    setPickerColor({ r, g, b, a: a ?? 1 })
+  }
+
+  const handleShapeColorChangeComplete = (color: ColorResult) => {
+    const { r, g, b, a } = color.rgb
+    setCurrentShapeColor(`rgba(${r}, ${g}, ${b}, ${a})`)
+  }
+
+  const [pickerColor, setPickerColor] = useState({
+    r: 0,
+    g: 0,
+    b: 0,
+    a: 1
+  })
+
+  // `currentShapeColor`가 변경될 때마다 `pickerColor` 상태 업데이트
+  useEffect(() => {
+    if (currentShapeColor.startsWith('rgba')) {
+      const colorParts = currentShapeColor.slice(5, -1).split(',')
+      setPickerColor({
+        r: parseInt(colorParts[0].trim()) || 0,
+        g: parseInt(colorParts[1].trim()) || 0,
+        b: parseInt(colorParts[2].trim()) || 0,
+        a: parseFloat(colorParts[3]?.trim()) || 1
+      })
+    }
+  }, [currentShapeColor])
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -1021,40 +1195,130 @@ export default function ImageEditor() {
             <HandIcon className="mr-2 h-4 w-4" />
             선택
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          <Popover>
+            <PopoverTrigger asChild>
               <Button variant="outline" className="w-full text-sm p-2 h-9">
-                <Square className="mr-2 h-4 w-4" />
-                도형
+                {selectedShape === 'circle' ? (
+                  <>
+                    <CircleIcon className="mr-2 h-4 w-4" />원
+                  </>
+                ) : selectedShape === 'triangle' ? (
+                  <>
+                    <TriangleIcon className="mr-2 h-4 w-4" />
+                    삼각형
+                  </>
+                ) : selectedShape === 'rectangle' ? (
+                  <>
+                    <Square className="mr-2 h-4 w-4" />
+                    사각형
+                  </>
+                ) : (
+                  <>
+                    <Square className="mr-2 h-4 w-4" />
+                    도형
+                  </>
+                )}
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem
-                onSelect={() => {
-                  handleToolSwitch('circle')
-                }}
-              >
-                <CircleIcon className="mr-2 h-4 w-4" />원
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => {
-                  handleToolSwitch('triangle')
-                }}
-              >
-                <TriangleIcon className="mr-2 h-4 w-4" />
-                삼각형
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => {
-                  handleToolSwitch('rectangle')
-                }}
-              >
-                <Square className="mr-2 h-4 w-4" />
-                사각형
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </PopoverTrigger>
+            <PopoverContent>
+              <div className="flex flex-col space-y-1">
+                <Button
+                  onClick={() => {
+                    if (selectedShape !== 'circle') handleToolSwitch('circle')
+                  }}
+                  className="flex items-center p-2"
+                  variant={selectedShape === 'circle' ? 'default' : 'outline'}
+                >
+                  <CircleIcon className="mr-2 h-4 w-4" />원
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (selectedShape !== 'triangle')
+                      handleToolSwitch('triangle')
+                  }}
+                  className="flex items-center p-2"
+                  variant={selectedShape === 'triangle' ? 'default' : 'outline'}
+                >
+                  <TriangleIcon className="mr-2 h-4 w-4" />
+                  삼각형
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (selectedShape !== 'rectangle')
+                      handleToolSwitch('rectangle')
+                  }}
+                  className="flex items-center p-2"
+                  variant={
+                    selectedShape === 'rectangle' ? 'default' : 'outline'
+                  }
+                >
+                  <Square className="mr-2 h-4 w-4" />
+                  사각형
+                </Button>
+              </div>
+              <div className="flex items-center space-x-2 border-t pt-2 mt-2 w-full">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      className="h-9 w-1/3 p-0 flex items-center justify-center"
+                      variant="outline"
+                    >
+                      {/* 색상 원 */}
+                      <div
+                        style={{
+                          backgroundColor: currentShapeColor,
+                          borderRadius: '50%',
+                          aspectRatio: '1',
+                          width: '25%' // 버튼 크기에 따라 자동으로 크기 조정
+                        }}
+                      />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="flex justify-center p-2">
+                    <ChromePicker
+                      color={pickerColor}
+                      onChange={handleShapeColorChange}
+                      onChangeComplete={handleShapeColorChangeComplete}
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <Select
+                  onValueChange={value =>
+                    setCurrentShapeThickness(Number(value))
+                  }
+                >
+                  <SelectTrigger className="w-1/3">
+                    <SelectValue
+                      placeholder={
+                        currentShapeThickness === 5
+                          ? `굵기`
+                          : currentShapeThickness
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {thicknesses.map(thickness => (
+                      <SelectItem key={thickness} value={thickness.toString()}>
+                        {thickness}px
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  className="h-9 w-1/3"
+                  variant={isFillEnabled ? 'default' : 'outline'}
+                  onClick={() => {
+                    setIsFillEnabled(!isFillEnabled)
+                  }}
+                >
+                  채우기
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
           <Popover open={isPenPopoverOpen} onOpenChange={setIsPenPopoverOpen}>
             <PopoverTrigger>
               <Button
