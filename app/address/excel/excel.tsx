@@ -83,7 +83,25 @@ export default function Excel() {
                 // 첫 번째 시트를 읽고, 시트 데이터를 JSON 배열로 변환
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
-                const jsonData: string[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                let jsonData: string[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                // 각 행의 길이를 11로 고정
+                jsonData = jsonData.map(row => {
+                    if (row.length > 11) {
+                        return row.slice(0, 11); // 11개 초과 시 잘라냄
+                    } else if (row.length < 11) {
+                        return [...row, ...Array(11 - row.length).fill("")]; // 11개 미만 시 빈 문자열 추가
+                    }
+                    return row;
+                });
+
+                // 전체 행 개수를 50개로 고정
+                if (jsonData.length < 50) {
+                    const rowsToAdd = 50 - jsonData.length;
+                    jsonData = [...jsonData, ...Array(rowsToAdd).fill(Array(11).fill(""))];
+                } else if (jsonData.length > 50) {
+                    jsonData = jsonData.slice(0, 50); // 50개 초과 시 잘라냄
+                }
 
                 setData(jsonData); // 변환된 데이터를 data 상태에 주입
             };
