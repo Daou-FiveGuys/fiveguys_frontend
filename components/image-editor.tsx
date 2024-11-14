@@ -28,6 +28,7 @@ import {
   ChevronDown,
   HammerIcon,
   Wand2Icon,
+  SparklesIcon,
   EyeOffIcon,
   Crop,
   Image
@@ -59,6 +60,8 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog'
 import { EyeClosedIcon } from '@radix-ui/react-icons'
+import Modal from './modal'
+import { Separator } from '@radix-ui/react-dropdown-menu'
 
 const thicknesses = [1, 2, 3, 5, 8, 13, 21, 34, 40]
 
@@ -109,8 +112,9 @@ const ImageEditModal = ({
 //이미지 수정 버튼 클릭 시 수행되는 함수.
 
 export default function ImageEditor() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [canvas, setCanvas] = useState<Canvas | null>(null)
+  const canvasElementRef = useRef<HTMLCanvasElement | null>(null)
+  const [canvas, setCanvas] = useState<fabric.Canvas | null>(null)
+  // const [canvas, setCanvas] = useState<Canvas | null>(null)
   const [activeShape, setActiveShape] = useState<string | null>(null)
   const [currentColor, setCurrentColor] = useState('#000000')
   const [currentThickness, setCurrentThickness] = useState(5)
@@ -119,13 +123,13 @@ export default function ImageEditor() {
   const [maskInfo, setMaskInfo] = useState<MaskInfo | null>(null)
 
   useEffect(() => {
-    if (canvasRef.current) {
+    if (canvasElementRef.current) {
       const options: Partial<CanvasOptions> = {
         width: 800,
         height: 600,
         backgroundColor: '#f0f0f0'
       }
-      const fabricCanvas = new Canvas(canvasRef.current, options)
+      const fabricCanvas = new Canvas(canvasElementRef.current, options)
       fabricCanvas.isDrawingMode = false
       setCanvas(fabricCanvas)
 
@@ -183,11 +187,10 @@ export default function ImageEditor() {
     if (!canvas) return
 
     canvas.isDrawingMode = true
-    canvas.freeDrawingBrush = new PencilBrush(canvas)
-    if (canvas.freeDrawingBrush) {
-      canvas.freeDrawingBrush.width = currentThickness
-      canvas.freeDrawingBrush.color = currentColor
-    }
+    if (!canvas.freeDrawingBrush)
+      canvas.freeDrawingBrush = new PencilBrush(canvas)
+    canvas.freeDrawingBrush.width = currentThickness
+    canvas.freeDrawingBrush.color = currentColor
     setActiveShape('pen')
   }
   //펜 기능
@@ -453,11 +456,8 @@ export default function ImageEditor() {
     a: 1
   })
   const [currentTextColor, setCurrentTextColor] = useState('rgba(0, 0, 0, 255)')
-
   const [isMovingObject, setIsMovingObject] = useState<boolean>(false)
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const textRef = useRef<fabric.IText | null>(null) // text 객체를 추적하는 ref
-  // const [isMasking, setIsMasking] = useState(false)
 
   const [apiTextData, setApiTextData] = useState([
     '안녕하세요! 😊',
@@ -708,47 +708,218 @@ export default function ImageEditor() {
     }
   }, [canvas, isTyping])
 
-  /**
-   *
-   *
-   *
-   *
-   * 김상준 추가
-   */
   const [isMasking, setIsMasking] = useState(false) // 이미지 수정 상태
   const [isRemoveText, setIsRemoveText] = useState(false)
   const [selectedApi, setSelectedApi] = useState<string | null>('imggen') // 텍스트 제거 API 선택 상태
-  const [maskingPenThickness, setMaskingPenThickness] = useState(3)
+  const [maskingPenThickness, setMaskingPenThickness] = useState(20)
   const [isAITool, setIsAITool] = useState(false)
+  const [normalObjects, setNormalObject] = useState<
+    FabricObject<
+      Partial<fabric.FabricObjectProps>,
+      fabric.SerializedObjectProps,
+      fabric.ObjectEvents
+    >[]
+  >([])
+  const [pendingTool, setPendingTool] = useState<string | null>(null) // 임시로 전환할 도구를 저장
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false) // 모달 표시 여부
+
+  const [isAddTextPopoverOpen, setIsAddTextPopoverOpen] = useState(false)
+  const [isPenPopoverOpen, setIsPenPopoverOpen] = useState(false)
+  const [isMaskingMode, setIsMaskingMode] = useState<boolean>(false)
+  const [isEraseMode, setIsEraseMode] = useState<boolean>(false)
+  const [isUpscale, setIsUpcale] = useState(false)
 
   const disableAITool = () => {
     setIsMasking(false)
+    setIsUpcale(false)
     setIsRemoveText(false)
     setIsAITool(false)
+    canvas?.renderAll()
   }
 
+  const setMasking = () => {
+    console.log('여기')
+    if (!canvas) return
+    let canvasObjects = canvas.getObjects()
+    canvasObjects.map(obj =>
+      setNormalObject(noneMaskObject => [...noneMaskObject, obj])
+    )
+    canvas.isDrawingMode = true
+    setIsMaskingMode(true)
+    setIsEraseMode(false)
+    if (!canvas.freeDrawingBrush)
+      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas)
+    canvas.freeDrawingBrush.color = '#CC99FF80'
+    canvas.freeDrawingBrush.width = maskingPenThickness
+    canvas.renderAll
+  }
+  const startMasking = () => {
+    if (!canvas) return
+    setIsMaskingMode(true)
+    setIsEraseMode(false)
+
+    /** TODO
+     *
+     * 이미지 수정 모드가 종료되었을 때도 수행할것
+     *
+     *
+     * */
+    canvas.off('mouse:down')
+    canvas.isDrawingMode = true
+
+    if (canvas.freeDrawingBrush) {
+      canvas.freeDrawingBrush.color = '#CC99FF80'
+      canvas.freeDrawingBrush.width = maskingPenThickness
+    }
+  }
+
+  // 지우개 시작 함수
+  const startErasing = () => {
+    if (!canvas) return
+    setIsMaskingMode(false)
+    setIsEraseMode(true)
+    canvas.isDrawingMode = false // 드로잉 모드 비활성화하여 객체 선택 모드로 전환
+
+    // 객체 선택 후 클릭하면 삭제
+    canvas.on('mouse:down', event => {
+      const target = canvas.findTarget(event.e)
+      if (target) {
+        canvas.remove(target)
+        canvas.requestRenderAll()
+      }
+    })
+  }
+
+  // 도구 변경 핸들러
+  const handleToolChange = (tool: string) => {
+    if (tool === 'masking') {
+      startMasking()
+    } else if (tool === 'eraser') {
+      startErasing()
+    }
+  }
+
+  // 마스킹 또는 지우개 두께 변경 시 업데이트
+  useEffect(() => {
+    if (!canvas || !canvas.freeDrawingBrush) return
+    if (isMaskingMode) canvas.freeDrawingBrush.width = maskingPenThickness
+  }, [maskingPenThickness, isMaskingMode])
+
   const handleMaskingClick = () => {
+    if (isMasking) return
+    setNormalObject(canvas!.getObjects())
+    setMasking()
+    setIsAITool(true)
     setIsMasking(true)
     setIsRemoveText(false)
   }
 
   const handleTextRemovalClick = () => {
     setIsMasking(false)
+    setIsAITool(true)
     setIsRemoveText(true)
     setSelectedApi('imggen')
   }
 
+  const handleUpscale = () => {
+    setIsMasking(false)
+    setIsRemoveText(false)
+    setIsAITool(true)
+    setIsUpcale(true)
+  }
+
+  /**
+   * 마스킹 객체, 원본 객체 토글 수행
+   */
   useEffect(() => {
-    const preventDefault = (e: TouchEvent) => e.preventDefault()
-
-    // 모든 touchmove 이벤트를 막음
-    document.addEventListener('touchmove', preventDefault, { passive: false })
-
-    // 컴포넌트가 언마운트될 때 이벤트 제거
-    return () => {
-      document.removeEventListener('touchmove', preventDefault)
+    console.log('여기')
+    if (!canvas) return
+    if (isMasking) {
+      normalObjects.forEach(obj => {
+        obj.set({
+          visible: false,
+          selectable: false
+        })
+      })
+    } else {
+      let maskObjects = canvas
+        ?.getObjects()
+        .filter(canvasObj => !normalObjects.some(obj => obj === canvasObj))
+      maskObjects?.map(maskObj => canvas?.remove(maskObj))
+      normalObjects.forEach(obj => {
+        obj.set({
+          visible: true,
+          selectable: true
+        })
+      })
     }
-  }, [])
+    canvas.renderAll() // 화면 업데이트
+  }, [isMasking])
+
+  const enableTool = (tool: string) => {
+    switch (tool) {
+      case 'move':
+        enableMoveObject()
+        break
+      case 'circle':
+      case 'triangle':
+      case 'rectangle':
+        addShape(tool)
+        break
+      case 'pen':
+        enableDrawing()
+        break
+      case 'eraser':
+        enableErasing()
+        break
+      case 'addText':
+        enableAddText()
+        break
+      case 'aiTool':
+        setIsAITool(true)
+        break
+      case 'inpaint':
+        handleMaskingClick()
+        break
+      case 'removeText':
+        handleTextRemovalClick()
+        break
+      case 'upscale':
+        handleUpscale()
+        break
+      default:
+        console.warn(`Unknown tool: ${tool}`)
+    }
+  }
+
+  const handleToolSwitch = (newTool: string) => {
+    if (isMasking && newTool !== 'inpaint') {
+      setPendingTool(newTool) // 전환할 도구 저장
+      setShowConfirmationModal(true) // 모달 표시
+    } else {
+      disableAll()
+      enableTool(newTool)
+    }
+  }
+
+  const confirmToolSwitch = () => {
+    disableAll()
+    if (pendingTool) enableTool(pendingTool) // 전환할 도구 활성화
+    setPendingTool(null) // 초기화
+    setShowConfirmationModal(false) // 모달 닫기
+  }
+
+  const cancelToolSwitch = () => {
+    setPendingTool(null) // 초기화
+    setShowConfirmationModal(false) // 모달 닫기
+  }
+
+  useEffect(() => {
+    if (!canvas) return
+    if (canvas.freeDrawingBrush) {
+      canvas.freeDrawingBrush.width = maskingPenThickness
+    }
+  }, [maskingPenThickness])
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -756,8 +927,7 @@ export default function ImageEditor() {
         <div className="flex space-x-4 mb-4">
           <Button
             onClick={() => {
-              disableAll()
-              enableMoveObject()
+              handleToolSwitch('move')
             }}
             variant={activeShape === 'move' ? 'default' : 'outline'}
           >
@@ -775,16 +945,14 @@ export default function ImageEditor() {
             <DropdownMenuContent>
               <DropdownMenuItem
                 onSelect={() => {
-                  disableAll()
-                  addShape('circle')
+                  handleToolSwitch('circle')
                 }}
               >
                 <CircleIcon className="mr-2 h-4 w-4" />원
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => {
-                  disableAll()
-                  addShape('triangle')
+                  handleToolSwitch('triangle')
                 }}
               >
                 <TriangleIcon className="mr-2 h-4 w-4" />
@@ -792,8 +960,7 @@ export default function ImageEditor() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => {
-                  disableAll()
-                  addShape('rectangle')
+                  handleToolSwitch('rectangle')
                 }}
               >
                 <Square className="mr-2 h-4 w-4" />
@@ -801,91 +968,92 @@ export default function ImageEditor() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                onClick={() => {
-                  disableAll()
-                  enableDrawing()
-                }}
-                variant={activeShape === 'pen' ? 'default' : 'outline'}
-              >
-                <Pen className="mr-2 h-4 w-4" /> 펜
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <div className="flex space-x-2 p-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-[80px]">
-                      <div
-                        className="w-4 h-4 rounded-full mr-2"
-                        style={{ backgroundColor: currentColor }}
-                      />
-                      색상
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[225px]">
-                    <ChromePicker
-                      color={currentColor}
-                      onChange={handleColorChange}
-                      onChangeComplete={handleColorChangeComplete}
-                      disableAlpha={true}
-                      styles={{
-                        default: {
-                          picker: {
-                            boxShadow: 'none',
-                            border: 'none',
-                            width: '100%'
+          <Button
+            onClick={() => {
+              handleToolSwitch('pen')
+            }}
+            variant={activeShape === 'pen' ? 'default' : 'outline'}
+          >
+            <Pen className="mr-2 h-4 w-4" /> 펜
+          </Button>
+          <Popover open={isPenPopoverOpen} onOpenChange={setIsPenPopoverOpen}>
+            {!isMasking && (
+              <PopoverContent className="w-auto p-0">
+                <div className="flex space-x-2 p-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-[80px]">
+                        <div
+                          className="w-4 h-4 rounded-full mr-2"
+                          style={{ backgroundColor: currentColor }}
+                        />
+                        색상
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[225px]">
+                      <ChromePicker
+                        color={currentColor}
+                        onChange={handleColorChange}
+                        onChangeComplete={handleColorChangeComplete}
+                        disableAlpha={true}
+                        styles={{
+                          default: {
+                            picker: {
+                              boxShadow: 'none',
+                              border: 'none',
+                              width: '100%'
+                            }
                           }
-                        }
-                      }}
-                    />
-                    {recentColors.length > 0 && (
-                      <div className="mt-4 w-full">
-                        <p className="text-sm font-medium mb-2">
-                          최근 사용한 색상
-                        </p>
-                        <div className="flex gap-2 justify-between">
-                          {recentColors.map((color, index) => (
-                            <button
-                              key={index}
-                              className="w-[32px] h-[32px] rounded-full border border-gray-300"
-                              style={{ backgroundColor: color }}
-                              onClick={() =>
-                                handleColorChangeComplete({
-                                  hex: color
-                                } as ColorResult)
-                              }
-                              title={`색상: ${color}`}
-                            />
-                          ))}
+                        }}
+                      />
+                      {recentColors.length > 0 && (
+                        <div className="mt-4 w-full">
+                          <p className="text-sm font-medium mb-2">
+                            최근 사용한 색상
+                          </p>
+                          <div className="flex gap-2 justify-between">
+                            {recentColors.map((color, index) => (
+                              <button
+                                key={index}
+                                className="w-[32px] h-[32px] rounded-full border border-gray-300"
+                                style={{ backgroundColor: color }}
+                                onClick={() =>
+                                  handleColorChangeComplete({
+                                    hex: color
+                                  } as ColorResult)
+                                }
+                                title={`색상: ${color}`}
+                              />
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </PopoverContent>
-                </Popover>
-                <Select
-                  onValueChange={value => setCurrentThickness(Number(value))}
-                >
-                  <SelectTrigger className="w-[100px]">
-                    <SelectValue placeholder="굵기" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {thicknesses.map(thickness => (
-                      <SelectItem key={thickness} value={thickness.toString()}>
-                        {thickness}px
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </PopoverContent>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                  <Select
+                    onValueChange={value => setCurrentThickness(Number(value))}
+                  >
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue placeholder="굵기" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {thicknesses.map(thickness => (
+                        <SelectItem
+                          key={thickness}
+                          value={thickness.toString()}
+                        >
+                          {thickness}px
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </PopoverContent>
+            )}
           </Popover>
           <Button
             onClick={() => {
-              disableAll()
-              enableErasing()
+              handleToolSwitch('eraser')
             }}
             variant={activeShape === 'eraser' ? 'default' : 'outline'}
           >
@@ -896,8 +1064,9 @@ export default function ImageEditor() {
               <PopoverTrigger asChild>
                 <Button
                   onClick={() => {
-                    disableAll()
-                    setIsAITool(true)
+                    if (!isAITool) {
+                      handleToolSwitch('aiTool')
+                    }
                   }}
                   variant={isAITool ? 'default' : 'outline'}
                   className="h-9 flex items-center justify-center whitespace-nowrap"
@@ -910,7 +1079,12 @@ export default function ImageEditor() {
                 {/* 이미지 수정 버튼 */}
                 <div className="flex items-center space-x-0">
                   <Button
-                    onClick={handleMaskingClick}
+                    onClick={() => {
+                      if (!isMasking) {
+                        console.log('여기')
+                        handleToolSwitch('inpaint')
+                      }
+                    }}
                     variant={isMasking ? 'default' : 'outline'}
                     className="h-9 flex items-center justify-center p-2 rounded-r-none"
                   >
@@ -927,20 +1101,38 @@ export default function ImageEditor() {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="flex flex-col w-full items-center justify-center space-y-2 p-2">
-                      <p className="text-sm font-medium">펜 굵기 선택</p>
+                      <div className="flex w-full items-center justify-center">
+                        <Button
+                          className="w-full"
+                          onClick={() => handleToolChange('masking')}
+                          variant={isMaskingMode ? 'default' : 'outline'}
+                        >
+                          마스킹
+                        </Button>
+                        <Separator className="p-1" />
+                        <Button
+                          className="w-full"
+                          onClick={() => handleToolChange('eraser')}
+                          variant={isEraseMode ? 'default' : 'outline'}
+                        >
+                          지우개
+                        </Button>
+                      </div>
                       <div className="flex space-x-2">
-                        {[1, 3, 5, 8, 10].map(thickness => (
-                          <button
+                        {[5, 10, 20, 35, 50].map(thickness => (
+                          <Button
+                            disabled={!isMaskingMode}
                             key={thickness}
                             onClick={() => setMaskingPenThickness(thickness)}
-                            className={`h-8 w-8 rounded-full border flex items-center justify-center ${
+                            variant={
                               maskingPenThickness === thickness
-                                ? 'bg-gray-300'
-                                : ''
-                            }`}
+                                ? 'default'
+                                : 'outline'
+                            }
+                            className="h-8 w-8 rounded-full border flex items-center justify-center"
                           >
                             {thickness}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </PopoverContent>
@@ -950,7 +1142,9 @@ export default function ImageEditor() {
                 {/* 텍스트 제거 버튼 */}
                 <div className="flex items-center space-x-0">
                   <Button
-                    onClick={handleTextRemovalClick}
+                    onClick={() => {
+                      handleToolSwitch('removeText')
+                    }}
                     variant={isRemoveText === true ? 'default' : 'outline'}
                     className="h-9 flex items-center justify-center p-2 rounded-r-none"
                   >
@@ -994,23 +1188,30 @@ export default function ImageEditor() {
                     </PopoverContent>
                   </Popover>
                 </div>
+
+                <div className="flex items-center space-x-0">
+                  <Button
+                    onClick={() => {
+                      handleToolSwitch('upscale')
+                    }}
+                    variant={isUpscale === true ? 'default' : 'outline'}
+                    className="h-9 w-full flex items-center justify-center p-2 rounded"
+                  >
+                    <SparklesIcon className="mr-2 h-4 w-4" />업 스케일링
+                  </Button>
+                </div>
               </PopoverContent>
             </Popover>
           </div>
-
-          {/* {
-          
-          여기까지 추가입니다 
-          
-          
-          } */}
-          <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+          <Popover
+            open={isAddTextPopoverOpen}
+            onOpenChange={setIsAddTextPopoverOpen}
+          >
             <PopoverTrigger asChild>
               <Button
                 onClick={() => {
                   if (!isAddingText) {
-                    disableAll()
-                    enableAddText()
+                    handleToolSwitch('addText')
                   }
                 }}
                 variant={activeShape === 'text' ? 'default' : 'outline'}
@@ -1019,204 +1220,213 @@ export default function ImageEditor() {
                 텍스트
               </Button>
             </PopoverTrigger>
-            <PopoverContent
-              className="w-[225px] mt-2 relative left-0"
-              style={{ top: '100%', left: '0' }} // PopoverContent가 버튼 아래에 나타나도록 설정
-            >
-              <div className="space-y-2">
-                {' '}
-                <div className="flex space-x-2 items-center justify-center">
-                  <Button
-                    onClick={() => {
-                      setIsBold(!isBold)
-                    }}
-                    variant={isBold === true ? 'default' : 'outline'}
-                    className="h-10 w-10 flex items-center justify-center text-lg p-3"
-                  >
-                    <BoldIcon />
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setIsUnderline(!isUnderline)
-                    }}
-                    variant={isUnderline === true ? 'default' : 'outline'}
-                    className="h-10 w-10 flex items-center justify-center text-lg"
-                  >
-                    <span className="underline">_</span>
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setIsItalic(!isItalic)
-                    }}
-                    variant={isItalic === true ? 'default' : 'outline'}
-                    className="h-10 w-10 flex items-center justify-center text-lg p-3"
-                  >
-                    <ItalicIcon />
-                  </Button>
-                  <div className="flex">
+            {isAddingText && (
+              <PopoverContent
+                className="w-[225px] mt-2 relative left-0"
+                style={{ top: '100%', left: '0' }} // PopoverContent가 버튼 아래에 나타나도록 설정
+              >
+                <div className="space-y-2">
+                  {' '}
+                  <div className="flex space-x-2 items-center justify-center">
                     <Button
                       onClick={() => {
-                        setIsHighlighter(!isHighlighter)
+                        setIsBold(!isBold)
                       }}
-                      variant={isHighlighter === true ? 'default' : 'outline'}
-                      className="h-10 w-8 flex items-center justify-center text-lg p-2 rounded-r-none"
+                      variant={isBold === true ? 'default' : 'outline'}
+                      className="h-10 w-10 flex items-center justify-center text-lg p-3"
                     >
-                      <HighlighterIcon />
+                      <BoldIcon />
                     </Button>
+                    <Button
+                      onClick={() => {
+                        setIsUnderline(!isUnderline)
+                      }}
+                      variant={isUnderline === true ? 'default' : 'outline'}
+                      className="h-10 w-10 flex items-center justify-center text-lg"
+                    >
+                      <span className="underline">_</span>
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setIsItalic(!isItalic)
+                      }}
+                      variant={isItalic === true ? 'default' : 'outline'}
+                      className="h-10 w-10 flex items-center justify-center text-lg p-3"
+                    >
+                      <ItalicIcon />
+                    </Button>
+                    <div className="flex">
+                      <Button
+                        onClick={() => {
+                          setIsHighlighter(!isHighlighter)
+                        }}
+                        variant={isHighlighter === true ? 'default' : 'outline'}
+                        className="h-10 w-8 flex items-center justify-center text-lg p-2 rounded-r-none"
+                      >
+                        <HighlighterIcon />
+                      </Button>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            className="h-10 w-auto flex items-center justify-center text-lg p-0 rounded-l-none"
+                            variant={'outline'}
+                          >
+                            ⌄
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="flex justify-center">
+                          <ChromePicker
+                            color={{
+                              r: highlighterColor.r || 0,
+                              g: highlighterColor.g || 0,
+                              b: highlighterColor.b || 0,
+                              a: highlighterColor.a || 1
+                            }}
+                            onChange={color =>
+                              setHighlighterColor({
+                                r: color.rgb.r ?? 0,
+                                g: color.rgb.g ?? 0,
+                                b: color.rgb.b ?? 0,
+                                a: color.rgb.a ?? 1
+                              })
+                            }
+                            onChangeComplete={color =>
+                              setHighlighterColor({
+                                r: color.rgb.r ?? 0,
+                                g: color.rgb.g ?? 0,
+                                b: color.rgb.b ?? 0,
+                                a: color.rgb.a ?? 1
+                              })
+                            }
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Select
+                      value={font.toString()}
+                      onValueChange={value => setFont(value)}
+                    >
+                      <SelectTrigger className="w-[100px] max-w-[120px] truncate">
+                        <SelectValue placeholder={font == '' ? '폰트' : font} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px] overflow-y-auto scroll-smooth">
+                        {fontOptions.map(font => (
+                          <SelectItem
+                            key={font.value}
+                            value={font.value}
+                            style={{ fontFamily: font.value }}
+                          >
+                            {font.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {/* 글꼴 크기 선택 */}
+                    <Select
+                      value={fontSize.toString()}
+                      onValueChange={value => setFontSize(Number(value))}
+                    >
+                      <SelectTrigger className="w-[100px] max-w-[120px] truncate">
+                        <SelectValue placeholder="크기" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="12">12px</SelectItem>
+                        <SelectItem value="16">16px</SelectItem>
+                        <SelectItem value="20">20px</SelectItem>
+                        <SelectItem value="24">24px</SelectItem>
+                        <SelectItem value="32">32px</SelectItem>
+                        <SelectItem value="48">48px</SelectItem>
+                        <SelectItem value="60">60px</SelectItem>
+                        <SelectItem value="72">72px</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
-                          className="h-10 w-auto flex items-center justify-center text-lg p-0 rounded-l-none"
+                          className="h-9 w-10 p-0 flex items-center justify-center"
                           variant={'outline'}
                         >
-                          ⌄
+                          {/* 색상 원 */}
+                          <div
+                            style={{
+                              backgroundColor: currentTextColor,
+                              borderRadius: '50%',
+                              aspectRatio: '1', // 정사각형 비율 유지
+                              width: '80%', // 버튼 크기에 따라 자동으로 크기 조정
+                              height: '80%' // 제거하거나 유지해도 좋음 (aspectRatio로 이미 크기 비율이 고정됨)
+                            }}
+                          />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="flex justify-center">
+                      <PopoverContent className="flex justify-center p-2">
                         <ChromePicker
                           color={{
-                            r: highlighterColor.r || 0,
-                            g: highlighterColor.g || 0,
-                            b: highlighterColor.b || 0,
-                            a: highlighterColor.a || 1
+                            r:
+                              parseInt(
+                                currentTextColor.slice(5).split(',')[0].trim()
+                              ) || 0,
+                            g:
+                              parseInt(
+                                currentTextColor.slice(5).split(',')[1].trim()
+                              ) || 0,
+                            b:
+                              parseInt(
+                                currentTextColor.slice(5).split(',')[2].trim()
+                              ) || 0,
+                            a:
+                              parseFloat(
+                                currentTextColor.slice(5).split(',')[3].trim()
+                              ) || 1
                           }}
-                          onChange={color =>
-                            setHighlighterColor({
-                              r: color.rgb.r ?? 0,
-                              g: color.rgb.g ?? 0,
-                              b: color.rgb.b ?? 0,
-                              a: color.rgb.a ?? 1
-                            })
-                          }
-                          onChangeComplete={color =>
-                            setHighlighterColor({
-                              r: color.rgb.r ?? 0,
-                              g: color.rgb.g ?? 0,
-                              b: color.rgb.b ?? 0,
-                              a: color.rgb.a ?? 1
-                            })
-                          }
+                          onChange={handleTextColorChange}
+                          onChangeComplete={handleTextColorChangeComplete}
                         />
                       </PopoverContent>
                     </Popover>
                   </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Select
-                    value={font.toString()}
-                    onValueChange={value => setFont(value)}
+                  <div
+                    className={`mt-2 overflow-y-scroll bg-gray-800 p-2 rounded-lg space-y-2`}
+                    style={{
+                      height:
+                        apiTextData && apiTextData.length > 0
+                          ? `${Math.min(apiTextData.length * 60, 250)}px`
+                          : '2.5rem'
+                    }}
                   >
-                    <SelectTrigger className="w-[100px] max-w-[120px] truncate">
-                      <SelectValue placeholder={font == '' ? '폰트' : font} />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px] overflow-y-auto scroll-smooth">
-                      {fontOptions.map(font => (
-                        <SelectItem
-                          key={font.value}
-                          value={font.value}
-                          style={{ fontFamily: font.value }}
-                        >
-                          {font.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {/* 글꼴 크기 선택 */}
-                  <Select
-                    value={fontSize.toString()}
-                    onValueChange={value => setFontSize(Number(value))}
-                  >
-                    <SelectTrigger className="w-[100px] max-w-[120px] truncate">
-                      <SelectValue placeholder="크기" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="12">12px</SelectItem>
-                      <SelectItem value="16">16px</SelectItem>
-                      <SelectItem value="20">20px</SelectItem>
-                      <SelectItem value="24">24px</SelectItem>
-                      <SelectItem value="32">32px</SelectItem>
-                      <SelectItem value="48">48px</SelectItem>
-                      <SelectItem value="60">60px</SelectItem>
-                      <SelectItem value="72">72px</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        className="h-9 w-10 p-0 flex items-center justify-center"
-                        variant={'outline'}
-                      >
-                        {/* 색상 원 */}
-                        <div
-                          style={{
-                            backgroundColor: currentTextColor,
-                            borderRadius: '50%',
-                            aspectRatio: '1', // 정사각형 비율 유지
-                            width: '80%', // 버튼 크기에 따라 자동으로 크기 조정
-                            height: '80%' // 제거하거나 유지해도 좋음 (aspectRatio로 이미 크기 비율이 고정됨)
+                    {apiTextData && apiTextData.length > 0 ? (
+                      apiTextData.map((text, index) => (
+                        <Button
+                          key={index}
+                          onClick={value => {
+                            addTextByButton(apiTextData[index])
                           }}
-                        />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="flex justify-center p-2">
-                      <ChromePicker
-                        color={{
-                          r:
-                            parseInt(
-                              currentTextColor.slice(5).split(',')[0].trim()
-                            ) || 0,
-                          g:
-                            parseInt(
-                              currentTextColor.slice(5).split(',')[1].trim()
-                            ) || 0,
-                          b:
-                            parseInt(
-                              currentTextColor.slice(5).split(',')[2].trim()
-                            ) || 0,
-                          a:
-                            parseFloat(
-                              currentTextColor.slice(5).split(',')[3].trim()
-                            ) || 1
-                        }}
-                        onChange={handleTextColorChange}
-                        onChangeComplete={handleTextColorChangeComplete}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                          className="w-full max-w-full h-auto px-2 py-1 border border-gray-500 text-white rounded-md whitespace-normal overflow-hidden break-words"
+                          variant="outline"
+                        >
+                          {text}
+                        </Button>
+                      ))
+                    ) : (
+                      <div className="text-white flex items-center justify-center">
+                        추천 문구가 없습니다.
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div
-                  className={`mt-2 overflow-y-scroll bg-gray-800 p-2 rounded-lg space-y-2`}
-                  style={{
-                    height:
-                      apiTextData && apiTextData.length > 0
-                        ? `${Math.min(apiTextData.length * 60, 250)}px`
-                        : '2.5rem'
-                  }}
-                >
-                  {apiTextData && apiTextData.length > 0 ? (
-                    apiTextData.map((text, index) => (
-                      <Button
-                        key={index}
-                        onClick={value => {
-                          addTextByButton(apiTextData[index])
-                        }}
-                        className="w-full max-w-full h-auto px-2 py-1 border border-gray-500 text-white rounded-md whitespace-normal overflow-hidden break-words"
-                        variant="outline"
-                      >
-                        {text}
-                      </Button>
-                    ))
-                  ) : (
-                    <div className="text-white flex items-center justify-center">
-                      추천 문구가 없습니다.
-                    </div>
-                  )}
-                </div>
-              </div>
-            </PopoverContent>
+              </PopoverContent>
+            )}
           </Popover>
         </div>
-        <canvas ref={canvasRef} />
+        {showConfirmationModal && (
+          <Modal
+            message="취소하면 저장되지 않습니다. 계속하시겠습니까?"
+            onConfirm={confirmToolSwitch}
+            onCancel={cancelToolSwitch}
+          />
+        )}
+        <canvas ref={canvasElementRef} />
       </CardContent>
     </Card>
   )
