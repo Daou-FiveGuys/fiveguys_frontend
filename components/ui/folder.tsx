@@ -12,7 +12,7 @@ type Folder = {
     addresses: AddressEntry[]
 }
 
-function FolderTree({ folders, currentFolder, setCurrentFolder, addFolder, setFolders }:{ folders : any; currentFolder : any; setCurrentFolder : any; addFolder : any; setFolders : any }) {
+function FolderTree({ folders, currentFolder, setCurrentFolder, addFolder, setFolders, isLoading }: { folders: any; currentFolder: any; setCurrentFolder: any; addFolder: any; setFolders: any; isLoading: boolean }) {
     return (
         <div className="space-y-4">
             <div className="mb-4">

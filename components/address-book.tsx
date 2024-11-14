@@ -40,6 +40,123 @@ type SearchResult = {
   addresses: AddressEntry[]
 }
 
+// Sample data
+const sampleData: Folder[] = [
+  {
+    id: 'root',
+    name: '기본 폴더',
+    subFolders: [
+      {
+        id: 'work',
+        name: '직장',
+        subFolders: [],
+        addresses: [
+          {
+            id: 'w1',
+            name: '김대리',
+            phoneNumber: '010-1234-5678',
+            var1: '영업부',
+            var2: '사원',
+            var3: 'kim@company.com',
+            var4: '서울'
+          },
+          {
+            id: 'w2',
+            name: '이과장',
+            phoneNumber: '010-2345-6789',
+            var1: '인사부',
+            var2: '과장',
+            var3: 'lee@company.com',
+            var4: '경기'
+          }
+        ]
+      },
+      {
+        id: 'family',
+        name: '가족',
+        subFolders: [],
+        addresses: [
+          {
+            id: 'f1',
+            name: '아버지',
+            phoneNumber: '010-9876-5432',
+            var1: '60대',
+            var2: '회사원',
+            var3: 'father@family.com',
+            var4: '서울'
+          },
+          {
+            id: 'f2',
+            name: '어머니',
+            phoneNumber: '010-8765-4321',
+            var1: '50대',
+            var2: '주부',
+            var3: 'mother@family.com',
+            var4: '서울'
+          }
+        ]
+      }
+    ],
+    addresses: [
+      {
+        id: 'p1',
+        name: '홍길동',
+        phoneNumber: '010-1111-2222',
+        var1: '30대',
+        var2: '자영업',
+        var3: 'hong@personal.com',
+        var4: '부산'
+      },
+      {
+        id: 'p2',
+        name: '김철수',
+        phoneNumber: '010-3333-4444',
+        var1: '40대',
+        var2: '회사원',
+        var3: 'kim@personal.com',
+        var4: '대구'
+      }
+    ]
+  }
+]
+
+// API control code
+const api = {
+  createFolder: async (
+    name: string,
+    parentId: string | null
+  ): Promise<Folder> => {
+    await new Promise(resolve => setTimeout(resolve, 500)) // Simulated delay
+    return { id: Date.now().toString(), name, subFolders: [], addresses: [] }
+  },
+  updateFolder: async (
+    id: string,
+    name: string
+  ): Promise<{ id: string; name: string }> => {
+    await new Promise(resolve => setTimeout(resolve, 500)) // Simulated delay
+    return { id, name }
+  },
+  deleteFolder: async (id: string): Promise<boolean> => {
+    await new Promise(resolve => setTimeout(resolve, 500)) // Simulated delay
+    return true
+  },
+  createAddress: async (
+    address: Omit<AddressEntry, 'id'>,
+    folderId: string
+  ): Promise<AddressEntry> => {
+    await new Promise(resolve => setTimeout(resolve, 500)) // Simulated delay
+    return { ...address, id: Date.now().toString() }
+  },
+  updateAddress: async (address: AddressEntry): Promise<AddressEntry> => {
+    await new Promise(resolve => setTimeout(resolve, 500)) // Simulated delay
+    return address
+  },
+  deleteAddress: async (id: string): Promise<boolean> => {
+    await new Promise(resolve => setTimeout(resolve, 500)) // Simulated delay
+    return true
+  }
+}
+
 export const CustomSelect = ({
   value,
   onChange,
@@ -82,13 +199,12 @@ export default function AddressBook() {
   const [searchFilter, setSearchFilter] = useState<'name' | 'phone' | 'both'>(
     'both'
   )
-  const [folders, setFolders] = useState<Folder[]>([
-    { id: 'root', name: '기본 폴더', subFolders: [], addresses: [] }
-  ])
-  const [currentFolder, setCurrentFolder] = useState<Folder>(folders[0])
+  const [folders, setFolders] = useState<Folder[]>(sampleData)
+  const [currentFolder, setCurrentFolder] = useState<Folder>(sampleData[0])
   const [isAddingAddress, setIsAddingAddress] = useState(false)
   const [newAddress, setNewAddress] = useState<Partial<AddressEntry>>({})
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSearch = useCallback(() => {
     const results: SearchResult[] = []
@@ -135,33 +251,127 @@ export default function AddressBook() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleSearch, handleReset])
 
-  const addFolder = (name: string) => {
+  const addFolder = async (
+    name: string,
+    parentFolder: Folder | null = null
+  ) => {
     if (name.trim()) {
-      const newFolder: Folder = {
-        id: Date.now().toString(),
-        name: name.trim(),
-        subFolders: [],
-        addresses: []
+      setIsLoading(true)
+      try {
+        const newFolder = await api.createFolder(
+          name.trim(),
+          parentFolder?.id || null
+        )
+        if (parentFolder) {
+          const updatedFolders = updateFolderRecursively(
+            folders,
+            parentFolder.id,
+            folder => ({
+              ...folder,
+              subFolders: [...folder.subFolders, newFolder]
+            })
+          )
+          setFolders(updatedFolders)
+        } else {
+          setFolders([...folders, newFolder])
+        }
+      } catch (error) {
+        console.error('Failed to create folder:', error)
+      } finally {
+        setIsLoading(false)
       }
-      setFolders([...folders, newFolder])
     }
   }
 
-  const addAddress = () => {
-    if (newAddress.name && newAddress.phoneNumber) {
-      const address: AddressEntry = {
-        id: Date.now().toString(),
-        name: newAddress.name,
-        phoneNumber: newAddress.phoneNumber,
-        var1: newAddress.var1,
-        var2: newAddress.var2,
-        var3: newAddress.var3,
-        var4: newAddress.var4
+  const updateFolderRecursively = (
+    folders: Folder[],
+    folderId: string,
+    updateFn: (folder: Folder) => Folder
+  ): Folder[] => {
+    return folders.map(folder => {
+      if (folder.id === folderId) {
+        return updateFn(folder)
       }
-      currentFolder.addresses.push(address)
-      setFolders([...folders])
-      setNewAddress({})
-      setIsAddingAddress(false)
+      if (folder.subFolders.length > 0) {
+        return {
+          ...folder,
+          subFolders: updateFolderRecursively(
+            folder.subFolders,
+            folderId,
+            updateFn
+          )
+        }
+      }
+      return folder
+    })
+  }
+
+  const addAddress = async () => {
+    if (newAddress.name && newAddress.phoneNumber) {
+      setIsLoading(true)
+      try {
+        const address = await api.createAddress(
+          newAddress as Omit<AddressEntry, 'id'>,
+          currentFolder.id
+        )
+        const updatedFolders = updateFolderRecursively(
+          folders,
+          currentFolder.id,
+          folder => ({
+            ...folder,
+            addresses: [...folder.addresses, address]
+          })
+        )
+        setFolders(updatedFolders)
+        setNewAddress({})
+        setIsAddingAddress(false)
+      } catch (error) {
+        console.error('Failed to add address:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+  }
+
+  const updateAddress = async (updatedAddress: AddressEntry) => {
+    setIsLoading(true)
+    try {
+      const address = await api.updateAddress(updatedAddress)
+      const updatedFolders = updateFolderRecursively(
+        folders,
+        currentFolder.id,
+        folder => ({
+          ...folder,
+          addresses: folder.addresses.map(addr =>
+            addr.id === address.id ? address : addr
+          )
+        })
+      )
+      setFolders(updatedFolders)
+    } catch (error) {
+      console.error('Failed to update address:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const deleteAddress = async (addressId: string) => {
+    setIsLoading(true)
+    try {
+      await api.deleteAddress(addressId)
+      const updatedFolders = updateFolderRecursively(
+        folders,
+        currentFolder.id,
+        folder => ({
+          ...folder,
+          addresses: folder.addresses.filter(addr => addr.id !== addressId)
+        })
+      )
+      setFolders(updatedFolders)
+    } catch (error) {
+      console.error('Failed to delete address:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -262,6 +472,7 @@ export default function AddressBook() {
             setCurrentFolder={setCurrentFolder}
             addFolder={addFolder}
             setFolders={setFolders}
+            isLoading={isLoading}
           />
         </div>
         <div className="w-2/3 p-4">
@@ -296,6 +507,9 @@ export default function AddressBook() {
               setFolders={setFolders}
               folders={folders}
               setCurrentFolder={setCurrentFolder}
+              updateAddress={updateAddress}
+              deleteAddress={deleteAddress}
+              isLoading={isLoading}
             />
           ) : (
             <AddressListView
@@ -303,6 +517,9 @@ export default function AddressBook() {
               setFolders={setFolders}
               folders={folders}
               currentFolder={currentFolder}
+              updateAddress={updateAddress}
+              deleteAddress={deleteAddress}
+              isLoading={isLoading}
             />
           )}
         </div>
@@ -373,9 +590,10 @@ export default function AddressBook() {
               </Button>
               <Button
                 onClick={addAddress}
+                disabled={isLoading}
                 className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-sm transition-colors duration-300"
               >
-                추가
+                {isLoading ? '추가 중...' : '추가'}
               </Button>
             </div>
           </div>
@@ -389,7 +607,10 @@ function SearchResultsView({
   searchResults,
   setFolders,
   folders,
-  setCurrentFolder
+  setCurrentFolder,
+  updateAddress,
+  deleteAddress,
+  isLoading
 }: any) {
   return (
     <div>
@@ -402,6 +623,9 @@ function SearchResultsView({
             folders={folders}
             currentFolder={result.folder}
             setCurrentFolder={setCurrentFolder}
+            updateAddress={updateAddress}
+            deleteAddress={deleteAddress}
+            isLoading={isLoading}
           />
         </div>
       ))}
@@ -414,7 +638,9 @@ function AddressListView({
   setFolders,
   folders,
   currentFolder,
-  setCurrentFolder
+  updateAddress,
+  deleteAddress,
+  isLoading
 }: any) {
   const [sortOrder, setSortOrder] = useState<'name' | 'phone'>('name')
   const [currentPage, setCurrentPage] = useState(1)
@@ -455,19 +681,6 @@ function AddressListView({
     } else {
       setSelectedAddresses([...selectedAddresses, id])
     }
-  }
-
-  const updateAddress = (updatedAddress: AddressEntry) => {
-    const updatedAddresses = currentFolder.addresses.map((addr: any) =>
-      addr.id === updatedAddress.id ? updatedAddress : addr
-    )
-    const updatedFolders = folders.map((folder: any) =>
-      folder.id === currentFolder.id
-        ? { ...folder, addresses: updatedAddresses }
-        : folder
-    )
-    setFolders(updatedFolders)
-    setIsEditDialogOpen(false)
   }
 
   return (
@@ -547,7 +760,9 @@ function AddressListView({
             key={page}
             variant={currentPage === page ? 'default' : 'outline'}
             onClick={() => setCurrentPage(page)}
-            className={`rounded-lg w-10 h-10 ${currentPage === page ? 'bg-blue-500 text-white' : 'text-blue-500'}`}
+            className={`rounded-lg w-10 h-10 ${
+              currentPage === page ? 'bg-blue-500 text-white' : 'text-blue-500'
+            }`}
           >
             {page}
           </Button>
@@ -615,8 +830,9 @@ function AddressListView({
             />
             <Button
               onClick={() => selectedAddress && updateAddress(selectedAddress)}
+              disabled={isLoading}
             >
-              저장
+              {isLoading ? '저장 중...' : '저장'}
             </Button>
           </div>
         </DialogContent>
@@ -647,6 +863,18 @@ function AddressListView({
               <strong>변수 4:</strong> {selectedAddress?.var4}
             </p>
           </div>
+          <Button
+            onClick={() => {
+              if (selectedAddress) {
+                deleteAddress(selectedAddress.id)
+                setIsViewDialogOpen(false)
+              }
+            }}
+            disabled={isLoading}
+            className="mt-4 bg-red-500 hover:bg-red-600 text-white"
+          >
+            {isLoading ? '삭제 중...' : '삭제'}
+          </Button>
         </DialogContent>
       </Dialog>
     </div>
