@@ -43,12 +43,24 @@ export default function Excel() {
         return () => {
             myTableRef.current?.destroy();
         };
-    }, [data, colHeaders]); // data와 colHeaders가 변경될 때마다 effect 실행
+    }, [data]); // data가 변경될 때마다 effect 실행
 
+    // TODO: 영어만 가능
     // 테이블 정보를 csv로 반환하는 함수
     const csvDownload = () => {
         const exportPlugin = myTableRef.current?.getPlugin("exportFile");
-        exportPlugin?.downloadFile("csv", { filename: '뿌리뿌리오_주소록_[YYYY]-[MM]-[DD]' }); // TODO: 주소록 그룹 명으로 출력할 것
+        exportPlugin?.downloadFile('csv', {
+            bom: false,
+            columnDelimiter: ',',
+            columnHeaders: false,
+            exportHiddenColumns: true,
+            exportHiddenRows: true,
+            fileExtension: 'csv',
+            filename: '뿌리뿌리오_주소록_[YYYY]-[MM]-[DD]', // TODO: 주소록 그룹 명으로 출력할 것
+            mimeType: 'text/csv',
+            rowDelimiter: '\r\n',
+            rowHeaders: false,
+          });
     };
 
     // 테이블 객체 내용을 콘솔창에 출력하는 함수
