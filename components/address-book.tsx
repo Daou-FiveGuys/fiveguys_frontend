@@ -479,7 +479,7 @@ export default function AddressBook() {
         </div>
       </motion.div>
       <div className="flex flex-grow bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-        <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 p-4">
+        <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 p-4 max-h-[calc(100vh-8rem)] overflow-y-auto custom-scrollbar">
           <FolderTree
             folders={folders}
             currentFolder={currentFolder}
@@ -489,7 +489,7 @@ export default function AddressBook() {
             isLoading={isLoading}
           />
         </div>
-        <div className="w-2/3 p-4">
+        <div className="w-2/3 p-4 max-h-[calc(100vh-8rem)] overflow-y-auto custom-scrollbar">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">{currentFolder.name}</h2>
             <Button
@@ -502,12 +502,12 @@ export default function AddressBook() {
           </div>
           <Breadcrumb>
             {getBreadcrumbPath(currentFolder).map((folder, index, array) => (
-                <BreadcrumbItem key={folder.id}>
-                  <BreadcrumbLink onClick={() => setCurrentFolder(folder)}>
-                    {folder.name}
-                  </BreadcrumbLink>
-                  {index < array.length - 1 && <BreadcrumbSeparator />}
-                </BreadcrumbItem>
+              <BreadcrumbItem key={folder.id}>
+                <BreadcrumbLink onClick={() => setCurrentFolder(folder)}>
+                  {folder.name}
+                </BreadcrumbLink>
+                {index < array.length - 1 && <BreadcrumbSeparator />}
+              </BreadcrumbItem>
             ))}
           </Breadcrumb>
           {searchResults.length > 0 ? (
