@@ -62,6 +62,7 @@ import {
 import { EyeClosedIcon } from '@radix-ui/react-icons'
 import Modal from './modal'
 import { Separator } from '@radix-ui/react-dropdown-menu'
+import ImageAIEdit from './image-processing'
 
 const thicknesses = [1, 2, 3, 5, 8, 13, 21, 34, 40]
 
@@ -72,6 +73,19 @@ interface MaskInfo {
   height: number
 }
 //마스킹 정보 인터페이스.
+
+class CustomPencilBrush extends fabric.PencilBrush {
+  globalCompositeOperation: GlobalCompositeOperation
+
+  constructor(canvas: fabric.Canvas) {
+    super(canvas)
+    this.globalCompositeOperation = 'destination-out' // 원하는 블렌딩 모드 설정
+  }
+
+  applyCompositeOperation(ctx: CanvasRenderingContext2D) {
+    ctx.globalCompositeOperation = this.globalCompositeOperation
+  }
+}
 
 const ImageEditModal = ({
   maskInfo,
@@ -121,6 +135,7 @@ export default function ImageEditor() {
   const [recentColors, setRecentColors] = useState<string[]>([])
   const [maskRect, setMaskRect] = useState<Rect | null>(null)
   const [maskInfo, setMaskInfo] = useState<MaskInfo | null>(null)
+  const [isPen, setIsPen] = useState(false)
 
   useEffect(() => {
     if (canvasElementRef.current) {
@@ -146,6 +161,10 @@ export default function ImageEditor() {
       }
 
       const fabricCanvas = initializeCanvas()
+      fabric.FabricImage.fromURL('/123.jpg').then(function (img) {
+        fabricCanvas.backgroundImage = img
+        img.canvas = fabricCanvas
+      })
 
       const handleResize = () => {
         const parent = canvasElementRef.current?.parentElement
@@ -211,10 +230,20 @@ export default function ImageEditor() {
 
   const enableDrawing = () => {
     if (!canvas) return
-
+    setIsPen(true)
     canvas.isDrawingMode = true
-    if (!canvas.freeDrawingBrush)
-      canvas.freeDrawingBrush = new PencilBrush(canvas)
+    if (!canvas.freeDrawingBrush) {
+      const customBrush = new CustomPencilBrush(canvas)
+      customBrush.globalCompositeOperation = 'source-atop' // 겹치는 부분을 투명하게 처리
+      canvas.freeDrawingBrush = customBrush
+      canvas.on('before:path:created', () => {
+        const ctx = canvas.getContext() as CanvasRenderingContext2D
+        if (ctx) {
+          customBrush.applyCompositeOperation(ctx)
+        }
+      })
+      // canvas.freeDrawingBrush = new PencilBrush(canvas)
+    }
     canvas.freeDrawingBrush.width = currentThickness
     canvas.freeDrawingBrush.color = currentColor
     setActiveShape('pen')
@@ -223,7 +252,7 @@ export default function ImageEditor() {
 
   const disableDrawing = () => {
     if (!canvas) return
-
+    setIsPen(false)
     canvas.isDrawingMode = false
     setActiveShape(null)
   }
@@ -764,7 +793,6 @@ export default function ImageEditor() {
   }
 
   const setMasking = () => {
-    console.log('여기')
     if (!canvas) return
     let canvasObjects = canvas.getObjects()
     canvasObjects.map(obj =>
@@ -773,8 +801,18 @@ export default function ImageEditor() {
     canvas.isDrawingMode = true
     setIsMaskingMode(true)
     setIsEraseMode(false)
-    if (!canvas.freeDrawingBrush)
-      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas)
+    if (!canvas.freeDrawingBrush) {
+      const customBrush = new CustomPencilBrush(canvas)
+      customBrush.globalCompositeOperation = 'source-atop' // 겹치는 부분을 투명하게 처리
+      canvas.freeDrawingBrush = customBrush
+      canvas.on('before:path:created', () => {
+        const ctx = canvas.getContext() as CanvasRenderingContext2D
+        if (ctx) {
+          customBrush.applyCompositeOperation(ctx)
+        }
+      })
+      // canvas.freeDrawingBrush = new PencilBrush(canvas)
+    }
     canvas.freeDrawingBrush.color = '#CC99FF80'
     canvas.freeDrawingBrush.width = maskingPenThickness
     canvas.renderAll
@@ -858,7 +896,6 @@ export default function ImageEditor() {
    * 마스킹 객체, 원본 객체 토글 수행
    */
   useEffect(() => {
-    console.log('여기')
     if (!canvas) return
     if (isMasking) {
       normalObjects.forEach(obj => {
@@ -947,6 +984,27 @@ export default function ImageEditor() {
     }
   }, [maskingPenThickness])
 
+  const [isInpainting, setIsInpainting] = useState(false)
+  const [isRemovingText, setIsRemovingText] = useState(false)
+  const [isUpscaling, setIsUpscaling] = useState(false)
+  const modes = [
+    {
+      mode: 'inpaint',
+      isProcessing: isInpainting,
+      setIsProcessing: setIsInpainting
+    },
+    {
+      mode: 'removeText',
+      isProcessing: isRemovingText,
+      setIsProcessing: setIsRemovingText
+    },
+    {
+      mode: 'upscale',
+      isProcessing: isUpscaling,
+      setIsProcessing: setIsUpscaling
+    }
+  ]
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardContent className="p-6">
@@ -995,17 +1053,21 @@ export default function ImageEditor() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button
-            className="w-full text-sm p-2 h-9"
-            onClick={() => {
-              handleToolSwitch('pen')
-            }}
-            variant={activeShape === 'pen' ? 'default' : 'outline'}
-          >
-            <Pen className="mr-2 h-4 w-4" /> 펜
-          </Button>
           <Popover open={isPenPopoverOpen} onOpenChange={setIsPenPopoverOpen}>
-            {!isMasking && (
+            <PopoverTrigger>
+              <Button
+                className="w-full text-sm p-2 h-9"
+                onClick={() => {
+                  if (!isPen) {
+                    handleToolSwitch('pen')
+                  }
+                }}
+                variant={activeShape === 'pen' ? 'default' : 'outline'}
+              >
+                <Pen className="mr-2 h-4 w-4" /> 펜
+              </Button>
+            </PopoverTrigger>
+            {isPen && (
               <PopoverContent className="w-auto p-0">
                 <div className="flex space-x-2 p-2">
                   <Popover>
@@ -1111,7 +1173,6 @@ export default function ImageEditor() {
                   <Button
                     onClick={() => {
                       if (!isMasking) {
-                        console.log('여기')
                         handleToolSwitch('inpaint')
                       }
                     }}
@@ -1452,7 +1513,7 @@ export default function ImageEditor() {
         </div>
         {showConfirmationModal && (
           <Modal
-            message="취소하면 저장되지 않습니다. 계속하시겠습니까?"
+            message="완료되지 않은 작업은 삭제됩니다. 계속하시겠습니까?"
             onConfirm={confirmToolSwitch}
             onCancel={cancelToolSwitch}
           />
@@ -1463,6 +1524,49 @@ export default function ImageEditor() {
             className="absolute top-0 left-0 w-full h-full"
           />
         </div>
+        <Separator className="p-2" />
+        <div className="flex justify-end">
+          {!isMasking && !isRemoveText && !isUpscale && (
+            <>
+              <Button className="w-full" variant="outline">
+                취소
+              </Button>
+              <Separator className="p-1" />
+            </>
+          )}
+
+          <Button
+            onClick={() => {
+              if (isMasking && !isInpainting) {
+                setIsInpainting(true)
+              }
+              if (isRemoveText && !isRemovingText) {
+                setIsRemovingText(true)
+              }
+              if (isUpscale && !isUpscaling) {
+                setIsUpscaling(true)
+              }
+            }}
+            className="w-full"
+          >
+            {isMasking
+              ? '프롬프트 입력'
+              : isRemoveText
+                ? '텍스트 제거'
+                : isUpscale
+                  ? '업 스케일링'
+                  : '완료'}
+          </Button>
+        </div>
+        {modes.map(({ mode, isProcessing, setIsProcessing }) => (
+          <ImageAIEdit
+            key={mode}
+            canvas={canvas}
+            isProcessing={isProcessing}
+            setIsProcessing={setIsProcessing}
+            mode={mode}
+          />
+        ))}
       </CardContent>
     </Card>
   )
