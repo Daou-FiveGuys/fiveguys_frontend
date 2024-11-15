@@ -5,7 +5,7 @@ interface ExcelDownloadButtonProps {
     tableRef: React.RefObject<Handsontable | null>;
 }
 
-export default function ExcelDownloadButton({ tableRef }: ExcelDownloadButtonProps) {
+export default function ExcelDownload({ tableRef }: ExcelDownloadButtonProps) {
     // XLSX 파일 다운로드 함수
     const handleXlsxDownload = () => {
         if (!tableRef.current) return;

@@ -2,11 +2,11 @@ import React from 'react';
 
 import * as XLSX from 'xlsx';
 
-interface FileUploadProps {
+interface ExcelUploadProps {
     onFileUpload: (data: string[][]) => void;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
+const ExcelUpload: React.FC<ExcelUploadProps> = ({ onFileUpload }) => {
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
@@ -52,4 +52,4 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload }) => {
     );
 };
 
-export default FileUpload;
+export default ExcelUpload;

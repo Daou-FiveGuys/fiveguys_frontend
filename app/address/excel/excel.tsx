@@ -5,11 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { registerAllModules } from "handsontable/registry";
 import "handsontable/dist/handsontable.full.min.css";
 import Handsontable from "handsontable";
-import ExcelDownloadButton from "./download";
-import FileUpload from "./upload";
-import { Groups } from "./types";
-import { getGroupData } from "./getGroups";
-import { getContacts, transformContactsToExcelData } from "./getContact";
+import ExcelDownload from "./download";
+import ExcelUpload from "./upload";
+import { Groups } from "./entity";
 import {
   Select,
   SelectTrigger,
@@ -17,6 +15,8 @@ import {
   SelectItem,
   SelectValue,
 } from "components/ui/select";
+import { getContacts, getGroupData } from "./service";
+import { transformContactsToExcelData } from "./transformExcel";
 
 export default function Excel() {
   const initialData: string[][] = Array.from({ length: 50 }, () =>
@@ -37,19 +37,7 @@ export default function Excel() {
       contactTableRef.current = new Handsontable(container, {
         data: data,
         rowHeaders: true,
-        colHeaders: [
-          "그룹명",
-          "이름",
-          "휴대폰",
-          "[*1*]",
-          "[*2*]",
-          "[*3*]",
-          "[*4*]",
-          "[*5*]",
-          "[*6*]",
-          "[*7*]",
-          "[*8*]",
-        ],
+        colHeaders: [ "그룹명", "이름", "휴대폰", "[*1*]", "[*2*]", "[*3*]", "[*4*]", "[*5*]", "[*6*]", "[*7*]", "[*8*]"],
         height: "300",
         rowHeights: 20,
         className: "htCenter htMiddle",
@@ -129,23 +117,11 @@ export default function Excel() {
         ) : (
           <p>데이터가 없습니다.</p>
         )}
-      </div>
-      <br />
-      <br />
-      <div id="hot-app" className="relative z-10" />
-      <br />
-      <br />
-      <FileUpload onFileUpload={handleFileData} />
-      <br />
-      <br />
-      <ExcelDownloadButton tableRef={contactTableRef} />
-      <br />
-      <br />
-      <button onClick={loggingClick}>
-        로그에 테이블 객체 상태 출력하기 (이후 저장하기로 변경)
-      </button>
-      <br />
-      <br />
+      </div> <br /> <br />
+      <div id="hot-app" className="relative z-10" /> <br /> <br />
+      <ExcelUpload onFileUpload={handleFileData} /> <br /> <br />
+      <ExcelDownload tableRef={contactTableRef} /> <br /> <br />
+      <button onClick={loggingClick}> 로그에 테이블 객체 상태 출력하기 (이후 저장하기로 변경) </button> <br /> <br />
     </main>
   );
 }
