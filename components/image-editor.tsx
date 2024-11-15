@@ -116,13 +116,17 @@ export default function ImageEditor() {
   const [maskRect, setMaskRect] = useState<Rect | null>(null)
   const [maskInfo, setMaskInfo] = useState<MaskInfo | null>(null)
   const [isPen, setIsPen] = useState(false)
+  const [canvasDimensions, setCanvasDimensions] = useState({
+    width: 800,
+    height: 533
+  }) // 초기값
 
   useEffect(() => {
     if (canvasElementRef.current) {
       const initializeCanvas = () => {
         const parent = canvasElementRef.current!.parentElement
-        const width = parent?.offsetWidth || 800
-        const height = width * 0.6666
+        const width = parent?.offsetWidth || 800 // 초기 너비
+        const height = width * 0.6666 // 초기 높이 비율 설정 (2:3 비율)
 
         const options = {
           width,
@@ -130,29 +134,62 @@ export default function ImageEditor() {
           backgroundColor: '#f0f0f0'
         }
 
-        const fabricCanvas = new Canvas(
+        const fabricCanvas = new fabric.Canvas(
           canvasElementRef.current as HTMLCanvasElement,
           options
         )
-        fabricCanvas.isDrawingMode = false
+        fabricCanvas.isDrawingMode = false // 초기 드로잉 모드 비활성화
         setCanvas(fabricCanvas)
 
         return fabricCanvas
       }
 
       const fabricCanvas = initializeCanvas()
-      fabric.FabricImage.fromURL('/123.jpg').then(function (img) {
+
+      fabric.FabricImage.fromURL(
+        'https://www.moducopy.co.kr/data/item/1656314211/thumb-7Ys7Iqk7YSw025_600x845.jpg'
+      ).then(img => {
+        if (!canvasElementRef.current || !fabricCanvas) return
+
+        const parent = canvasElementRef.current.parentElement
+        const canvasWidth = parent?.offsetWidth || 800
+
+        // 이미지 크기 가져오기
+        const imgWidth = img.width || 800
+        const imgHeight = img.height || 600
+
+        // 이미지 비율 유지하며 캔버스 크기 설정
+        const scale = canvasWidth / imgWidth
+        const canvasHeight = imgHeight * scale
+        setCanvasDimensions({ width: canvasWidth, height: canvasHeight })
+
+        fabricCanvas.setDimensions({
+          width: canvasWidth,
+          height: canvasHeight
+        })
+
+        // 이미지 배경 설정
+        img.scaleToWidth(canvasWidth) // 이미지 폭에 맞게 스케일 조정
         fabricCanvas.backgroundImage = img
+        fabricCanvas.renderAll.bind(fabricCanvas)
+
+        // 캔버스에 이미지 적용
         img.canvas = fabricCanvas
       })
 
       const handleResize = () => {
         const parent = canvasElementRef.current?.parentElement
         const width = parent?.offsetWidth || 800
-        const height = width * 0.6666
 
-        fabricCanvas.setDimensions({ width, height })
-        fabricCanvas.renderAll()
+        const img = fabricCanvas.backgroundImage
+        if (img) {
+          const scale = width / (img.width || 800)
+          const height = (img.height || 600) * scale
+
+          fabricCanvas.setDimensions({ width, height })
+          img.scaleToWidth(width) // 리사이즈된 캔버스 폭에 맞게 이미지 스케일 조정
+          fabricCanvas.renderAll()
+        }
       }
 
       window.addEventListener('resize', handleResize)
@@ -163,50 +200,6 @@ export default function ImageEditor() {
       }
     }
   }, [])
-
-  // const addShape = (shape: string) => {
-  //   if (!canvas) return
-
-  //   let fabricShape: FabricObject
-
-  //   const shapeOptions = {
-  //     fill: 'transparent',
-  //     stroke: currentColor,
-  //     strokeWidth: currentThickness,
-  //     left: 100,
-  //     top: 100
-  //   }
-
-  //   switch (shape) {
-  //     case 'circle':
-  //       fabricShape = new Circle({
-  //         ...shapeOptions,
-  //         radius: 50
-  //       })
-  //       break
-  //     case 'triangle':
-  //       fabricShape = new Triangle({
-  //         ...shapeOptions,
-  //         width: 100,
-  //         height: 100
-  //       })
-  //       break
-  //     case 'rectangle':
-  //       fabricShape = new Rect({
-  //         ...shapeOptions,
-  //         width: 100,
-  //         height: 100
-  //       })
-  //       break
-  //     default:
-  //       return
-  //   }
-
-  //   canvas.add(fabricShape)
-  //   canvas.renderAll()
-  //   setActiveShape(shape)
-  // }
-  //도형 추가 기능
 
   const enableDrawing = () => {
     if (!canvas) return
@@ -1793,7 +1786,12 @@ export default function ImageEditor() {
             onCancel={cancelToolSwitch}
           />
         )}
-        <div className="relative w-full h-0 pb-[66.66%] bg-gray-200">
+        <div
+          className="relative w-full bg-gray-200"
+          style={{
+            height: `${(canvasDimensions.height / canvasDimensions.width) * 100}%` // 비율 유지
+          }}
+        >
           <canvas
             ref={canvasElementRef}
             className="absolute top-0 left-0 w-full h-full"
@@ -1826,7 +1824,8 @@ export default function ImageEditor() {
           <Button
             disabled={isMasking && inpaintPrompt.length === 0}
             onClick={() => {
-              if (isInpainting || isRemovingText || isUpscale) {
+              console.log('여기')
+              if (isInpainting || isRemovingText || isUpscaling) {
                 setAvailable(false)
                 return
               }

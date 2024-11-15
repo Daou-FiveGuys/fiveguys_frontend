@@ -31,20 +31,16 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
         break
       case 'removeText':
       case 'upscale':
-        let url = ''
-        if (mode === 'removeText') url = `local-${option}`
-        else url = 'local-upscale'
+        let url = 'http://localhost:8080/api/v1/ai/image'
+        if (mode === 'removeText') url += `/remove-text/${option}`
+        else url += `/upscale`
+        sendImageRequestId(url)
         break
     }
     setShowProcessingModal(true)
 
     const timer = setTimeout(() => {
       setShowProcessingModal(false)
-      setNewImageUrl(
-        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRWg7X0YYzUCU5m8BA_sH_ti92q4X0lCz5h_w&s'
-      )
-      setIsModalOpen(true) // 최종 모달 열기
-      setIsProcessing(false) // 업스케일링 상태 해제
     }, 3000) // 3초 동안 처리 완료 모달 표시
 
     return () => clearTimeout(timer) // 타이머 정리
@@ -53,8 +49,22 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
   const applyNewImage = () => {
     if (!canvas) return
     if (newImageUrl) {
-      fabric.FabricImage.fromURL(newImageUrl).then(function (img) {
+      fabric.FabricImage.fromURL(newImageUrl).then(img => {
+        if (!canvas) return
+
+        // 기존 캔버스 크기 가져오기
+        const canvasWidth = canvas.getWidth()
+        const canvasHeight = canvas.getHeight()
+
+        // 이미지의 비율이 동일하므로, 그대로 캔버스 크기에 맞게 설정
+        img.scaleToWidth(canvasWidth) // 캔버스 폭에 맞게 스케일링
+        img.scaleToHeight(canvasHeight) // 캔버스 높이에 맞게 스케일링
+
+        img.left = 0 // 이미지를 캔버스 왼쪽 위로 정렬
+        img.top = 0
+
         canvas.backgroundImage = img
+        canvas.renderAll.bind(canvas)
         img.canvas = canvas
       })
     }
@@ -72,28 +82,33 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     setNewImageUrl(null)
     setIsModalOpen(false)
   }
+
   const sendImageRequestId = async (url: string) => {
     // 필요한 조건 체크: canvas가 존재하고 처리 중일 때만 요청
     if (!canvas || !isProcessing) return
 
     // `requestId`와 기타 필요한 정보를 포함한 DTO 객체 생성
-    const imageUpscaleDTO = {
-      requestId: 'your-request-id' // 여기에 실제 requestId를 입력하세요
+    const ImageRequestDTO = {
+      requestId: '' // 여기에 실제 requestId를 입력하세요
       // 추가적으로 필요한 필드가 있다면 여기에 추가합니다.
     }
 
     try {
       // POST 요청 전송
-      const response = await axios.post(`${url}`, imageUpscaleDTO, {
+      const response = await axios.post(`${url}`, ImageRequestDTO, {
         headers: {
-          Authorization: `Bearer `, // 실제 인증 토큰으로 변경
+          Authorization: `Bearer {액세스토큰}`, // 실제 인증 토큰으로 변경
           'Content-Type': 'application/json'
         }
       })
 
       // 응답 데이터 처리
-      setNewImageUrl(response.data.imageUrl) // 서버에서 받은 이미지 URL 설정
-      setIsModalOpen(true) // 모달 열기
+      if (response.data.code === 200) {
+        setNewImageUrl(response.data.data.url) // 서버에서 받은 이미지 URL 설정
+        setIsModalOpen(true) // 모달 열기
+      } else {
+        console.error('Error uploading image:', response.data.message)
+      }
     } catch (error) {
       console.error('Error uploading image:', error)
     } finally {
