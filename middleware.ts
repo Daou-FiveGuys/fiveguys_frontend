@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserRole } from './utils/token'
-
-// 토큰 만료 여부 확인 함수
-function isTokenExpired(exp: string): boolean {
-  const currentTime = Math.floor(Date.now() / 1000) // 현재 시간을 초 단위로 계산
-  return Number(exp) < currentTime
-}
+import { getUserRole, isTokenExpired } from './utils/token'
 
 // 경로 매칭 유틸리티 함수
 const matchUrl = (request: NextRequest, paths: string[]): boolean => {
