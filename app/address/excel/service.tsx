@@ -37,17 +37,24 @@ export const getGroup2Data = async (folder2Id: Number): Promise<Folder2[]> => {
 };
 
 // 연락처 데이터를 가져오는 함수
-export const getContact2Data = async (groupId: string): Promise<Contact2[]> => {
+export const getContact2Data = async (group2Id: Number): Promise<Contact2[]> => {
     try {
-        const response = await fetch(`http://localhost:8080/api/v1/contact/id/${groupId}`, {
+        const response = await fetch(`http://localhost:8080/api/v1/group2/${group2Id}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
         });
 
         if (!response.ok) throw new Error(`API 요청 실패: ${response.status}`);
 
-        const result: CommonResponse<Contact2[]> = await response.json();
-        return Array.isArray(result.data) ? result.data : [];
+        const result: CommonResponse<Group2> = await response.json();
+
+        // Group2 데이터에서 연락처 데이터를 추출하여 반환
+        if (result.data && result.data.contact2s) {
+            return result.data.contact2s;
+        }
+
+        console.warn("No contacts found for the specified group.");
+        return [];
     } catch (error) {
         console.error("연락처 데이터 로드 오류:", error);
         return [];

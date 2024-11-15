@@ -89,12 +89,26 @@ export default function Excel() {
         }
     };
 
-    const handleGroup2Select = async (groupId: string) => {
+    const handleGroup2Select = async (groupId: Number) => {
         try {
             const contacts = await getContact2Data(groupId);
             console.log("Fetched Contacts for Group:", contacts);
+
             const transformedData = transformContactsToExcelData(contacts);
-            setData(transformedData);
+
+            // 기존 데이터와 새 데이터를 순차적으로 병합
+            setData((prevData) => {
+                const newData = [...prevData];
+                let rowIndex = 0;
+
+                for (let i = 0; i < transformedData.length; i++) {
+                    if (rowIndex >= newData.length) break; // 데이터가 50행을 초과하면 중단
+                    newData[rowIndex] = transformedData[i];
+                    rowIndex++;
+                }
+
+                return newData;
+            });
         } catch (error) {
             console.error("연락처 데이터 로드 오류:", error);
         }
@@ -115,7 +129,7 @@ export default function Excel() {
                 <GroupSelect
                     groups={group2Data}
                     isLoading={isLoadingGroups}
-                    onSelect={handleGroup2Select}
+                    onSelect={(value) => handleGroup2Select(Number(value))}
                 />
             </div>
             <br />
