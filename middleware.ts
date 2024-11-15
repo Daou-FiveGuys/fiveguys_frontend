@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { decode } from 'js-base64'
+import { getUserRole } from './utils/token'
 
 // 토큰 만료 여부 확인 함수
 function isTokenExpired(exp: string): boolean {
@@ -28,10 +28,8 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const payload = access_token.value.split('.')[1]
-    const decodedPayload = JSON.parse(atob(payload)) // Base64 디코딩
-    const isExpired = isTokenExpired(decodedPayload.exp)
-    const role = decodedPayload.auth[0].authority
+    const isExpired = isTokenExpired(access_token.value)
+    const role = getUserRole(access_token.value)
 
     if (isExpired) {
       // 토큰 만료: `/api/refresh-token`으로 리다이렉트

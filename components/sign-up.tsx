@@ -13,22 +13,9 @@ import {
   CardTitle
 } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover'
-import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
-import { format, addMonths, subMonths, getDaysInMonth } from 'date-fns'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
+
 import { redirect, useRouter } from 'next/navigation'
-import axios from 'axios'
+import apiClient from '@/services/apiClient'
 import { setCookie } from 'cookies-next'
 
 export default function SignUpForm() {
@@ -94,9 +81,9 @@ export default function SignUpForm() {
     }
 
     const trySignup = async () => {
-      await axios
+      await apiClient
         .post(
-          `http://hansung-fiveguys.duckdns.org:8080/api/v1/user/signup`,
+          `/user/signup`,
           {
             name: `${name}`,
             email: `${email}`,

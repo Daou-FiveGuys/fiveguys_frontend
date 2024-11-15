@@ -1,10 +1,10 @@
 'use client'
 
-import axios from 'axios'
 import { redirect, useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
-import { setCookie } from 'cookies-next'
 import { NextResponse } from 'next/server'
+import apiClient from '@/services/apiClient'
+import { setCookie } from 'cookies-next'
 
 interface CallBackProps {
   params: { provider: string }
@@ -40,11 +40,8 @@ export default function CallBack({ params, searchParams }: CallBackProps) {
     }
 
     const getAccessToken = async () => {
-      await axios
-        .get(
-          `http://hansung-fiveguys.duckdns.org:8080/api/v1/oauth/${provider}?${query}`,
-          { withCredentials: true }
-        )
+      await apiClient
+        .get(`/oauth/${provider}?${query}`, { withCredentials: true })
         .then(res => {
           const access_token = res.data.data.accessToken
           if (res.data.code === 200) {

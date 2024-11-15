@@ -1,11 +1,10 @@
 'use client'
 import { CardContent, CardDescription, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import apiClient from '@/services/apiClient'
 import { Button } from '@nextui-org/button'
 import { Card, CardHeader } from '@nextui-org/card'
-import axios from 'axios'
 import { deleteCookie, getCookie, setCookie } from 'cookies-next'
-import { decode } from 'js-base64'
 import { redirect, useRouter } from 'next/navigation'
 import { NextRequest } from 'next/server'
 import { useEffect, useState } from 'react'
@@ -20,9 +19,9 @@ export default function EmailVerify() {
 
   const access_token = getCookie('access_token')
   const handleVerifyCode = () => {
-    axios
+    apiClient
       .post(
-        `http://hansung-fiveguys.duckdns.org:8080/api/v1/email`,
+        `/email`,
         { code: `${code}` },
         {
           headers: {
@@ -55,7 +54,7 @@ export default function EmailVerify() {
     if (!isSent) setIsSent(true)
 
     if (!isButtonDisabled) {
-      axios.get(`http://hansung-fiveguys.duckdns.org:8080/api/v1/email`, {
+      apiClient.get(`/email`, {
         headers: {
           Authorization: `Bearer ${access_token}`
         },
