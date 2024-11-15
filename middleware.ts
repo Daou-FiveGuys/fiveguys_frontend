@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getUserRole } from './utils/token'
 
 // 토큰 만료 여부 확인 함수
 function isTokenExpired(exp: string): boolean {
@@ -14,41 +15,39 @@ const matchUrl = (request: NextRequest, paths: string[]): boolean => {
 // 미들웨어
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const PUBLIC_PATHS = ['/login', '/signup']
-  // const BASE_URL = 'http://hansung-fiveguys.duckdns.org'
+  const BASE_URL = 'http://hansung-fiveguys.duckdns.org'
 
-  // const access_token = request.cookies.get('access_token')
+  const access_token = request.cookies.get('access_token')
 
-  // // 공개 경로 요청인지 확인
-  // if (!access_token) {
-  //   if (!matchUrl(request, PUBLIC_PATHS)) {
-  //     return NextResponse.redirect(new URL(`${BASE_URL}/login`, request.url))
-  //   }
-  //   return NextResponse.next() // 공개 경로는 그대로 진행
-  // }
+  // 공개 경로 요청인지 확인
+  if (!access_token) {
+    if (!matchUrl(request, PUBLIC_PATHS)) {
+      return NextResponse.redirect(new URL(`${BASE_URL}/login`, request.url))
+    }
+    return NextResponse.next() // 공개 경로는 그대로 진행
+  }
 
-  // try {
-  //   const payload = access_token.value.split('.')[1]
-  //   const decodedPayload = JSON.parse(atob(payload)) // Base64 디코딩
-  //   const isExpired = isTokenExpired(decodedPayload.exp)
-  //   const role = decodedPayload.auth[0].authority
+  try {
+    const isExpired = isTokenExpired(access_token.value)
+    const role = getUserRole(access_token.value)
 
-  //   if (isExpired) {
-  //     // 토큰 만료: `/api/refresh-token`으로 리다이렉트
-  //     return NextResponse.redirect(
-  //       new URL(`${BASE_URL}/api/refresh-token`, request.url)
-  //     )
-  //   }
-  //   if (role === 'ROLE_VISITOR' && !matchUrl(request, ['/verify']))
-  //     return NextResponse.redirect(new URL(`${BASE_URL}/verify`, request.url))
-  //   if (
-  //     role === 'ROLE_USER' &&
-  //     matchUrl(request, ['/login', '/signup', '/verify'])
-  //   )
-  //     return NextResponse.redirect(new URL(`${BASE_URL}/`, request.url))
-  // } catch (error) {
-  //   console.error('Error decoding token:', error)
-  //   return NextResponse.redirect(new URL(`${BASE_URL}/login`, request.url))
-  // }
+    if (isExpired) {
+      // 토큰 만료: `/api/refresh-token`으로 리다이렉트
+      return NextResponse.redirect(
+        new URL(`${BASE_URL}/api/refresh-token`, request.url)
+      )
+    }
+    if (role === 'ROLE_VISITOR' && !matchUrl(request, ['/verify']))
+      return NextResponse.redirect(new URL(`${BASE_URL}/verify`, request.url))
+    if (
+      role === 'ROLE_USER' &&
+      matchUrl(request, ['/login', '/signup', '/verify'])
+    )
+      return NextResponse.redirect(new URL(`${BASE_URL}/`, request.url))
+  } catch (error) {
+    console.error('Error decoding token:', error)
+    return NextResponse.redirect(new URL(`${BASE_URL}/login`, request.url))
+  }
 
   return NextResponse.next()
 }

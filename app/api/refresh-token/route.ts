@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
 
 // 상수 BASE_URL 설정
-const BASE_URL = 'http://hansung-fiveguys.duckdns.org'
+// const BASE_URL = 'http://hansung-fiveguys.duckdns.org'
+const BASE_URL = 'http://localhost:3000'
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const access_token = request.cookies.get('access_token')
@@ -16,15 +17,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     // 토큰 리프레시 요청
-    const response = await axios.get(
-      'http://hansung-fiveguys.duckdns.org:8080/api/v1/oauth/refresh-token',
-      {
-        params: {
-          accessToken: `${access_token.value}`
-        },
-        withCredentials: true
-      }
-    )
+    const response = await axios.get('/oauth/refresh-token', {
+      params: {
+        accessToken: `${access_token.value}`
+      },
+      withCredentials: true
+    })
 
     // 리프레시 성공
     if (response.data.code === 200) {
