@@ -40,6 +40,8 @@ import { Separator } from '@radix-ui/react-dropdown-menu'
 import ImageAIEdit from './image-processing'
 import SaveEditedImage from './image-save'
 import ImageNotAvailableModal from './image-not-available-modal'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/redux/store'
 
 const thicknesses = [1, 2, 3, 5, 8, 13, 21, 34, 40]
 
@@ -64,8 +66,6 @@ class CustomPencilBrush extends fabric.PencilBrush {
   }
 }
 
-type ShapeType = 'circle' | 'triangle' | 'rectangle'
-
 interface ShapeOptions {
   fill: string
   stroke: string
@@ -78,6 +78,7 @@ interface ShapeOptions {
 }
 
 export default function ImageEditor() {
+  const imageUrl = useSelector((state: RootState) => state.image)
   const canvasElementRef = useRef<HTMLCanvasElement | null>(null)
   const [canvas, setCanvas] = useState<fabric.Canvas | null>(null)
   // const [canvas, setCanvas] = useState<Canvas | null>(null)
@@ -119,7 +120,13 @@ export default function ImageEditor() {
 
       const fabricCanvas = initializeCanvas()
 
+      /**
+       *
+       *
+       * imageUrl => null 처리
+       */
       fabric.FabricImage.fromURL(
+        // imageUrl.url,
         'https://fal.media/files/lion/P6e0ncdN6pP_35_yX6_ez_0c0ad928a6a34b8383c3b3bdb2ba1ecc.jpg',
         { crossOrigin: 'anonymous' }
       ).then(img => {
@@ -1848,7 +1855,6 @@ export default function ImageEditor() {
           <Button
             disabled={isMasking && inpaintPrompt.length === 0}
             onClick={() => {
-              console.log('여기')
               if (isInpainting || isRemovingText || isUpscaling) {
                 setAvailable(false)
                 return

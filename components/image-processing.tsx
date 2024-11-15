@@ -2,7 +2,10 @@ import React, { useEffect, useState } from 'react'
 import * as fabric from 'fabric'
 import ImageInpantMoal from './image-modal'
 import ImageProcessingRequestSuccessModal from './image-confirm-modal'
-import axios from 'axios'
+import { useDispatch, useSelector } from 'react-redux'
+import { setImageData } from '@/redux/slices/imageSlice'
+import { RootState } from '@/redux/store'
+import apiClient from '@/services/apiClient'
 
 interface YourComponentProps {
   canvas: fabric.Canvas | null
@@ -19,8 +22,11 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
   mode,
   option
 }) => {
+  const dispatch = useDispatch()
+  const image = useSelector((state: RootState) => state.image)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newImageUrl, setNewImageUrl] = useState<string | null>(null)
+  const [newRequestId, setNewRequestId] = useState<string | null>(null)
   const [showProcessingModal, setShowProcessingModal] = useState(false)
   const [maskObjects, setMaskObjects] = useState<
     fabric.FabricObject<
@@ -29,6 +35,10 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
       fabric.ObjectEvents
     >[]
   >([])
+
+  const handleImageUpdate = (requestId: string, url: string) => {
+    dispatch(setImageData({ requestId: requestId, url: url }))
+  }
 
   useEffect(() => {
     if (!canvas || !isProcessing) return
@@ -39,10 +49,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
         break
       case 'removeText':
       case 'upscale':
-        let url = 'http://localhost:8080/api/v1/ai/image'
-        if (mode === 'removeText') url += `/remove-text/${option}`
-        else url += `/upscale`
-        sendImageRequestId(url)
+        sendImageRequestId(mode === 'removeText' ? '/remove-text' : '/upscale')
         break
     }
     setShowProcessingModal(true)
@@ -63,6 +70,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
       }
     })
   }
+
   const applyNewImage = () => {
     if (!canvas) return
     if (newImageUrl) {
@@ -87,6 +95,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
         img.canvas = canvas
       })
     }
+    dispatch(setImageData({ requestId: newRequestId, url: newImageUrl }))
     if (mode === 'inpaint')
       canvas.getObjects().forEach(obj => {
         if (maskObjects.some(mask => obj === mask)) canvas.remove(obj)
@@ -96,6 +105,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
   }
 
   const cancelNewImage = () => {
+    setNewRequestId(null)
     setNewImageUrl(null)
     setIsModalOpen(false)
   }
@@ -104,15 +114,13 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     // 필요한 조건 체크: canvas가 존재하고 처리 중일 때만 요청
     if (!canvas || !isProcessing) return
 
-    // `requestId`와 기타 필요한 정보를 포함한 DTO 객체 생성
     const ImageRequestDTO = {
-      requestId: 'e5c449c9-877b-4d33-9e7f-3a12ccb88964' // 여기에 실제 requestId를 입력하세요
-      // 추가적으로 필요한 필드가 있다면 여기에 추가합니다.
+      requestId: image.requestId
     }
 
     try {
       // POST 요청 전송
-      const response = await axios.post(`${url}`, ImageRequestDTO, {
+      const response = await apiClient.post(`${url}`, ImageRequestDTO, {
         headers: {
           Authorization: `Bearer `, // 실제 인증 토큰으로 변경
           'Content-Type': 'application/json'
@@ -121,6 +129,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
 
       // 응답 데이터 처리
       if (response.data.code === 200) {
+        setNewRequestId(response.data.data.requestId)
         setNewImageUrl(response.data.data.url) // 서버에서 받은 이미지 URL 설정
         setIsModalOpen(true) // 모달 열기
       } else {
@@ -224,7 +233,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     formData.append('multipartFile', blob, 'canvas_image.png')
 
     const imageInpaintDTO = {
-      requestId: 'e5c449c9-877b-4d33-9e7f-3a12ccb88964', // 실제 요청 ID로 설정
+      requestId: image.requestId, // 실제 요청 ID로 설정
       prompt: option, // 사용자가 입력한 프롬프트,
       width: canvas.backgroundImage?.width,
       height: canvas.backgroundImage?.height
@@ -237,7 +246,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
 
     try {
       // axios를 사용하여 서버로 데이터 전송
-      const response = await axios.post(
+      const response = await apiClient.post(
         'http://localhost:8080/api/v1/ai/image/inpaint',
         formData,
         {
@@ -249,6 +258,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
       )
 
       if (response.data.code === 200) {
+        setNewRequestId(response.data.data.requestId)
         setNewImageUrl(response.data.data.url) // 서버에서 받은 이미지 URL 설정
         setIsModalOpen(true) // 모달 열기
       } else {
