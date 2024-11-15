@@ -66,6 +66,7 @@ import ImageAIEdit from './image-processing'
 import SaveEditedImage from './image-save'
 import { Input } from './ui/input'
 import { object } from 'zod'
+import ImageNotAvailableModal from './image-not-available-modal'
 
 const thicknesses = [1, 2, 3, 5, 8, 13, 21, 34, 40]
 
@@ -970,25 +971,26 @@ export default function ImageEditor() {
   const [isInpainting, setIsInpainting] = useState(false)
   const [isRemovingText, setIsRemovingText] = useState(false)
   const [isUpscaling, setIsUpscaling] = useState(false)
+  const [available, setAvailable] = useState(true)
   const [inpaintPrompt, setInpaintPrompt] = useState('')
   const modes = [
     {
       mode: 'inpaint',
       isProcessing: isInpainting,
       setIsProcessing: setIsInpainting,
-      prompt: inpaintPrompt
+      option: inpaintPrompt
     },
     {
       mode: 'removeText',
       isProcessing: isRemovingText,
       setIsProcessing: setIsRemovingText,
-      prompt: null
+      option: selectedApi
     },
     {
       mode: 'upscale',
       isProcessing: isUpscaling,
       setIsProcessing: setIsUpscaling,
-      prompt: null
+      option: null
     }
   ]
   const [isDone, setIsDone] = useState(false)
@@ -1824,6 +1826,11 @@ export default function ImageEditor() {
           <Button
             disabled={isMasking && inpaintPrompt.length === 0}
             onClick={() => {
+              if (isInpainting || isRemovingText || isUpscale) {
+                setAvailable(false)
+                return
+              }
+
               if (isMasking && !isInpainting) {
                 setIsInpainting(true)
               }
@@ -1848,13 +1855,13 @@ export default function ImageEditor() {
                   : '완료'}
           </Button>
         </div>
-        {modes.map(({ mode, isProcessing, setIsProcessing }) => (
+        {modes.map(({ mode, isProcessing, setIsProcessing, option }) => (
           <ImageAIEdit
             key={mode}
             canvas={canvas}
             isProcessing={isProcessing}
             setIsProcessing={setIsProcessing}
-            prompt={inpaintPrompt}
+            option={option}
             mode={mode}
           />
         ))}
@@ -1864,6 +1871,9 @@ export default function ImageEditor() {
             isDone={isDone}
             setIsDone={setIsDone}
           />
+        )}
+        {!available && (
+          <ImageNotAvailableModal onConfirm={() => setAvailable(true)} />
         )}
       </CardContent>
     </Card>
