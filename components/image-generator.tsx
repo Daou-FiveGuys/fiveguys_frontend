@@ -23,6 +23,7 @@ let initialImages: ImageData[] = [
 
 export async function showExistingImages(seed?: string): Promise<boolean> {
   try {
+    
     const result = seed ? await reFetchImageSources(seed) : await fetchImageSources();
     if (result === "error") {
       return false;
