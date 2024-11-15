@@ -147,7 +147,7 @@ export default function ImageEditor() {
       const fabricCanvas = initializeCanvas()
 
       fabric.FabricImage.fromURL(
-        'https://www.moducopy.co.kr/data/item/1656314211/thumb-7Ys7Iqk7YSw025_600x845.jpg'
+        'https://fal.media/files/lion/P6e0ncdN6pP_35_yX6_ez_0c0ad928a6a34b8383c3b3bdb2ba1ecc.jpg'
       ).then(img => {
         if (!canvasElementRef.current || !fabricCanvas) return
 
@@ -693,6 +693,7 @@ export default function ImageEditor() {
   }
 
   const disableAll = () => {
+    setSelectedShape(null)
     disableMasking()
     disableDrawing()
     disableErasing()
@@ -1846,7 +1847,7 @@ export default function ImageEditor() {
             className="w-full"
           >
             {isMasking
-              ? '프롬프트 입력'
+              ? '이미지 수정'
               : isRemoveText
                 ? '텍스트 제거'
                 : isUpscale

@@ -87,17 +87,15 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     // 필요한 조건 체크: canvas가 존재하고 처리 중일 때만 요청
     if (!canvas || !isProcessing) return
 
-    // `requestId`와 기타 필요한 정보를 포함한 DTO 객체 생성
     const ImageRequestDTO = {
-      requestId: '' // 여기에 실제 requestId를 입력하세요
-      // 추가적으로 필요한 필드가 있다면 여기에 추가합니다.
+      requestId: ''
     }
 
     try {
       // POST 요청 전송
       const response = await axios.post(`${url}`, ImageRequestDTO, {
         headers: {
-          Authorization: `Bearer {액세스토큰}`, // 실제 인증 토큰으로 변경
+          Authorization: `Bearer `,
           'Content-Type': 'application/json'
         }
       })
@@ -117,37 +115,67 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
   }
 
   const sendImageForInpainting = async () => {
-    if (!canvas || !isProcessing) return
+    if (!canvas || !isProcessing || !canvas.backgroundImage) return
 
     // 복제할 캔버스를 생성
+    const originalWidth = canvas.width // 현재 캔버스 크기 저장
+    const originalHeight = canvas.height
+
+    // 원본 이미지 크기 가져오기
+    let scaleX = 1
+    let scaleY = 1
+
+    if (canvas.backgroundImage) {
+      scaleX = canvas.backgroundImage.width / canvas.width
+      scaleY = canvas.backgroundImage.height / canvas.height
+
+      canvas.setWidth(canvas.backgroundImage.width)
+      canvas.setHeight(canvas.backgroundImage.height)
+      canvas.renderAll()
+    }
+
+    // 배경 이미지를 제거하고 배경색을 검은색으로 설정
     const originalBackgroundImage = canvas.backgroundImage
     const originalBackgroundColor = canvas.backgroundColor
 
-    // 배경 이미지를 제거하고 배경색을 검은색으로 설정
     canvas.backgroundImage = undefined
     canvas.backgroundColor = 'black'
 
-    // 모든 객체의 원래 색상을 저장
+    // 모든 객체의 원래 색상과 좌표 저장
     const originalStrokeColors = canvas
       .getObjects()
       .map(obj => obj.stroke as string)
     const originalFillColors = canvas
       .getObjects()
       .map(obj => obj.fill as string)
+    const originalPositions = canvas.getObjects().map(obj => ({
+      left: obj.left,
+      top: obj.top,
+      scaleX: obj.scaleX,
+      scaleY: obj.scaleY
+    }))
 
     // 모든 객체의 외곽선을 흰색으로, 내부 채우기를 검정색으로 변경
     canvas.getObjects().forEach(obj => {
       obj.set({
         stroke: 'white',
-        fill: 'black'
+        fill: 'black',
+        left: obj.left * scaleX,
+        top: obj.top * scaleY,
+        scaleX: obj.scaleX * scaleX,
+        scaleY: obj.scaleY * scaleY
       })
+      obj.setCoords()
     })
+
     canvas.renderAll() // 변경 사항 렌더링
+
+    // 마스크 이미지 추출
     const imageData = canvas.toDataURL({
       format: 'png',
       quality: 1.0,
       multiplier: 1,
-      enableRetinaScaling: true
+      enableRetinaScaling: false
     })
 
     // 배경 이미지와 색상, 객체의 원래 색상 복원
@@ -156,9 +184,17 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     canvas.getObjects().forEach((obj, index) => {
       obj.set({
         stroke: originalStrokeColors[index],
-        fill: originalFillColors[index]
+        fill: originalFillColors[index],
+        left: originalPositions[index].left,
+        top: originalPositions[index].top,
+        scaleX: originalPositions[index].scaleX,
+        scaleY: originalPositions[index].scaleY
       })
+      obj.setCoords()
     })
+
+    canvas.setWidth(originalWidth) // 캔버스 크기 복원
+    canvas.setHeight(originalHeight)
     canvas.renderAll() // 원래 상태로 다시 렌더링
 
     // 이미지 데이터를 Blob 형식으로 변환
@@ -169,8 +205,10 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     formData.append('multipartFile', blob, 'canvas_image.png')
 
     const imageInpaintDTO = {
-      requestId: 'your-request-id', // 실제 요청 ID로 설정
-      prompt: option // 사용자가 입력한 프롬프트
+      requestId: '', // 실제 요청 ID로 설정
+      prompt: option, // 사용자가 입력한 프롬프트,
+      width: canvas.backgroundImage?.width,
+      height: canvas.backgroundImage?.height
     }
 
     formData.append(
@@ -181,19 +219,22 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     try {
       // axios를 사용하여 서버로 데이터 전송
       const response = await axios.post(
-        'https://your-server-url/inpaint',
+        'http://localhost:8080/api/v1/ai/image/inpaint',
         formData,
         {
           headers: {
-            Authorization: `Bearer `, // 실제 인증 토큰으로 변경
+            Authorization: `Bearer `,
             'Content-Type': 'multipart/form-data'
           }
         }
       )
 
-      // 서버 응답 처리
-      setNewImageUrl(response.data.imageUrl) // 서버에서 받은 이미지 URL 설정
-      setIsModalOpen(true) // 모달 열기
+      if (response.data.code === 200) {
+        setNewImageUrl(response.data.data.url) // 서버에서 받은 이미지 URL 설정
+        setIsModalOpen(true) // 모달 열기
+      } else {
+        console.error('Error uploading image:', response.data.message)
+      }
     } catch (error) {
       console.error('Error uploading image:', error)
     } finally {
