@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import axios from 'axios'
 import { deleteCookie, setCookie } from 'cookies-next'
+import { getCookie } from '@/utils/cookies'
 
 // 상수 BASE_URL 설정
 const BASE_URL = 'http://hansung-fiveguys.duckdns.org'
 // const BASE_URL = 'http://localhost:3000'
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
-  const access_token = request.cookies.get('access_token')
+export async function GET(): Promise<NextResponse> {
+  const access_token = getCookie('access_token')
 
   // 토큰이 없을 경우 "/login"으로 리다이렉션
   if (!access_token) {
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       'http://hansung-fiveguys.duckdns.org:8080/api/v1/oauth/refresh-token',
       {
         params: {
-          accessToken: `${access_token.value}`
+          accessToken: `${access_token}`
         },
         withCredentials: true
       }
