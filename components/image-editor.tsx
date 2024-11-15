@@ -40,7 +40,6 @@ import { Separator } from '@radix-ui/react-dropdown-menu'
 import ImageAIEdit from './image-processing'
 import SaveEditedImage from './image-save'
 import ImageNotAvailableModal from './image-not-available-modal'
-import ImageUploaderButton from './image-upload-button'
 
 const thicknesses = [1, 2, 3, 5, 8, 13, 21, 34, 40]
 
