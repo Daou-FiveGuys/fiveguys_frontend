@@ -120,7 +120,8 @@ export default function ImageEditor() {
       const fabricCanvas = initializeCanvas()
 
       fabric.FabricImage.fromURL(
-        'https://fal.media/files/lion/P6e0ncdN6pP_35_yX6_ez_0c0ad928a6a34b8383c3b3bdb2ba1ecc.jpg'
+        'https://fal.media/files/lion/P6e0ncdN6pP_35_yX6_ez_0c0ad928a6a34b8383c3b3bdb2ba1ecc.jpg',
+        { crossOrigin: 'anonymous' }
       ).then(img => {
         if (!canvasElementRef.current || !fabricCanvas) return
 
@@ -827,31 +828,33 @@ export default function ImageEditor() {
       reader.onload = function (f) {
         const data = f.target?.result
         if (typeof data === 'string') {
-          fabric.FabricImage.fromURL(data).then(img => {
-            if (!canvas) return
-            const canvasWidth = canvas.getWidth()
-            const canvasHeight = canvas.getHeight()
+          fabric.FabricImage.fromURL(data, { crossOrigin: 'anonymous' }).then(
+            img => {
+              if (!canvas) return
+              const canvasWidth = canvas.getWidth()
+              const canvasHeight = canvas.getHeight()
 
-            // 이미지 크기 조정
-            const maxWidth = canvasWidth * 0.8 // 캔버스의 80% 너비
-            const maxHeight = canvasHeight * 0.8 // 캔버스의 80% 높이
+              // 이미지 크기 조정
+              const maxWidth = canvasWidth * 0.8 // 캔버스의 80% 너비
+              const maxHeight = canvasHeight * 0.8 // 캔버스의 80% 높이
 
-            const scaleX = maxWidth / img.width!
-            const scaleY = maxHeight / img.height!
-            const scale = Math.min(scaleX, scaleY, 1) // 비율 유지하며 스케일 제한
+              const scaleX = maxWidth / img.width!
+              const scaleY = maxHeight / img.height!
+              const scale = Math.min(scaleX, scaleY, 1) // 비율 유지하며 스케일 제한
 
-            img.scale(scale)
+              img.scale(scale)
 
-            // 정중앙 배치
-            img.set({
-              left: canvasWidth / 2 - img.getScaledWidth() / 2,
-              top: canvasHeight / 2 - img.getScaledHeight() / 2,
-              originX: 'left',
-              originY: 'top'
-            })
+              // 정중앙 배치
+              img.set({
+                left: canvasWidth / 2 - img.getScaledWidth() / 2,
+                top: canvasHeight / 2 - img.getScaledHeight() / 2,
+                originX: 'left',
+                originY: 'top'
+              })
 
-            canvas.add(img)
-          })
+              canvas.add(img)
+            }
+          )
         }
       }
       reader.readAsDataURL(file)
@@ -1462,7 +1465,9 @@ export default function ImageEditor() {
                       <div className="flex w-full items-center justify-center">
                         <Button
                           className="w-full"
-                          onClick={() => handleToolChange('masking')}
+                          onClick={() => {
+                            if (isMasking) handleToolChange('masking')
+                          }}
                           variant={isMaskingMode ? 'default' : 'outline'}
                         >
                           마스킹
@@ -1470,7 +1475,9 @@ export default function ImageEditor() {
                         <Separator className="p-1" />
                         <Button
                           className="w-full"
-                          onClick={() => handleToolChange('eraser')}
+                          onClick={() => {
+                            if (isMasking) handleToolChange('eraser')
+                          }}
                           variant={isEraseMode ? 'default' : 'outline'}
                         >
                           지우개

@@ -22,11 +22,19 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newImageUrl, setNewImageUrl] = useState<string | null>(null)
   const [showProcessingModal, setShowProcessingModal] = useState(false)
+  const [maskObjects, setMaskObjects] = useState<
+    fabric.FabricObject<
+      Partial<fabric.FabricObjectProps>,
+      fabric.SerializedObjectProps,
+      fabric.ObjectEvents
+    >[]
+  >([])
 
   useEffect(() => {
     if (!canvas || !isProcessing) return
     switch (mode) {
       case 'inpaint':
+        handleSetMaskObjects()
         sendImageForInpainting()
         break
       case 'removeText':
@@ -46,10 +54,21 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     return () => clearTimeout(timer) // 타이머 정리
   }, [canvas, isProcessing, setIsProcessing])
 
+  const handleSetMaskObjects = () => {
+    if (!canvas) return
+    setMaskObjects([])
+    canvas.getObjects().map(obj => {
+      if (obj.visible) {
+        setMaskObjects(prev => [...prev, obj])
+      }
+    })
+  }
   const applyNewImage = () => {
     if (!canvas) return
     if (newImageUrl) {
-      fabric.FabricImage.fromURL(newImageUrl).then(img => {
+      fabric.FabricImage.fromURL(newImageUrl, {
+        crossOrigin: 'anonymous'
+      }).then(img => {
         if (!canvas) return
 
         // 기존 캔버스 크기 가져오기
@@ -70,9 +89,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     }
     if (mode === 'inpaint')
       canvas.getObjects().forEach(obj => {
-        if (obj.visible) {
-          canvas.remove(obj)
-        }
+        if (maskObjects.some(mask => obj === mask)) canvas.remove(obj)
       })
     canvas.renderAll()
     setIsModalOpen(false) // 최종 모달 닫기
@@ -87,15 +104,17 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     // 필요한 조건 체크: canvas가 존재하고 처리 중일 때만 요청
     if (!canvas || !isProcessing) return
 
+    // `requestId`와 기타 필요한 정보를 포함한 DTO 객체 생성
     const ImageRequestDTO = {
-      requestId: ''
+      requestId: 'e5c449c9-877b-4d33-9e7f-3a12ccb88964' // 여기에 실제 requestId를 입력하세요
+      // 추가적으로 필요한 필드가 있다면 여기에 추가합니다.
     }
 
     try {
       // POST 요청 전송
       const response = await axios.post(`${url}`, ImageRequestDTO, {
         headers: {
-          Authorization: `Bearer `,
+          Authorization: `Bearer `, // 실제 인증 토큰으로 변경
           'Content-Type': 'application/json'
         }
       })
@@ -205,7 +224,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     formData.append('multipartFile', blob, 'canvas_image.png')
 
     const imageInpaintDTO = {
-      requestId: '', // 실제 요청 ID로 설정
+      requestId: 'e5c449c9-877b-4d33-9e7f-3a12ccb88964', // 실제 요청 ID로 설정
       prompt: option, // 사용자가 입력한 프롬프트,
       width: canvas.backgroundImage?.width,
       height: canvas.backgroundImage?.height
@@ -223,7 +242,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
         formData,
         {
           headers: {
-            Authorization: `Bearer `,
+            Authorization: `Bearer `, // 실제 인증 토큰으로 변경
             'Content-Type': 'multipart/form-data'
           }
         }
