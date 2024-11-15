@@ -4,7 +4,8 @@ import { isTokenExpired } from '@/utils/token'
 import { deleteCookie, getCookie, setCookie } from 'cookies-next'
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8080/api/v1',
+  // baseURL: 'http://localhost:8080/api/v1',
+  baseURL: 'http://hansung-fiveguys.duckdns.org:8080/api/v1',
   withCredentials: true // 쿠키 전송 허용
 })
 
@@ -27,7 +28,7 @@ apiClient.interceptors.request.use(
       } catch (error) {
         deleteCookie('access_token')
         console.error('토큰 갱신 실패:', error)
-        window.location.href = 'http://localhost:3000/login'
+        window.location.href = 'http://hansung-fiveguys.duckdns.org'
       }
     }
     if (accessToken) {

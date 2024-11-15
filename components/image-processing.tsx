@@ -246,16 +246,12 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
 
     try {
       // axios를 사용하여 서버로 데이터 전송
-      const response = await apiClient.post(
-        'http://localhost:8080/api/v1/ai/image/inpaint',
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer `, // 실제 인증 토큰으로 변경
-            'Content-Type': 'multipart/form-data'
-          }
+      const response = await apiClient.post('/inpaint', formData, {
+        headers: {
+          Authorization: `Bearer `, // 실제 인증 토큰으로 변경
+          'Content-Type': 'multipart/form-data'
         }
-      )
+      })
 
       if (response.data.code === 200) {
         setNewRequestId(response.data.data.requestId)

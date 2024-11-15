@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
 
 // 상수 BASE_URL 설정
-// const BASE_URL = 'http://hansung-fiveguys.duckdns.org'
-const BASE_URL = 'http://localhost:3000'
+const BASE_URL = 'http://hansung-fiveguys.duckdns.org'
+// const BASE_URL = 'http://localhost:3000'
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const access_token = request.cookies.get('access_token')

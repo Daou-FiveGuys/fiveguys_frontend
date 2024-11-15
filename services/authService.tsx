@@ -11,7 +11,7 @@ export async function refreshAccessToken(): Promise<string> {
 
     // Refresh Token API 요청
     const response = await axios.get(
-      'https://localhost:8080/api/v1/oauth/refresh-token',
+      'http://hansung-fiveguys.duckdns.org:8080/api/v1/oauth/refresh-token',
       {
         withCredentials: true, // HttpOnly 쿠키 전송
         headers: {
