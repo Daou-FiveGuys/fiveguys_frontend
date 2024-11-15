@@ -8,15 +8,10 @@ import Handsontable from "handsontable";
 import ExcelDownload from "./download";
 import ExcelUpload from "./upload";
 import { Folder2, Group2, Contact2 } from "./entity";
-import { getFolder2Data, getGroup2Data, getContact2Data } from "./service";
+import { getFolder2Data, getContact2Data } from "./service";
 import { transformContactsToExcelData } from "./transformExcel";
-import {
-    Select,
-    SelectTrigger,
-    SelectContent,
-    SelectItem,
-    SelectValue,
-} from "components/ui/select";
+import { FolderSelect } from "./folderSelect";
+import { GroupSelect } from "./groupSelect";
 
 export default function Excel() {
     const initialData: string[][] = Array.from({ length: 50 }, () => Array(11).fill(""));
@@ -25,7 +20,6 @@ export default function Excel() {
     const [group2Data, setGroup2Data] = useState<Group2[]>([]);
     const [isLoadingFolders, setIsLoadingFolders] = useState(true);
     const [isLoadingGroups, setIsLoadingGroups] = useState(false);
-    const [selectedFolderId, setSelectedFolderId] = useState<Number | null>(null);
 
     const contactTableRef = useRef<Handsontable | null>(null);
 
@@ -78,7 +72,6 @@ export default function Excel() {
     };
 
     const handleFolder2Select = async (folderId: Number) => {
-        setSelectedFolderId(folderId);
         setIsLoadingGroups(true);
         try {
             const folder = folder2Data.find((f) => f.folderId === folderId);
@@ -114,54 +107,16 @@ export default function Excel() {
     return (
         <main>
             <div className="flex space-x-4">
-                <div>
-                    <Select onValueChange={(value) => handleFolder2Select(Number(value))}>
-                        <SelectTrigger className="w-[150px]">
-                            <SelectValue placeholder="폴더 선택" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {isLoadingFolders ? (
-                                <SelectItem value="loading" disabled>
-                                    로딩 중...
-                                </SelectItem>
-                            ) : folder2Data.length > 0 ? (
-                                folder2Data.map((folder2) => (
-                                    <SelectItem key={folder2.folderId} value={folder2.folderId.toString()}>
-                                        {folder2.name}
-                                    </SelectItem>
-                                ))
-                            ) : (
-                                <SelectItem value="empty" disabled>
-                                    선택 가능한 폴더가 없습니다
-                                </SelectItem>
-                            )}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div>
-                    <Select onValueChange={(value) => handleGroup2Select(value)}>
-                        <SelectTrigger className="w-[150px]">
-                            <SelectValue placeholder="그룹 선택" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {isLoadingGroups ? (
-                                <SelectItem value="loading" disabled>
-                                    로딩 중...
-                                </SelectItem>
-                            ) : group2Data.length > 0 ? (
-                                group2Data.map((group2) => (
-                                    <SelectItem key={group2.groupsId} value={group2.groupsId.toString()}>
-                                        {group2.name}
-                                    </SelectItem>
-                                ))
-                            ) : (
-                                <SelectItem value="empty" disabled>
-                                    선택 가능한 그룹이 없습니다
-                                </SelectItem>
-                            )}
-                        </SelectContent>
-                    </Select>
-                </div>
+                <FolderSelect
+                    folders={folder2Data}
+                    isLoading={isLoadingFolders}
+                    onSelect={handleFolder2Select}
+                />
+                <GroupSelect
+                    groups={group2Data}
+                    isLoading={isLoadingGroups}
+                    onSelect={handleGroup2Select}
+                />
             </div>
             <br />
             <div id="hot-app" className="relative z-10" />
