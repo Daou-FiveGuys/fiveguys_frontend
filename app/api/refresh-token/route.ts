@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
+import { deleteCookie, setCookie } from 'cookies-next'
 
 // 상수 BASE_URL 설정
 const BASE_URL = 'http://hansung-fiveguys.duckdns.org'
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   // 토큰이 없을 경우 "/login"으로 리다이렉션
   if (!access_token) {
     const res = NextResponse.redirect(new URL(`${BASE_URL}/login`))
-    res.cookies.delete('access_token') // 쿠키 삭제
+    deleteCookie('access_token')
     return res
   }
 
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
       // "/" 경로로 리다이렉션 및 쿠키 설정
       const res = NextResponse.redirect(new URL(`${BASE_URL}/`))
-      res.cookies.set('access_token', newAccessToken, {
+      setCookie('access_token', newAccessToken, {
         httpOnly: false, // 클라이언트 접근 가능
         secure: process.env.NODE_ENV === 'production', // 프로덕션 환경에서 HTTPS만 허용
         maxAge: 60 * 60, // 1시간
@@ -43,12 +44,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // 리프레시 실패 시 "/login"으로 리다이렉션
     const res = NextResponse.redirect(new URL(`${BASE_URL}/login`))
-    res.cookies.delete('access_token') // 쿠키 삭제
+    deleteCookie('access_token')
     return res
   } catch (error) {
     console.error('Error refreshing token:', error)
     const res = NextResponse.redirect(new URL(`${BASE_URL}/login`))
-    res.cookies.delete('access_token') // 쿠키 삭제
+    deleteCookie('access_token')
     return res
   }
 }
