@@ -130,7 +130,12 @@ export default function ImageEditor() {
         'https://fal.media/files/lion/P6e0ncdN6pP_35_yX6_ez_0c0ad928a6a34b8383c3b3bdb2ba1ecc.jpg',
         { crossOrigin: 'anonymous' }
       ).then(img => {
-        if (!canvasElementRef.current || !fabricCanvas) return
+        if (
+          !canvasElementRef.current ||
+          !fabricCanvas ||
+          !fabricCanvas.lowerCanvasEl
+        )
+          return
 
         const parent = canvasElementRef.current.parentElement
         const canvasWidth = parent?.offsetWidth || 800
@@ -1207,7 +1212,7 @@ export default function ImageEditor() {
             선택
           </Button>
           <Popover open={isPenPopoverOpen} onOpenChange={setIsPenPopoverOpen}>
-            <PopoverTrigger>
+            <PopoverTrigger asChild>
               <Button
                 className="w-full text-sm p-2 h-9"
                 onClick={() => {
