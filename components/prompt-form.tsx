@@ -335,25 +335,6 @@ export function PromptForm({
   //전화번호 추가 기능 1: 전화번호 파일 추가(파일 업로드까지) + 전화번호 추가 기능(전번 입력까지).
 
   const handlePhoneNumber = (number: string) => {
-    //const existingNumber = samplePhoneNumbers.find(item => item.phoneNumber === number)
-    //if (existingNumber) {
-      // setMessages(currentMessages => [
-      //   ...currentMessages,
-      //   {
-      //     id: nanoid(),
-      //     display: <UserMessage>{number}</UserMessage>
-      //   },
-      //   {
-      //     id: nanoid(),
-      //     display: <SavePhoneNumber phoneData={existingNumber} />
-      //   },
-      //   {
-      //     id: nanoid(),
-      //     display: "이미 존재하는 전화번호입니다."
-      //   }
-      // ])
-      // setCurrentMode('normal')
-    //} else {
       setPhoneData(prev => ({ ...prev, phoneNumber: number }))
       setMessages(currentMessages => [
         ...currentMessages,
@@ -490,14 +471,30 @@ export function PromptForm({
         display: <UserTextMessage 
           message={lastTextInput} 
           onCreatedMessage={setLastCreatedMessage}
+          onCommunicationStatus={setTextSuccess}
         />
-      },
+      }
+    ])
+    if(textSuccess){
+    setMessages(currentMessages => [
+      ...currentMessages,
       {
         id: nanoid(),
-        display: "주제, 재요청혹은 메시지 생성 완료를 입력해주세요."
+        display: "텍스트 주제 재입력을 원하면 주제, 텍스트 재생성을 원하면 재생성을 입력해주세요. 혹은 메시지 생성 완료를 입력해 주세요."
       }
     ])
     setCurrentMode('text-create-action')
+  }
+  else{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: "메시지 전송에 실패했습니다."
+      }
+    ])
+    setCurrentMode('normal')
+  }
   }
   //문자 생성 기능 4: 문자 저장 후 이미지 생성 여부 확인
   
@@ -506,23 +503,42 @@ export function PromptForm({
   const [lastCreatedMessage, setLastCreatedMessage] = React.useState('')
   const [currentImageUrl, setCurrentImageUrl] = React.useState('')
 
+  const handleSuccess = (success: boolean) => {
+    setIsSuccess(success)
+  };
   const handleImageGeneration = () => {
+    console.log(selectedSeed);
     setMessages(currentMessages => [
       ...currentMessages,
       //추가
       {
         id: nanoid(),
-        display: <ImageGenerator createdMessage={lastCreatedMessage}/>
-      },
-      {
-        id: nanoid(),
-        display: "0, 1, 2, 3, 4번 중 하나를 선택해주세요. (0: 이미지 재생성)"
+        display: <ImageGenerator createdMessage={lastCreatedMessage} onSuccess={handleSuccess}/>
       }
     ])
-    setCurrentMode('image-select')
+    if(isSuccess){
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: "0, 1, 2, 3, 4번 중 하나를 선택해주세요. (0: 이미지 재생성)"
+        }
+      ])
+      setCurrentMode('image-select')
+    }
+    else{
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: "이미지 생성에 실패했습니다."
+        }
+      ])
+      setCurrentMode('normal')
+    }
   }
+  const [isSuccess, setIsSuccess] = React.useState(false);
   //이미지 생성 기능 1: 이미지 4장 생성 기능.
-
   const handleImageReSeed = (seed:string) =>{
     console.log(selectedSeed);
     setMessages(currentMessages => [
@@ -530,14 +546,29 @@ export function PromptForm({
       //추가
       {
         id: nanoid(),
-        display: <ImageGenerator createdMessage={lastCreatedMessage} seed={seed}/>
-      },
-      {
-        id: nanoid(),
-        display: "0, 1, 2, 3, 4번 중 하나를 선택해주세요. (0: 이미지 재생성)"
+        display: <ImageGenerator createdMessage={lastCreatedMessage} seed={selectedSeed} onSuccess={handleSuccess}/>
       }
     ])
-    setCurrentMode('image-select')
+    if(isSuccess){
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: "0, 1, 2, 3, 4번 중 하나를 선택해주세요. (0: 이미지 재생성)"
+        }
+      ])
+      setCurrentMode('image-select')
+    }
+    else{
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: "이미지 생성에 실패했습니다."
+        }
+      ])
+      setCurrentMode('normal')
+    }
   }
 
   const handleImageAction = (value:string) => {
@@ -651,10 +682,11 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: <ImageGenerator selectedImage={value}/>
+        display: <ImageGenerator selectedImage={value} onSuccess={handleSuccess}/>
       }
       
     ])
+    console.log(selectedSeed);
 
     if(error==""){
       {
@@ -829,6 +861,10 @@ export function PromptForm({
     setSaveNum(prevSaveNum => prevSaveNum + 1)
     setCurrentMode('normal')
   }
+  const [textSuccess, setTextSuccess] = React.useState(false);
+  const handleTextSuccess = () =>{
+    
+  }
 
   const handleText = (value:string) =>{
     setLastTextInput(value)
@@ -843,14 +879,30 @@ export function PromptForm({
         display: <UserTextMessage 
           message={value} 
           onCreatedMessage={setLastCreatedMessage}
+          onCommunicationStatus={setTextSuccess}
         />
-      },
+      }
+    ])
+    if(textSuccess){
+    setMessages(currentMessages => [
+      ...currentMessages,
       {
         id: nanoid(),
         display: "텍스트 주제 재입력을 원하면 주제, 텍스트 재생성을 원하면 재생성을 입력해주세요. 혹은 메시지 생성 완료를 입력해 주세요."
       }
     ])
     setCurrentMode('text-create-action')
+  }
+  else{
+    setMessages(currentMessages => [
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: "메시지 생성에 실패했습니다."
+      }
+    ])
+    setCurrentMode('normal')
+  }
   }
   const [awaitingReselection, setAwaitingReselection] = React.useState(false)
   const requestReselection = () => {
@@ -1202,12 +1254,12 @@ export function PromptForm({
               if (value.toLowerCase() === '이미지 생성') {
                 const hasEnoughTokens = await handleCheckTokens()
                 //console.log(result)
-                if(hasEnoughTokens) {
-                  const result = await showExistingImages();
-                  if(result){handleImageGeneration()}
-                  else {
-                    handleErrorGenerateImage(value)
-                  }
+                if(true) {
+                  // const result = await showExistingImages();
+                  // if(result){handleImageGeneration()}
+                  // else {
+                  //   handleErrorGenerateImage(value)
+                  // }
                   handleImageGeneration()
                 }
                 else handleErrorGenerateImageApi(value)
@@ -1231,9 +1283,9 @@ export function PromptForm({
                 else handleErrorImage(value)
 
               } else if (['1', '2', '3', '4'].includes(value)) {
-                const {src, seed} = returnSelectedImage(value)
+                const src = returnSelectedImage(value)
                 console.log(src)
-                setSelectedSeed(seed)
+                setSelectedSeed(value)
                 setSelectedImage(src)
                 setCurrentImageUrl(src)
                 handleSelectedImageSave(value)  
@@ -1244,8 +1296,8 @@ export function PromptForm({
             } else if (currentMode === 'image-Reselect') {
               if (['1', '2', '3', '4'].includes(value)) {
                 handleSelectedImageSave(value)  
-                const {src, seed} = returnSelectedImage(value)
-                setSelectedSeed(seed)
+                const src = returnSelectedImage(value)
+                setSelectedSeed(value)
                 console.log(src)
                 setSelectedImage(src)
                 setCurrentImageUrl(src)

@@ -1,29 +1,49 @@
-import React, { useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { UserTextMessageApi } from './user-text-message-api'
 
 interface UserTextMessageProps {
   message: string
   onCreatedMessage: (createdMessage: string) => void
+  onCommunicationStatus: (success: boolean) => void
 }
 
-const createdMessages = [
-  "삶이 있는 한 희망은 있다. - 키케로",
-  "산다는 것, 그것은 치열한 전투이다. - 로망 로랑",
-  "하루에 3시간을 걸으면 7년 후에 지구를 한바퀴 돌 수 있다. - 사무엘 존슨"
-]
+export function UserTextMessage({ message, onCreatedMessage, onCommunicationStatus }: UserTextMessageProps) {
+  const [createdMessage, setCreatedMessage] = useState<string>('')
+  const [error, setError] = useState<string | null>(null)
 
-export function UserTextMessage({ message, onCreatedMessage }: UserTextMessageProps) {
-  const randomCreatedMessage = useMemo(() => {
-    const msg = createdMessages[Math.floor(Math.random() * createdMessages.length)];
-    onCreatedMessage(msg);
-    return msg;
-  }, [onCreatedMessage]);
+  useEffect(() => {
+    const fetchCreatedMessage = async () => {
+      try {
+        const result = await UserTextMessageApi(message)
+        if (result.isValid && typeof result.data === 'string') {
+          setCreatedMessage(result.data)
+          onCreatedMessage(result.data)
+          onCommunicationStatus(true)
+        } else {
+          setError(typeof result.error === 'string' ? result.error : '알 수 없는 오류가 발생했습니다.')
+          onCommunicationStatus(false)
+        }
+      } catch (error) {
+        setError('통신 중 오류가 발생했습니다.')
+        onCommunicationStatus(false)
+      }
+    }
+
+    fetchCreatedMessage()
+  }, [message, onCreatedMessage, onCommunicationStatus])
 
   return (
     <div className="bg-blue-100 p-4 rounded-md">
       <p className="font-medium text-black">사용자 메시지:</p>
       <p className="text-black mb-2">{message}</p>
-      <p className="text-gray-600 italic mb-4">{randomCreatedMessage}</p>
+      {error ? (
+        <p className="text-red-500 mb-4">에러: {error}</p>
+      ) : createdMessage ? (
+        <p className="text-gray-600 italic mb-4">{createdMessage}</p>
+      ) : (
+        <p className="text-gray-400 mb-4">메시지 생성 중...</p>
+      )}
     </div>
   )
 }
