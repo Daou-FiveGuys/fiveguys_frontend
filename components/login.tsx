@@ -14,11 +14,12 @@ import {
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { redirect, useRouter } from 'next/navigation'
-import { setCookie } from 'cookies-next'
 import Link from 'next/link'
 import axios from 'axios'
 
 import { NextApiRequest, NextApiResponse } from 'next'
+import apiClient from '@/services/apiClient'
+import { setCookie } from 'cookies-next'
 
 export default function LoginForm() {
   const [email, setEmail] = useState('')
@@ -41,18 +42,15 @@ export default function LoginForm() {
         password: password
       }
 
-      await axios
-        .post(
-          `http://hansung-fiveguys.duckdns.org:8080/api/v1/oauth`,
-          loginData,
-          {
-            withCredentials: true
-          }
-        )
+      await apiClient
+        .post(`/oauth`, loginData, {
+          withCredentials: true
+        })
         .then(res => {
           if (res.data.code === 200) {
             const accessToken = res.data.data.accessToken
             if (accessToken) {
+              console.log(accessToken)
               setCookie('access_token', accessToken, {
                 httpOnly: false,
                 secure: process.env.NODE_ENV === 'production',
@@ -67,18 +65,6 @@ export default function LoginForm() {
         })
     } catch (err) {
       setError('잠시 뒤에 다시 시도하세요.')
-    }
-  }
-
-  const handleSocialLogin = async (provider: string) => {
-    try {
-      console.log(`${provider} 로그인 시도`)
-      // 실제 구현에서는 이 부분에 소셜 로그인 로직을 추가해야 합니다.
-      // 예시로 알림창을 띄우고 홈페이지로 리다이렉션하겠습니다.
-      alert(`${provider} 로그인 성공!`)
-      router.push('/')
-    } catch (err) {
-      setError(`${provider} 로그인에 실패했습니다. 다시 시도해주세요.`)
     }
   }
 
