@@ -22,7 +22,7 @@ export interface ChatProps extends React.ComponentProps<'div'> {
 export function Chat({ id, className, session, missingKeys }: ChatProps) {
   const router = useRouter()
   const path = usePathname()
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState<string>('')
   const [messages] = useUIState()
   const [aiState] = useAIState()
 
@@ -62,7 +62,7 @@ export function Chat({ id, className, session, missingKeys }: ChatProps) {
           ref={scrollRef}
       >
         <div
-            className={cn('pb-[200px] pt-4 md:pt-10', className)}
+            className={cn('pb-[250px] pt-4 md:pt-10', className)}
             ref={messagesRef}
         >
           {messages.length ? (

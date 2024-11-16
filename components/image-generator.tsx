@@ -34,7 +34,7 @@ export async function showExistingImages(prompt?: string, seed?: string): Promis
   try {
     const result = seed ? await reFetchImageSources(seed, prompt || '') : await fetchImageSources(prompt || '');
     if ('error' in result) {
-      console.error(result.error);
+      console.error(result.error)
       return false;
     }
     // 성공적으로 이미지를 받아온 경우 initialImages 업데이트

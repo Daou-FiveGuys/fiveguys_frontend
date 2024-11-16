@@ -1,29 +1,51 @@
-import NextAuth from 'next-auth'
-import { authConfig } from './auth.config'
-import {NextRequest, NextResponse} from "next/server";
+import { NextRequest, NextResponse } from 'next/server'
+import { getUserRole, isTokenExpired } from './utils/token'
 
-export default NextAuth(authConfig).auth
+// 경로 매칭 유틸리티 함수
+const matchUrl = (request: NextRequest, paths: string[]): boolean => {
+  return paths.some(path => request.nextUrl.pathname.startsWith(path))
+}
 
-// This function can be marked `async` if using `await` inside
-export function middleware(request: NextRequest) {
-  const session = request.cookies.get('user_session')
+// 미들웨어
+export async function middleware(request: NextRequest): Promise<NextResponse> {
+  const PUBLIC_PATHS = ['/login', '/signup']
+  const BASE_URL = 'http://hansung-fiveguys.duckdns.org'
 
-  // List of paths that don't require authentication
-  const publicPaths = ['/login', '/register']
+  const access_token = request.cookies.get('access_token')
 
-  // Check if the requested path is public
-  const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path))
-
-  if (!session && !isPublicPath) {
-    // Redirect to login page if there's no session and the path is not public
-    return NextResponse.redirect(new URL('/login', request.url))
+  // 공개 경로 요청인지 확인
+  if (!access_token) {
+    if (!matchUrl(request, PUBLIC_PATHS)) {
+      return NextResponse.redirect(new URL(`${BASE_URL}/login`, request.url))
+    }
+    return NextResponse.next() // 공개 경로는 그대로 진행
   }
 
-  // Continue with the request if there's a session or if it's a public path
+  try {
+    const isExpired = isTokenExpired(access_token.value)
+    const role = getUserRole(access_token.value)
+
+    if (isExpired) {
+      // 토큰 만료: `/api/refresh-token`으로 리다이렉트
+      return NextResponse.redirect(
+        new URL(`${BASE_URL}/api/refresh-token`, request.url)
+      )
+    }
+    if (role === 'ROLE_VISITOR' && !matchUrl(request, ['/verify']))
+      return NextResponse.redirect(new URL(`${BASE_URL}/verify`, request.url))
+    if (
+      role === 'ROLE_USER' &&
+      matchUrl(request, ['/login', '/signup', '/verify'])
+    )
+      return NextResponse.redirect(new URL(`${BASE_URL}/`, request.url))
+  } catch (error) {
+    console.error('Error decoding token:', error)
+    return NextResponse.redirect(new URL(`${BASE_URL}/login`, request.url))
+  }
+
   return NextResponse.next()
 }
 
-// See "Matching Paths" below to learn more
 export const config = {
-  matcher: '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  matcher: '/((?!api|_next/static|_next/image|favicon.ico).*)'
 }

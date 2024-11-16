@@ -25,6 +25,7 @@ export async function fetchImageSources(prompt: string): Promise<ImageSource[] |
 
     console.log(response.data);
 
+    
     if (response.data && Array.isArray(response.data) && response.data.length > 0) {
       return response.data.map((item, index) => ({
         id: (index + 1).toString(),
