@@ -1,70 +1,53 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { redirect, useRouter } from 'next/navigation'
-import Link from 'next/link'
-import axios from 'axios'
-
-import { NextApiRequest, NextApiResponse } from 'next'
-import apiClient from '@/services/apiClient'
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { useRouter } from 'next/navigation'
 import { setCookie } from 'cookies-next'
 
 export default function LoginForm() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setError("")
 
     if (!email || !password) {
-      setError('이메일과 비밀번호를 모두 입력해주세요.')
+      setError("이메일과 비밀번호를 모두 입력해주세요.")
       return
     }
 
     try {
-      const loginData = {
-        email: email, // 실제 이메일과 비밀번호로 변경하세요.
-        password: password
+      if (email === "qwer1234@gmail.com" && password === "Qwer1234@") {
+        console.log("로그인 성공")
+        // Set a session cookie
+        setCookie('user_session', 'logged_in', { maxAge: 60 * 60 * 24 }) // 24 hours
+        // 로그인 성공 시 홈페이지로 리다이렉션
+        router.push('/')
+      } else {
+        throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.")
       }
-
-      await apiClient
-        .post(`/oauth`, loginData, {
-          withCredentials: true
-        })
-        .then(res => {
-          if (res.data.code === 200) {
-            const accessToken = res.data.data.accessToken
-            if (accessToken) {
-              console.log(accessToken)
-              setCookie('access_token', accessToken, {
-                httpOnly: false,
-                secure: process.env.NODE_ENV === 'production',
-                maxAge: 60 * 60,
-                path: '/'
-              })
-            }
-            router.push('/')
-          } else {
-            setError('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.')
-          }
-        })
     } catch (err) {
-      setError('잠시 뒤에 다시 시도하세요.')
+      setError("로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.")
+    }
+  }
+
+  const handleSocialLogin = async (provider: string) => {
+    try {
+      console.log(`${provider} 로그인 시도`)
+      // 실제 구현에서는 이 부분에 소셜 로그인 로직을 추가해야 합니다.
+      // 예시로 알림창을 띄우고 홈페이지로 리다이렉션하겠습니다.
+      alert(`${provider} 로그인 성공!`)
+      router.push('/')
+    } catch (err) {
+      setError(`${provider} 로그인에 실패했습니다. 다시 시도해주세요.`)
     }
   }
 
@@ -83,7 +66,7 @@ export default function LoginForm() {
               type="email"
               placeholder="example@example.com"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
@@ -94,25 +77,16 @@ export default function LoginForm() {
               type="password"
               placeholder="********"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
-          {error && (
-            <p className="text-sm text-red-500" role="alert">
-              {error}
-            </p>
-          )}
-          <Button type="submit" className="w-full">
-            로그인
-          </Button>
+          {error && <p className="text-sm text-red-500" role="alert">{error}</p>}
+          <Button type="submit" className="w-full">로그인</Button>
         </form>
 
         <div className="mt-4 text-center">
-          <a
-            href="/forgot-credentials"
-            className="text-sm text-primary hover:underline"
-          >
+          <a href="/forgot-credentials" className="text-sm text-primary hover:underline">
             아이디/비밀번호 찾기
           </a>
         </div>
@@ -120,30 +94,28 @@ export default function LoginForm() {
         <div className="mt-6">
           <Separator className="my-4" />
           <div className="space-y-2">
-            <Link
-              href={`https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI}&scope=https://www.googleapis.com/auth/userinfo.email+profile`}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => handleSocialLogin("Google")}
             >
-              <Button type="button" variant="outline" className="w-full">
-                Google로 로그인
-              </Button>
-            </Link>
-            <div className="m-2"></div>
-            <Link
-              href={`https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${process.env.NEXT_PUBLIC_NAVER_CLIENT_ID}&state=${process.env.NEXT_PUBLIC_NAVER_CLIENT_STATE}&redirect_uri=${process.env.NEXT_PUBLIC_NAVER_REDIRECT_URI}`}
+              Google로 로그인
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => handleSocialLogin("Naver")}
             >
-              <Button type="button" variant="outline" className="w-full">
-                Naver로 로그인
-              </Button>
-            </Link>
+              Naver로 로그인
+            </Button>
           </div>
         </div>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-gray-500">
-          계정이 없으신가요?{' '}
-          <a href="/signup" className="text-primary hover:underline">
-            회원가입
-          </a>
+          계정이 없으신가요? <a href="/signup" className="text-primary hover:underline">회원가입</a>
         </p>
       </CardFooter>
     </Card>
