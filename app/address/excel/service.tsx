@@ -1,17 +1,11 @@
+import apiClient from "@/services/apiClient";
 import { Folder2, Group2, Contact2, CommonResponse } from "./entity";
 
 // 폴더 데이터를 가져오는 함수
 export const getFolder2Data = async (userId: Number): Promise<Folder2[]> => {
     try {
-        const response = await fetch(`http://localhost:8080/api/v1/folder2/user/${userId}`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
-
-        if (!response.ok) throw new Error(`API 요청 실패: ${response.status}`);
-
-        const result: CommonResponse<Folder2[]> = await response.json();
-        return Array.isArray(result.data) ? result.data : [];
+        const response = await apiClient.get<CommonResponse<Folder2[]>>(`/folder2/user/${userId}`);
+        return Array.isArray(response.data.data) ? response.data.data : [];
     } catch (error) {
         console.error("폴더 데이터 로드 오류:", error);
         return [];
@@ -20,37 +14,23 @@ export const getFolder2Data = async (userId: Number): Promise<Folder2[]> => {
 
 // 그룹 데이터를 가져오는 함수
 export const getGroup2Data = async (folder2Id: Number): Promise<Folder2[]> => {
-  try {
-      const response = await fetch(`http://localhost:8080/api/v1/folder2/${folder2Id}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-      });
-
-      if (!response.ok) throw new Error(`API 요청 실패: ${response.status}`);
-
-      const result: CommonResponse<Folder2[]> = await response.json();
-      return Array.isArray(result.data) ? result.data : [];
-  } catch (error) {
-      console.error("그룹 데이터 로드 오류:", error);
-      return [];
-  }
+    try {
+        const response = await apiClient.get<CommonResponse<Folder2[]>>(`/folder2/${folder2Id}`);
+        return Array.isArray(response.data.data) ? response.data.data : [];
+    } catch (error) {
+        console.error("그룹 데이터 로드 오류:", error);
+        return [];
+    }
 };
 
 // 연락처 데이터를 가져오는 함수
 export const getContact2Data = async (group2Id: Number): Promise<Contact2[]> => {
     try {
-        const response = await fetch(`http://localhost:8080/api/v1/group2/${group2Id}`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
+        const response = await apiClient.get<CommonResponse<Group2>>(`/group2/${group2Id}`);
+        const group2 = response.data.data;
 
-        if (!response.ok) throw new Error(`API 요청 실패: ${response.status}`);
-
-        const result: CommonResponse<Group2> = await response.json();
-
-        // Group2 데이터에서 연락처 데이터를 추출하여 반환
-        if (result.data && result.data.contact2s) {
-            return result.data.contact2s;
+        if (group2 && group2.contact2s) {
+            return group2.contact2s;
         }
 
         console.warn("No contacts found for the specified group.");
@@ -67,19 +47,13 @@ export const patchGroup2Data = async (group2Id: Number, contact2s: Array<Contact
         // 요청 JSON 출력 (디버깅용)
         console.log("Request JSON:", JSON.stringify(contact2s, null, 2));
 
-        const response = await fetch(`http://localhost:8080/api/v1/group2/${group2Id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(contact2s), // List<Contact2>로 요청 바디를 전달
-        });
+        const response = await apiClient.patch<CommonResponse<Group2>>(`/group2/${group2Id}`, contact2s);
 
-        if (!response.ok) throw new Error(`API 요청 실패: ${response.status}`);
+        const updatedGroup = response.data.data;
 
-        const result: CommonResponse<Group2> = await response.json();
-
-        if (result.data && result.data.contact2s) {
-            console.log("Updated contacts:", result.data.contact2s);
-            return result.data.contact2s;
+        if (updatedGroup && updatedGroup.contact2s) {
+            console.log("Updated contacts:", updatedGroup.contact2s);
+            return updatedGroup.contact2s;
         }
 
         console.warn("No contacts found for the specified group.");
