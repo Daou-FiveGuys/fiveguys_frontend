@@ -16,7 +16,7 @@ export async function deductTokens() {
   const errors = []
   try {
     // const currentBalance = await getTokenBalance()
-    const currentBalance = 100
+    const currentBalance = 10000
     if (currentBalance >= 10) {
       const newBalance = currentBalance - 10
       const response = await axios.post('/api/updateTokenBalance', { newBalance }) // 실제 API 엔드포인트로 변경해야 합니다
