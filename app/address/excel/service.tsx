@@ -60,3 +60,32 @@ export const getContact2Data = async (group2Id: Number): Promise<Contact2[]> => 
         return [];
     }
 };
+
+// 엑셀에 있는 연락처 정보를 저장하는 함수
+export const patchGroup2Data = async (group2Id: Number, contact2s: Array<Contact2>) => {
+    try {
+        // 요청 JSON 출력 (디버깅용)
+        console.log("Request JSON:", JSON.stringify(contact2s, null, 2));
+
+        const response = await fetch(`http://localhost:8080/api/v1/group2/${group2Id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(contact2s), // List<Contact2>로 요청 바디를 전달
+        });
+
+        if (!response.ok) throw new Error(`API 요청 실패: ${response.status}`);
+
+        const result: CommonResponse<Group2> = await response.json();
+
+        if (result.data && result.data.contact2s) {
+            console.log("Updated contacts:", result.data.contact2s);
+            return result.data.contact2s;
+        }
+
+        console.warn("No contacts found for the specified group.");
+        return [];
+    } catch (error) {
+        console.error("연락처 데이터 로드 오류:", error);
+        return [];
+    }
+};

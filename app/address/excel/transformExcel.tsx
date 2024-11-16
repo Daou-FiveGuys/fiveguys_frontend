@@ -17,7 +17,7 @@ export const transformContactsToExcelData = (contacts: Contact2[]): string[][] =
 
     // 50행 고정
     while (transformedData.length < 50) {
-        transformedData.push(Array(11).fill(""));
+        transformedData.push(Array(10).fill(""));
     }
 
     return transformedData;
