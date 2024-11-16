@@ -257,7 +257,7 @@ export function PromptForm({
           }
         ])
       }
-    } else if (currentMode === 'send-message-recipient' || currentMode === 'send-message-group') {
+    } else if (currentMode === 'send-message-recipient') {
       setMessageRecipient(input)
       setMessages(currentMessages => [
         ...currentMessages,
@@ -269,22 +269,53 @@ export function PromptForm({
           id: nanoid(),
           display: <SendingMessage 
             recipient={input} 
-            isGroup={currentMode === 'send-message-group'}
+            isGroup={false}
             lastCreatedMessage={lastCreatedMessage}
             currentImageUrl={currentImageUrl}
-            onAddPhoneNumber={(phoneNumber) => {
-              setMessages(currentMessages => [
-                ...currentMessages,
-                {
-                  id: nanoid(),
-                  display: "새로운 전화번호를 추가합니다. 전화번호를 입력해주세요."
-                }
-              ])
-              setMessageRecipient(phoneNumber)
-              setCurrentMode('phone')
-            }
-          
-          }
+          //   onAddPhoneNumber={(phoneNumber) => {
+          //     setMessages(currentMessages => [
+          //       ...currentMessages,
+          //       {
+          //         id: nanoid(),
+          //         display: "새로운 전화번호를 추가합니다. 전화번호를 입력해주세요."
+          //       }
+          //     ])
+          //     setMessageRecipient(phoneNumber)
+          //     setCurrentMode('phone')
+          //   }
+          // }
+          />
+        }
+      ])
+      setCurrentMode('normal')
+    }
+    else if(currentMode === 'send-message-group'){
+      setMessageRecipient(input)
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: <UserMessage>{input}</UserMessage>
+        },
+        {
+          id: nanoid(),
+          display: <SendingMessage 
+            recipient={input} 
+            isGroup={true}
+            lastCreatedMessage={lastCreatedMessage}
+            currentImageUrl={currentImageUrl}
+          //   onAddPhoneNumber={(phoneNumber) => {
+          //     setMessages(currentMessages => [
+          //       ...currentMessages,
+          //       {
+          //         id: nanoid(),
+          //         display: "새로운 전화번호를 추가합니다. 전화번호를 입력해주세요."
+          //       }
+          //     ])
+          //     setMessageRecipient(phoneNumber)
+          //     setCurrentMode('phone')
+          //   }
+          // }
           />
         }
       ])

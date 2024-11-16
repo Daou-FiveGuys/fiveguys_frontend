@@ -16,9 +16,9 @@ export function UserTextMessage({ message, onCreatedMessage, onCommunicationStat
     const fetchCreatedMessage = async () => {
       try {
         const result = await UserTextMessageApi(message)
-        if (result.isValid && typeof result.data === 'string') {
-          setCreatedMessage(result.data)
-          onCreatedMessage(result.data)
+        if (result.isValid) {
+          setCreatedMessage(result.text)
+          onCreatedMessage(result.text)
           onCommunicationStatus(true)
         } else {
           setError(typeof result.error === 'string' ? result.error : '알 수 없는 오류가 발생했습니다.')
