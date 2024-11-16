@@ -9,8 +9,8 @@ interface ImageGeneratorProps {
 }
 
 interface ImageData {
-  id: string;
-  src: string;
+  requestId: string;
+  url: string;
 }
 
 let initialImages: ImageData[] = [
@@ -34,14 +34,14 @@ export async function showExistingImages(prompt?: string, seed?: string): Promis
   try {
     const result = seed ? await reFetchImageSources(seed, prompt || '') : await fetchImageSources(prompt || '');
     if ('error' in result) {
-      console.error(result.error)
+      console.error(result.error);
       return false;
     }
     // 성공적으로 이미지를 받아온 경우 initialImages 업데이트
     if (Array.isArray(result)) {
       initialImages = result.map((image, index) => ({
-        id: (index + 1).toString(),
-        src: image.src
+        requestId: image.requestId,
+        url: image.url
       }));
     }
     return true;
@@ -88,14 +88,14 @@ export function ImageGenerator({ selectedImage, createdMessage, seed }: ImageGen
   }
 
   if (selectedImage) {
-    const image = images.find(img => img.id === selectedImage)
+    const image = images.find(img => img.url === selectedImage)
     if (image) {
       return (
         <div className="mt-4">
           <h3 className="text-lg font-bold mb-2 text-black">선택된 이미지</h3>
           <img 
-            src={image.src} 
-            alt={`선택된 이미지 ${image.id}`} 
+            src={image.url} 
+            alt={`선택된 이미지 ${image.requestId}`} 
             className="w-full h-auto rounded-md mb-2"
           />
           {createdMessage && (
@@ -111,14 +111,14 @@ export function ImageGenerator({ selectedImage, createdMessage, seed }: ImageGen
       <h3 className="text-lg font-bold mb-2 text-black">생성된 이미지</h3>
       <div className="grid grid-cols-2 gap-2">
         {images.map((image) => (
-          <div key={image.id} className="relative">
+          <div key={image.requestId} className="relative">
             <img 
-              src={image.src} 
-              alt={`생성된 이미지 ${image.id}`} 
+              src={image.url} 
+              alt={`생성된 이미지 ${image.requestId}`} 
               className="w-full h-auto rounded-md"
             />
             <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded">
-              {image.id}
+              {image.requestId}
             </div>
           </div>
         ))}
@@ -131,7 +131,7 @@ export function ImageGenerator({ selectedImage, createdMessage, seed }: ImageGen
 }
 
 export function returnSelectedImage(value: string) {
-  const image = initialImages.find(img => img.id === value);
+  const image = initialImages.find(img => img.requestId === value);
   console.log(image)
-  return image ? image.src :'';
+  return image ? image.url :'';
 }

@@ -1,4 +1,3 @@
-
 import axios, { AxiosError } from 'axios';
 
 export const UserTextMessageApi = async (message: string) => {
@@ -19,7 +18,7 @@ export const UserTextMessageApi = async (message: string) => {
     console.log('Response:', response.data);
     return {
       isValid: isValid === 0,
-      data: typeof response.data === 'string' ? response.data : JSON.stringify(response.data)
+      text: response.data.text
     };
   } catch (error) {
     isValid++;
