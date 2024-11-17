@@ -7,27 +7,25 @@ import { Chat } from '@/components/chat'
 import { AI } from '@/lib/chat/actions'
 import { Session } from '@/lib/types'
 
-interface PageParams {
-  id: string
+export interface ChatPageProps {
+  params: {
+    id: string
+  }
 }
 
 export async function generateMetadata({
   params
-}: {
-  params: PageParams
-}): Promise<Metadata> {
+}: ChatPageProps): Promise<Metadata> {
   const session = await auth()
 
-  if (!session?.user || session?.user?.id === undefined) {
+  if (!session?.user || session.user === undefined || session.user.id === undefined) {
     return {}
   }
 
   const chat = await getChat(params.id, session.user.id)
 
   if (!chat || 'error' in chat) {
-    return {
-      title: 'Chat'
-    }
+    redirect('/')
   } else {
     return {
       title: chat?.title.toString().slice(0, 50) ?? 'Chat'
@@ -35,11 +33,7 @@ export async function generateMetadata({
   }
 }
 
-export default async function ChatPage({
-  params
-}: {
-  params: PageParams
-}) {
+export default async function ChatPage({ params }: ChatPageProps) {
   const session = (await auth()) as Session
   const missingKeys = await getMissingKeys()
 
