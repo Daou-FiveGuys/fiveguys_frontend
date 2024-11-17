@@ -7,24 +7,22 @@ import { Chat } from '@/components/chat'
 import { AI } from '@/lib/chat/actions'
 import { Session } from '@/lib/types'
 
-export interface ChatPageProps {
-  params: Promise<{ id: string }>
-  searchParams: { [key: string]: string | string[] | undefined }
+interface PageParams {
+  id: string
 }
 
 export async function generateMetadata({
   params
 }: {
-  params: Promise<{ id: string }>
+  params: PageParams
 }): Promise<Metadata> {
-  const { id } = await params
   const session = await auth()
 
   if (!session?.user || session?.user?.id === undefined) {
     return {}
   }
 
-  const chat = await getChat(id, session.user.id)
+  const chat = await getChat(params.id, session.user.id)
 
   if (!chat || 'error' in chat) {
     return {
@@ -37,17 +35,20 @@ export async function generateMetadata({
   }
 }
 
-export default async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+export default async function ChatPage({
+  params
+}: {
+  params: PageParams
+}) {
   const session = (await auth()) as Session
   const missingKeys = await getMissingKeys()
 
   if (!session?.user) {
-    redirect(`/login?next=/chat/${id}`)
+    redirect(`/login?next=/chat/${params.id}`)
   }
 
   const userId = session.user.id as string
-  const chat = await getChat(id, userId)
+  const chat = await getChat(params.id, userId)
 
   if (!chat || 'error' in chat) {
     redirect('/')
