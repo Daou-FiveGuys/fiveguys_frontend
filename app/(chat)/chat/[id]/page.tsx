@@ -11,6 +11,7 @@ export interface ChatPageProps {
   params: {
     id: string
   }
+  searchParams: { [key: string]: string | string[] | undefined }
 }
 
 export async function generateMetadata({
@@ -25,7 +26,9 @@ export async function generateMetadata({
   const chat = await getChat(params.id, session.user.id)
 
   if (!chat || 'error' in chat) {
-    redirect('/')
+    return {
+      title: 'Chat'
+    }
   } else {
     return {
       title: chat?.title.toString().slice(0, 50) ?? 'Chat'
