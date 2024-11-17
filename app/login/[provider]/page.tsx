@@ -7,17 +7,19 @@ import apiClient from '@/services/apiClient'
 import { setCookie } from 'cookies-next'
 
 interface CallBackProps {
-  params: { provider: string }
-  searchParams: {
+  params: Promise<{ provider: string }>
+  searchParams: Promise<{
     code?: string
     state?: string
-  }
+  }>
 }
 
-export default function CallBack({ params, searchParams }: CallBackProps) {
-  const provider = params.provider
-  const code = searchParams.code
-  const state = searchParams.state
+export default async function CallBack({ params, searchParams }: CallBackProps) {
+  const p = await params;
+  const p2 = await searchParams;
+  const provider = p.provider
+  const code = p2.code
+  const state = p2.state
   const router = useRouter()
   const isCalled = useRef(false) // useRef to track if the call has been made
 

@@ -8,9 +8,9 @@ import { AI } from '@/lib/chat/actions'
 import { Session } from '@/lib/types'
 
 export interface ChatPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function generateMetadata({
@@ -22,7 +22,8 @@ export async function generateMetadata({
     return {}
   }
 
-  const chat = await getChat(params.id, session.user.id)
+  const p = await params;
+  const chat = await getChat(p.id, session.user.id)
 
   if (!chat || 'error' in chat) {
     redirect('/')
@@ -37,12 +38,13 @@ export default async function ChatPage({ params }: ChatPageProps) {
   const session = (await auth()) as Session
   const missingKeys = await getMissingKeys()
 
+  const p = await params;
   if (!session?.user) {
-    redirect(`/login?next=/chat/${params.id}`)
+    redirect(`/login?next=/chat/${p.id}`)
   }
 
   const userId = session.user.id as string
-  const chat = await getChat(params.id, userId)
+  const chat = await getChat(p.id, userId)
 
   if (!chat || 'error' in chat) {
     redirect('/')
