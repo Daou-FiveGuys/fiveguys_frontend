@@ -1,103 +1,179 @@
 'use client'
-//그룹이면 샘플데이터에서 그룹 확인 후 전달. 그룹아니면 전화번호 존재 여부 없이 전화번호 전달.
+
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Button } from '@/components/ui/button'
 
 interface SendingMessageProps {
   recipient: string;
   isGroup: boolean;
-  onAddPhoneNumber: (phoneNumber: string) => void;
-  currentImageUrl: string;
   lastCreatedMessage: string;
+  currentImageUrl: string;
 }
 
-export function SendingMessage({ recipient, isGroup, lastCreatedMessage, currentImageUrl, onAddPhoneNumber }: SendingMessageProps) {
-  const [sendingStatus, setSendingStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+interface ApiErrorResponse {
+  error: string;
+}
 
+interface GroupData {
+  name: string;
+  members: string[];
+}
+
+export function SendingMessage({ recipient, isGroup, lastCreatedMessage, currentImageUrl }: SendingMessageProps) {
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState<string>('')
+  const [groupData, setGroupData] = useState<GroupData | null>(null)
+
+  const isValidName = (input: string) => /^[a-zA-Z가-힣\s]+$/.test(input);
   const isValidPhoneNumber = (input: string) => /^\d{11}$/.test(input);
 
-  // 샘플 데이터 생성 (그룹 정보 포함)
-  const sampleData = [
-    { groupName: '가족', name: '홍길동', phone: '01012345678' },
-    { groupName: '가족', name: '김철수', phone: '01087654321' },
-    { groupName: '친구', name: '이영희', phone: '01011112222' },
-    { groupName: '직장', name: '박민수', phone: '01033334444' },
-  ];
-
-  // recipient에 해당하는 전화번호 찾기
-  const phoneNumberToSend = isGroup
-    ? sampleData.find(item => item.groupName === recipient)?.phone || ''
-    : isValidPhoneNumber(recipient) ? recipient : '';
-
   useEffect(() => {
-    const sendMessage = async () => {
-      if (!phoneNumberToSend) {
-        setSendingStatus('error')
-        setErrorMessage('유효한 전화번호가 없습니다.')
+    if (isGroup) {
+      fetchGroupData();
+    } else {
+      sendMessage();
+    }
+  }, []);
+
+  const getGroupData = async (groupId: string): Promise<GroupData> => {
+    try {
+      const response = await axios.get<GroupData | ApiErrorResponse>(
+        `http://localhost:8080/api/v1/group2/${groupId}`,
+        {
+          headers: {
+            'accept': 'application/json'
+          }
+        }
+      );
+
+      if ('error' in response.data) {
+        throw new Error(response.data.error);
+      }
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const apiError = error.response.data as ApiErrorResponse;
+        throw new Error(apiError.error || '그룹 데이터를 가져오는데 실패했습니다.');
+      }
+      throw new Error('그룹 데이터를 가져오는데 실패했습니다.');
+    }
+  };
+  const fetchGroupData = async () => {
+
+    try {
+      const data = await getGroupData(recipient);
+      setGroupData(data);
+      sendMessage();
+    } catch (error) {
+      setStatus('error');
+      setErrorMessage(error instanceof Error ? error.message : '그룹 데이터를 가져오는데 실패했습니다.');
+    }
+  };
+  //그룹 조회 기능 -> sendingMessage
+
+  const sendMessage = async () => {
+    if (isGroup) {
+      if (!groupData) {
+        setStatus('error');
+        setErrorMessage('그룹 데이터가 없습니다.');
+        return;
+      }
+      await sendGroupMessage(groupData.members, lastCreatedMessage);
+    } else {
+      if (!isValidName(recipient) && !isValidPhoneNumber(recipient)) {
+        setStatus('error')
+        setErrorMessage('잘못된 형식입니다. 이름 또는 11자리 전화번호를 입력해주세요.')
         return
       }
-
-      setSendingStatus('sending')
-      try {
-        console.log(lastCreatedMessage)
-        console.log(currentImageUrl)
-        const response = await axios.post('/api/send-message', {
-          recipient: phoneNumberToSend,
-          message: lastCreatedMessage,
-          imageUrl: currentImageUrl
-        })
-        if (response.status === 200) {
-          setSendingStatus('success')
-        } else {
-          throw new Error('메시지 전송에 실패했습니다')
-        }
-      } catch (error) {
-        setSendingStatus('error')
-        setErrorMessage(error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다')
-      }
+      await sendIndividualMessage(recipient, lastCreatedMessage);
     }
-
-    sendMessage()
-  }, [phoneNumberToSend, lastCreatedMessage, currentImageUrl])
-
-  if (sendingStatus === 'sending') {
-    return <div className="mt-2 p-4 bg-gray-100 rounded-md">메시지를 전송 중입니다...</div>
   }
+  // 그룹 -> GroupsendMessageToServer로 전달, 한명 -> OnesendMessageToServer로 전달
 
-  if (sendingStatus === 'error') {
-    return (
-      <div className="mt-2 p-4 bg-red-100 rounded-md">
-        <h3 className="text-lg font-semibold mb-2 text-red-600">메시지 전송 실패</h3>
-        <p>{errorMessage}</p>
-      </div>
-    )
-  }
+  const sendGroupMessage = async (members: string[], message: string) => {
+    setStatus('sending');
+    try {
+      await GroupsendMessageToServer(members.map(member => ({ [member]: {} })), message);
+      setStatus('success');
+    } catch (error) {
+      handleSendError(error);
+    }
+  };
 
-  if (isGroup) {
-    return (
-      <div className="mt-2 p-4 bg-gray-100 rounded-md">
-        <h3 className="text-lg font-semibold mb-2">그룹 메시지 전송 완료</h3>
-        <p><strong>그룹명:</strong> {recipient}</p>
-        <p>그룹 내 연락처로 메시지가 성공적으로 전송되었습니다.</p>
-        {phoneNumberToSend && <p><strong>전송된 전화번호:</strong> {phoneNumberToSend}</p>}
-      </div>
-    )
-  } else {
-    return (
-      <div className="mt-2 p-4 bg-gray-100 rounded-md">
-        <h3 className="text-lg font-semibold mb-2">메시지 전송 완료</h3>
-        <p><strong>수신자:</strong> {recipient}</p>
-        <p>메시지가 성공적으로 전송되었습니다.</p>
-        <h5>{lastCreatedMessage}</h5>
-        {currentImageUrl && <img src={currentImageUrl} alt="전송된 이미지" className="mt-2 max-w-full h-auto" />}
-        {!isValidPhoneNumber(recipient) && (
-          <Button onClick={() => onAddPhoneNumber(recipient)} className="mt-4">
-            전화번호 추가
-          </Button>
-        )}
-      </div>
-    )
-  }
+  const sendIndividualMessage = async (recipient: string, message: string) => {
+    setStatus('sending');
+    try {
+      await OnesendMessageToServer([{ [recipient]: {} }], message);
+      setStatus('success');
+    } catch (error) {
+      handleSendError(error);
+    }
+  };
+
+  const OnesendMessageToServer = async (targets: Array<{ [key: string]: {} }>, content: string) => {
+    const response = await axios.post<ApiErrorResponse>(
+      'http://localhost:8080/api/v1/ppurio/send',
+      {
+        messageType: '',
+        content: content,
+        fromNumber: '',
+        targets: targets,
+        subject: '',
+        filePaths: ['']
+      },
+      {
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response.data;
+  };
+  const GroupsendMessageToServer = async (targets: Array<{ [key: string]: {} }>, content: string) => {
+    const response = await axios.post<ApiErrorResponse>(
+      'http://localhost:8080/api/v1/ppurio/send',
+      {
+        messageType: '',
+        content: content,
+        fromNumber: '',
+        targets: targets,
+        subject: '',
+        filePaths: ['']
+      },
+      {
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response.data;
+  };
+
+  const handleSendError = (error: unknown) => {
+    setStatus('error');
+    if (axios.isAxiosError(error) && error.response) {
+      const apiError = error.response.data as ApiErrorResponse;
+      setErrorMessage(apiError.error || '메시지 전송에 실패했습니다. 다시 시도해주세요.');
+    } else {
+      setErrorMessage('메시지 전송에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  return (
+    <div className="mt-2 p-4 bg-gray-100 rounded-md">
+      <h3 className="text-lg font-semibold mb-2">메시지 전송</h3>
+      <p><strong>{isGroup ? "그룹명" : "수신자"}:</strong> {recipient}</p>
+      {status === 'sending' && <p>메시지 전송 중...</p>}
+      {status === 'success' && (
+        <div>
+          <p className="text-green-600">메시지가 성공적으로 전송되었습니다.</p>
+          <h5 className="mt-2">{lastCreatedMessage}</h5>
+          {currentImageUrl && <img src={currentImageUrl} alt="전송된 이미지" className="mt-2 max-w-full h-auto" />}
+        </div>
+      )}
+      {status === 'error' && <p className="text-red-600">오류: {errorMessage}</p>}
+    </div>
+  )
 }

@@ -28,8 +28,9 @@ jobs:
          chmod 600 key.pem
          ssh -o StrictHostKeyChecking=no -i key.pem $SSH_USER@$SSH_HOST << EOF
            cd fiveguys_frontend/
-           docker system prune -a -f
+           docker system prune -a
+           y
            git pull origin main
            docker-compose down
-           docker-compose up -d --build 
+           docker-compose up -d --build
          EOF

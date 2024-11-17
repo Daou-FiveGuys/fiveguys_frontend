@@ -12,11 +12,11 @@ export default async function EditPage({ params }: EditPageProps) {
 
   if (session) {
     redirect('/')
-  }
+  } 
 
   return (
     <main className="flex flex-col p-4">
-      <ImageEditorForm />
+      <ImageEditorForm imageid={params.imageid}/>
     </main>
   )
 }

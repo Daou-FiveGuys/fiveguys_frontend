@@ -19,7 +19,7 @@ export async function generateMetadata({
 }: ChatPageProps): Promise<Metadata> {
   const session = await auth()
 
-  if (!session?.user || session.user === undefined || session.user.id === undefined) {
+  if (!session?.user) {
     return {}
   }
 

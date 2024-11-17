@@ -1,35 +1,17 @@
-// components/providers.tsx
 'use client'
 
-import { ThemeProvider } from 'next-themes'
-import { Provider } from 'react-redux'
-import { store } from '@/redux/store'
+import * as React from 'react'
+import { ThemeProvider as NextThemesProvider } from 'next-themes'
+import { ThemeProviderProps } from 'next-themes/dist/types'
+import { SidebarProvider } from '@/lib/hooks/use-sidebar'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
-interface ProvidersProps {
-  children: React.ReactNode
-  attribute: string
-  defaultTheme: string
-  enableSystem: boolean
-  disableTransitionOnChange: boolean
-}
-
-export function Providers({
-  children,
-  attribute,
-  defaultTheme,
-  enableSystem,
-  disableTransitionOnChange
-}: ProvidersProps) {
+export function Providers({ children, ...props }: ThemeProviderProps) {
   return (
-    <Provider store={store}>
-      <ThemeProvider
-        attribute={attribute}
-        defaultTheme={defaultTheme}
-        enableSystem={enableSystem}
-        disableTransitionOnChange={disableTransitionOnChange}
-      >
-        {children}
-      </ThemeProvider>
-    </Provider>
+    <NextThemesProvider {...props}>
+      <SidebarProvider>
+        <TooltipProvider>{children}</TooltipProvider>
+      </SidebarProvider>
+    </NextThemesProvider>
   )
 }
