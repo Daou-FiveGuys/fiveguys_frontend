@@ -6,11 +6,12 @@ import { getChat, getMissingKeys } from '@/app/actions'
 import { Chat } from '@/components/chat'
 import { AI } from '@/lib/chat/actions'
 import { Session } from '@/lib/types'
+import { GetServerSideProps } from 'next'
 
 export interface ChatPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function generateMetadata({
@@ -22,7 +23,8 @@ export async function generateMetadata({
     return {}
   }
 
-  const chat = await getChat(params.id, session.user.id)
+  const id = await params;
+  const chat = await getChat(id.id, session.user.id)
 
   if (!chat || 'error' in chat) {
     redirect('/')
@@ -37,12 +39,13 @@ export default async function ChatPage({ params }: ChatPageProps) {
   const session = (await auth()) as Session
   const missingKeys = await getMissingKeys()
 
+  const id = await params;
   if (!session?.user) {
-    redirect(`/login?next=/chat/${params.id}`)
+    redirect(`/login?next=/chat/${id.id}`)
   }
 
   const userId = session.user.id as string
-  const chat = await getChat(params.id, userId)
+  const chat = await getChat(id.id, userId)
 
   if (!chat || 'error' in chat) {
     redirect('/')
