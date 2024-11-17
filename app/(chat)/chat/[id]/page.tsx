@@ -7,10 +7,9 @@ import { Chat } from '@/components/chat'
 import { AI } from '@/lib/chat/actions'
 import { Session } from '@/lib/types'
 
-// params를 Promise로 감싸지 않음, Next.js는 이미 동적으로 처리되므로
 export interface ChatPageProps {
   params: {
-    id: string;
+    id: string
   }
 }
 
@@ -19,7 +18,7 @@ export async function generateMetadata({
 }: ChatPageProps): Promise<Metadata> {
   const session = await auth()
 
-  if (!session?.user || session.user === undefined || session.user.id === undefined) {
+  if (!session?.user || session?.user?.id === undefined) {
     return {}
   }
 
