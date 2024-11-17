@@ -8,11 +8,12 @@ import { AI } from '@/lib/chat/actions'
 import { Session } from '@/lib/types'
 
 export interface ChatPageProps {
-  params: Promise<{
+  params: {
     id: string
-  }>
+  }
 }
 
+// generateMetadata에서 params를 비동기적으로 처리할 필요 없음
 export async function generateMetadata({
   params
 }: ChatPageProps): Promise<Metadata> {
@@ -22,8 +23,7 @@ export async function generateMetadata({
     return {}
   }
 
-  const p = await params;
-  const chat = await getChat(p.id, session.user.id)
+  const chat = await getChat(params.id, session.user.id)
 
   if (!chat || 'error' in chat) {
     redirect('/')
@@ -38,13 +38,12 @@ export default async function ChatPage({ params }: ChatPageProps) {
   const session = (await auth()) as Session
   const missingKeys = await getMissingKeys()
 
-  const p = await params;
   if (!session?.user) {
-    redirect(`/login?next=/chat/${p.id}`)
+    redirect(`/login?next=/chat/${params.id}`)
   }
 
   const userId = session.user.id as string
-  const chat = await getChat(p.id, userId)
+  const chat = await getChat(params.id, userId)
 
   if (!chat || 'error' in chat) {
     redirect('/')
