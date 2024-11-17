@@ -7,13 +7,13 @@ import { Chat } from '@/components/chat'
 import { AI } from '@/lib/chat/actions'
 import { Session } from '@/lib/types'
 
+// params를 Promise로 감싸지 않음, Next.js는 이미 동적으로 처리되므로
 export interface ChatPageProps {
-  params: Promise<{
-    id: string
-  }>
+  params: {
+    id: string;
+  }
 }
 
-// generateMetadata에서 params를 비동기적으로 처리
 export async function generateMetadata({
   params
 }: ChatPageProps): Promise<Metadata> {
@@ -23,8 +23,7 @@ export async function generateMetadata({
     return {}
   }
 
-  const p = await params;  // Promise에서 실제 값 추출
-  const chat = await getChat(p.id, session.user.id)
+  const chat = await getChat(params.id, session.user.id)
 
   if (!chat || 'error' in chat) {
     redirect('/')
@@ -39,13 +38,12 @@ export default async function ChatPage({ params }: ChatPageProps) {
   const session = (await auth()) as Session
   const missingKeys = await getMissingKeys()
 
-  const p = await params;  // Promise에서 실제 값 추출
   if (!session?.user) {
-    redirect(`/login?next=/chat/${p.id}`)
+    redirect(`/login?next=/chat/${params.id}`)
   }
 
   const userId = session.user.id as string
-  const chat = await getChat(p.id, userId)
+  const chat = await getChat(params.id, userId)
 
   if (!chat || 'error' in chat) {
     redirect('/')
