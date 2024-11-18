@@ -12,9 +12,6 @@ import { CustomSelect } from './address-book'; // CustomSelectê°€ address-bookì—
 
 export default function AddressListView({
   addresses,
-  setFolders,
-  folders,
-  currentFolder,
   updateAddress,
   deleteAddress,
   isLoading,
