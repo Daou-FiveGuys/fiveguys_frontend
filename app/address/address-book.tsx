@@ -692,7 +692,7 @@ const updateGroup = (
             topFolder2s={topFolder2s}
             currentGroup2={currentGroup2}
             setCurrentGroup2={setCurrentGroup2}
-            addFolder={addFolder2AndGroup2}
+            addFolder2AndGroup2={addFolder2AndGroup2}
             setFolders={setTopFolder2s}
             isLoading={isLoading}
           />
@@ -713,21 +713,17 @@ const updateGroup = (
           <Breadcrumb>
             {getBreadcrumbPath(currentGroup2).map((folder, index, array) => (
               <BreadcrumbItem key={folder.folderId}>
-                // 의미 없다.
                 <BreadcrumbLink onClick={() => setCurrentGroup2(currentGroup2)}>
                   {folder.name}
                 </BreadcrumbLink>
               <BreadcrumbSeparator />
-              
-              <BreadcrumbItem key={currentGroup2.groupsId}>
-                // 의미 없다.
+              </BreadcrumbItem>
+            ))}
+            <BreadcrumbItem key={currentGroup2.groupsId}>
                 <BreadcrumbLink onClick={() => setCurrentGroup2(currentGroup2)}>
                   {currentGroup2.name}
                 </BreadcrumbLink>
               </BreadcrumbItem>
-
-              </BreadcrumbItem>
-            ))}
           </Breadcrumb>
 
           {/* 검색한 결과가 나올 우측 공간 */}
