@@ -41,7 +41,7 @@ const sampleData: Folder2[] = [
               {
                 "contactId": 1,
                 "name": "contact11",
-                "telNum": "string",
+                "telNum": "01000000000",
                 "var1": "string",
                 "var2": "string",
                 "var3": "string",
@@ -54,7 +54,7 @@ const sampleData: Folder2[] = [
               {
                 "contactId": 2,
                 "name": "contact12",
-                "telNum": "string",
+                "telNum": "01000000001",
                 "var1": "string",
                 "var2": "string",
                 "var3": "string",
@@ -67,7 +67,7 @@ const sampleData: Folder2[] = [
               {
                 "contactId": 3,
                 "name": "contact13",
-                "telNum": "string",
+                "telNum": "01000000002",
                 "var1": "string",
                 "var2": "string",
                 "var3": "string",
@@ -86,7 +86,7 @@ const sampleData: Folder2[] = [
               {
                 "contactId": 4,
                 "name": "contact21",
-                "telNum": "string",
+                "telNum": "01000000003",
                 "var1": "string",
                 "var2": "string",
                 "var3": "string",
@@ -99,7 +99,7 @@ const sampleData: Folder2[] = [
               {
                 "contactId": 5,
                 "name": "contact22",
-                "telNum": "string",
+                "telNum": "01000000004",
                 "var1": "string",
                 "var2": "string",
                 "var3": "string",
@@ -220,17 +220,6 @@ const sampleData: Folder2[] = [
       }
     ]
 
-    /**
-     * 드롭다운 방식 셀렉트 박스 컴포넌트이다.
-     * 
-     * 버튼을 누르면, 열린다. (Q. 뭐가 열리는지?)
-     * 폴더 내부 정보, 확장 축소 기능을 하는 컴포넌트로 추측된다.
-     * @param value // 모르겠음
-     * @param onChange // 모르겠음
-     * @param option // 모르겠음
-     * @param className // 모르겠음
-     * @returns 
-     */
 export const CustomSelect = ({
   value,
   onChange,
@@ -301,47 +290,38 @@ export default function AddressBook() {
    */
   const handleSearch = useCallback(() => {
     const results: SearchResult[] = [];
-
+  
     // 1. 폴더 계층에서 모든 루프를 발생시킨다.
     topFolder2s.forEach((folder2) => {
       // 2. 그룹 계층에서 모든 루프를 발생시킨다.
-        folder2.group2s.forEach((group2) => {
-          // 3. 그룹 내 연락처에서 동일한 속성 정보가 존재한다면, 포함한다.
-          const matchedContacts = group2.contact2s.filter((contact2) => {
-            // 4. 검색 필터에 맞는 연락처 정보에서만 조회한다.
-            if (searchFilter === 'name' || searchFilter === 'both') {
-              // 5. (정확도 상승을 위함 - 소문자로 변환했을 때) contact2 안에 해당 검색어의 문자가 포함되는 경우 참
-              if (contact2.name.toLowerCase().includes(searchTerm.toLowerCase())) return true;
-            }
-            // 4,5. 동일
-            if (searchFilter === 'phone' || searchFilter === 'both') {
-              if (contact2.telNum.includes(searchTerm)) return true;
-            }
-            return false;
-          });
-
-          // 5.에서 true가 반환된 경우에만 results에 해당 정보를 push
-          if (matchedContacts.length > 0) {
-              results.push({
-                  folder2,
-                  group2,
-                  contact2s: matchedContacts,
-              });
+      folder2.group2s.forEach((group2) => {
+        // 3. 그룹 내 연락처에서 동일한 속성 정보가 존재한다면, 포함한다.
+        const matchedContacts = group2.contact2s.filter((contact2) => {
+          // 4. 검색 필터에 맞는 연락처 정보에서만 조회한다.
+          if (searchFilter === 'name' || searchFilter === 'both') {
+            if (contact2.name.toLowerCase().includes(searchTerm.toLowerCase())) return true;
           }
+          if (searchFilter === 'phone' || searchFilter === 'both') {
+            if (contact2.telNum.includes(searchTerm)) return true;
+          }
+          return false;
         });
+  
+        // 5.에서 true가 반환된 경우에만 results에 해당 정보를 push
+        if (matchedContacts.length > 0) {
+          results.push({
+            folder2,
+            group2,
+            contact2s: matchedContacts,
+          });
+        }
+      });
     });
-
+  
     // 6. 새로운 객체를 저장한다.
     setSearchResults(results);
-
-    /**
-     * 반복적으로 실행되어야 하는 경우
-     * 1. 검색어가 바뀐 경우
-     * 2. 검색 필터 [이름, 전화번호, 모두] 중 하나로 변경된 경우
-     * 3. 선택된 폴더 정보가 변경된 경우
-     */
   }, [searchTerm, searchFilter, topFolder2s]);
-
+  
   /**
    * 모든 검색어 정보를 초기화하는 핸들러이다.
    */
@@ -839,17 +819,23 @@ function SearchResultsView({
   deleteAddress,
   isLoading,
 }: any) {
+  if (!searchResults || searchResults.length === 0) {
+    return <p>검색 결과가 없습니다.</p>;
+  }
+
   return (
     <div>
       {searchResults.map((result: any, index: number) => (
-        <div key={result.folder.folderId || index} className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">{result.folder.name}</h3>
+        <div key={result.folder?.folderId || index} className="mb-6">
+          <h3 className="text-lg font-semibold mb-2">
+            {result.folder?.name || '폴더 이름 없음'}
+          </h3>
           <AddressListView
-            key={`address-list-${result.folder.folderId || index}`} // 고유 key 추가
-            addresses={result.addresses}
+            key={`address-list-${result.folder?.folderId || index}`}
+            addresses={result.contact2s || []} // contact2s가 없으면 빈 배열로 처리
             setFolders={setFolders}
             folders={folders}
-            currentFolder={result.folder}
+            currentFolder={result.folder || {}}
             setCurrentFolder={setCurrentFolder}
             updateAddress={updateAddress}
             deleteAddress={deleteAddress}

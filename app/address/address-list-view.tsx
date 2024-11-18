@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Contact2 } from './entity';
-import { CustomSelect } from './address-book'; // CustomSelect가 address-book에 있는 경우 수정
+import { CustomSelect } from './address-book';
 
 export default function AddressListView({
   addresses,
@@ -26,7 +26,7 @@ export default function AddressListView({
     if (sortOrder === 'name') {
       return a.name.localeCompare(b.name);
     } else {
-      return a.phoneNumber.localeCompare(b.phoneNumber);
+      return a.telNum.localeCompare(b.phoneNumber);
     }
   });
 
@@ -41,7 +41,7 @@ export default function AddressListView({
     if (selectedAddresses.length === paginatedAddresses.length) {
       setSelectedAddresses([]);
     } else {
-      setSelectedAddresses(paginatedAddresses.map((a) => a.id));
+      setSelectedAddresses(paginatedAddresses.map((a) => a.contactId));
     }
   };
 
@@ -80,7 +80,7 @@ export default function AddressListView({
       <AnimatePresence>
         {paginatedAddresses.map((address) => (
           <motion.div
-            key={address.id}
+            key={address.contactId}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -90,13 +90,13 @@ export default function AddressListView({
             <div className="w-8 h-8 flex items-center justify-center">
               <input
                 type="checkbox"
-                checked={selectedAddresses.includes(address.id)}
-                onChange={() => toggleSelect(address.id)}
+                checked={selectedAddresses.includes(address.contactId)}
+                onChange={() => toggleSelect(address.contactId)}
                 className="rounded text-blue-500 focus:ring-blue-500"
               />
             </div>
             <span className="flex-grow-0 w-1/3">{address.name}</span>
-            <span className="w-1/3">{address.phoneNumber}</span>
+            <span className="w-1/3">{address.telNum}</span>
             <div className="w-24 flex space-x-2">
               <Button
                 variant="ghost"
