@@ -4,15 +4,16 @@ import {Button} from "@/components/ui/button";
 import {ChevronDown, ChevronUp, Edit, FolderPlus, Trash2} from "lucide-react";
 import {Input} from "@/components/ui/input";
 import {CustomSelect} from "@/app/address/address-book";
-import {AddressEntry} from "@/app/address/entity";
+import {Contact2, Group2, Folder2} from "@/app/address/entity";
 
-type Folder = {
-    id: string
-    name: string
-    subFolders: Folder[]
-    addresses: AddressEntry[]
-}
-
+/**
+ * 좌측에 나타나는 폴더 재귀 정보를 보여주는 컴포넌트
+ * 
+ * 업데이트 시 폴더와 그룹정보만 나타난다.
+ * 
+ * @param param 
+ * @returns 
+ */
 function FolderTree({ folders, currentFolder, setCurrentFolder, addFolder, setFolders, isLoading }: { folders: any; currentFolder: any; setCurrentFolder: any; addFolder: any; setFolders: any; isLoading: boolean }) {
     return (
         <div className="space-y-4">
@@ -21,7 +22,7 @@ function FolderTree({ folders, currentFolder, setCurrentFolder, addFolder, setFo
             </div>
             {folders.map((folder : any) => (
                 <FolderItem
-                    key={folder.id}
+                    key={folder.folderId}
                     folder={folder}
                     currentFolder={currentFolder}
                     setCurrentFolder={setCurrentFolder}
@@ -34,18 +35,15 @@ function FolderTree({ folders, currentFolder, setCurrentFolder, addFolder, setFo
     )
 }
 
-function FolderItem({ folder, currentFolder, setCurrentFolder, addFolder, setFolders, folders }:{ folder : any; currentFolder : any; setCurrentFolder : any; addFolder : any; setFolders : any; folders : any}) {
+function FolderItem({ folder, currentFolder, setCurrentFolder, addFolder, setFolders, folders }:{ folder : Folder2; currentFolder : any; setCurrentFolder : any; addFolder : any; setFolders : any; folders : any}) {
     const [isExpanded, setIsExpanded] = useState(false)
     const [folderSortOrder, setFolderSortOrder] = useState<'asc' | 'desc'>('asc')
 
     const editFolder = (newName: string) => {
-        const updateFolderRecursively = (folders: Folder[]): Folder[] => {
+        const updateFolderRecursively = (folders: Folder2[]): Folder2[] => {
             return folders.map(f => {
-                if (f.id === folder.id) {
+                if (f.folderId === folder.folderId) {
                     return { ...f, name: newName };
-                }
-                if (f.subFolders.length > 0) {
-                    return { ...f, subFolders: updateFolderRecursively(f.subFolders) };
                 }
                 return f;
             });
@@ -55,39 +53,36 @@ function FolderItem({ folder, currentFolder, setCurrentFolder, addFolder, setFol
 
     const deleteFolder = () => {
         if (window.confirm('해당 폴더를 삭제하시겠습니까?\n삭제시 취소 및 복구가 불가합니다.')) {
-            const deleteFolderRecursively = (folders: Folder[]): Folder[] => {
+            const deleteFolderRecursively = (folders: Folder2[]): Folder2[] => {
                 return folders.filter(f => {
-                    if (f.id === folder.id) {
+                    if (f.folderId === folder.folderId) {
                         return false;
-                    }
-                    if (f.subFolders.length > 0) {
-                        f.subFolders = deleteFolderRecursively(f.subFolders);
                     }
                     return true;
                 });
             };
             setFolders(deleteFolderRecursively(folders));
-            if (currentFolder.id === folder.id) {
+            if (currentFolder.folderId === folder.folderId) {
                 setCurrentFolder(folders[0]);
             }
         }
     }
 
-    const sortedSubFolders = [...folder.subFolders].sort((a, b) => {
+    const sortedSubFolders = [...folder.group2s].sort((a, b) => {
         return folderSortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
     })
 
     return (
         <div>
-            <div className={`flex items-center space-x-2 py-2 px-3 rounded-lg ${currentFolder.id === folder.id ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'} transition-colors duration-200`}>
+            <div className={`flex items-center space-x-2 py-2 px-3 rounded-lg ${currentFolder.folderId === folder.folderId ? 'bg-blue-100 dark:bg-blue-900' : 'hover:bg-gray-100 dark:hover:bg-gray-700'} transition-colors duration-200`}>
                 <Button variant="ghost" size="icon" onClick={() => setIsExpanded(!isExpanded)} className="text-gray-500">
                     {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
                 </Button>
                 <span
-                    className={`flex-grow cursor-pointer ${currentFolder.id === folder.id ? 'font-bold' : ''}`}
+                    className={`flex-grow cursor-pointer ${currentFolder.folderId === folder.folderId ? 'font-bold' : ''}`}
                     onClick={() => setCurrentFolder(folder)}
                 >
-          {folder.name} ({folder.subFolders.length + folder.addresses.length})
+          {folder.name} ({folder.group2s.length + folder.group2s[0].contact2s.length})
         </span>
                 <Button variant="ghost" size="icon" onClick={() => {
                     const newName = prompt('새 폴더 이름을 입력하세요:', folder.name);
@@ -120,18 +115,18 @@ function FolderItem({ folder, currentFolder, setCurrentFolder, addFolder, setFol
                         </div>
                         <AddFolderForm addFolder={(name : any) => {
                             const newFolder = {
-                                id: Date.now().toString(),
+                                folderId: Date.now().toString(),
                                 name: name,
                                 subFolders: [],
                                 addresses: []
                             };
-                            const addFolderRecursively = (folders: Folder[]): Folder[] => {
+                            const addFolderRecursively = (folders: Folder2[]): Folder2[] => {
                                 return folders.map(f => {
-                                    if (f.id === folder.id) {
-                                        return { ...f, subFolders: [...f.subFolders, newFolder] };
+                                    if (f.folderId === folder.folderId) {
+                                        return { ...f, subFolders: [...f.group2s[0].contact2s, newFolder] };
                                     }
-                                    if (f.subFolders.length > 0) {
-                                        return { ...f, subFolders: addFolderRecursively(f.subFolders) };
+                                    if (f.group2s[0].contact2s.length > 0) {
+                                        return { ...f, subFolders: addFolderRecursively([f]) };
                                     }
                                     return f;
                                 });
@@ -140,8 +135,14 @@ function FolderItem({ folder, currentFolder, setCurrentFolder, addFolder, setFol
                         }} />
                         {sortedSubFolders.map(subFolder => (
                             <FolderItem
-                                key={subFolder.id}
-                                folder={subFolder}
+                                key={subFolder.groupsId}
+                                folder={
+                                    {
+                                        folderId: Date.now(),
+                                        name: "test",
+                                        group2s:[]
+                                    }
+                                }
                                 currentFolder={currentFolder}
                                 setCurrentFolder={setCurrentFolder}
                                 addFolder={addFolder}
@@ -187,4 +188,3 @@ function AddFolderForm({ addFolder }: any) {
 }
 
 export { FolderTree, FolderItem, AddFolderForm };
-export type { Folder };

@@ -1,5 +1,3 @@
-// address-list-view.tsx
-
 'use client';
 
 import React, { useState } from 'react';
@@ -7,7 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AddressEntry } from './entity';
+import { Contact2 } from './entity';
 import { CustomSelect } from './address-book'; // CustomSelect가 address-book에 있는 경우 수정
 
 export default function AddressListView({
@@ -21,7 +19,7 @@ export default function AddressListView({
   const [selectedAddresses, setSelectedAddresses] = useState<string[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState<AddressEntry | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<Contact2 | null>(null);
   const itemsPerPage = 10;
 
   const sortedAddresses = [...addresses].sort((a, b) => {
@@ -157,7 +155,7 @@ export default function AddressListView({
             />
             <Input
               placeholder="전화번호"
-              value={selectedAddress?.phoneNumber || ''}
+              value={selectedAddress?.telNum || ''}
               onChange={(e) =>
                 setSelectedAddress((prev) =>
                   prev ? { ...prev, phoneNumber: e.target.value } : null,
@@ -220,7 +218,7 @@ export default function AddressListView({
               <strong>이름:</strong> {selectedAddress?.name}
             </p>
             <p>
-              <strong>전화번호:</strong> {selectedAddress?.phoneNumber}
+              <strong>전화번호:</strong> {selectedAddress?.telNum}
             </p>
             <p>
               <strong>변수 1:</strong> {selectedAddress?.var1}
@@ -238,7 +236,7 @@ export default function AddressListView({
           <Button
             onClick={() => {
               if (selectedAddress) {
-                deleteAddress(selectedAddress.id);
+                deleteAddress(selectedAddress.contactId);
                 setIsViewDialogOpen(false);
               }
             }}
