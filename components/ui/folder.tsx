@@ -26,14 +26,31 @@ function FolderTree({
   setFolders: Dispatch<SetStateAction<Folder2[]>>;
   isLoading: boolean;
 }) {
+    const [folderSortOrder, setFolderSortOrder] = useState<'asc' | 'desc'>('asc')
+
+    const sortedSubFolders = [...topFolder2s].sort((a, b) => {
+        return folderSortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+    })
+
   return (
     <div className="space-y-4">
+        <div className="flex justify-between items-center mb-2 mt-2">
+            <CustomSelect
+                value={folderSortOrder}
+                onChange={(value: 'asc' | 'desc') => setFolderSortOrder(value)}
+                options={[
+                    { value: 'asc', label: '오름차순' },
+                    { value: 'desc', label: '내림차순' },
+                ]}
+                className="w-32"
+            />
+        </div>
       {/* 새 폴더 추가 */}
       <div className="mb-4">
         <AddFolderForm addFolder={(name) => addFolder2AndGroup2(name, null)} />
       </div>
       {/* 최상위 폴더 렌더링 */}
-      {topFolder2s.map((folder2) => (
+      {sortedSubFolders.map((folder2) => (
         <FolderItem
           key={folder2.folderId}
           folder={folder2}
@@ -67,6 +84,7 @@ function FolderItem({
   folders: Folder2[];
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [groupSortOrder, setFolderSortOrder] = useState<'asc' | 'desc'>('asc')
 
   // 폴더 수정
   const handleEditFolder = () => {
@@ -145,6 +163,9 @@ function FolderItem({
     }
   };
   
+  const sortedGroups = [...folder.group2s].sort((a, b) => {
+    return groupSortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+  })
 
   return (
     <div>
@@ -201,8 +222,19 @@ function FolderItem({
             exit={{ opacity: 0, height: 0 }}
             className="ml-6"
           >
+            <div className="flex justify-between items-center mb-2 mt-2">
+                <CustomSelect
+                    value={groupSortOrder}
+                    onChange={(value: 'asc' | 'desc') => setFolderSortOrder(value)}
+                    options={[
+                        { value: 'asc', label: '오름차순' },
+                        { value: 'desc', label: '내림차순' },
+                    ]}
+                    className="w-32"
+                />
+            </div>
             <AddGroupForm addFolder2AndGroup2={addFolder2AndGroup2} folder2={folder} />
-            {folder.group2s.map((group) => (
+            {sortedGroups.map((group) => (
               <div
                 key={group.groupsId}
                 className="flex items-center space-x-2 py-2 px-3 rounded-lg bg-gray-100 dark:bg-gray-700 mb-2"
