@@ -1,4 +1,4 @@
-import AddressBook from '@/app/address/address-book'
+import AddressBook from '../address-book'
 import Excel from './excel'
 import AddressBookModal from '../select-contact-modal'
 
