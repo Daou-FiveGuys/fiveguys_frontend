@@ -273,7 +273,6 @@ export const CustomSelect = ({
  * searchTerm 검색어
  * searchFilter 검색 필터, 조사할 연관 검색어가 [이름, 전화번호, 둘다]인지 구분하는 함수
  * 
- * folder 폴더 리스트. 최상위 폴더 개념??
  * currentFolder 초기 생성에서는 최상위 폴더를 의미한다.
  * isAddingContact2 주소록 추가하는 다이얼로그를 닫는 플래스
  * newAddress 새로운 주소를 추가하는 것으로 추정 Patial을 사용한다.
@@ -287,7 +286,8 @@ export default function AddressBook() {
   const [searchFilter, setSearchFilter] = useState<'name' | 'phone' | 'both'>(
     'both'
   )
-  const [folder2s, setFolder2s] = useState<Folder2[]>(sampleData)
+  // 유저가 가진 모든 폴더를 관리하는 객체이다.
+  const [topFolder2s, setTopFolder2s] = useState<Folder2[]>(sampleData)
   const [currentFolder2, setCurrentFolder2] = useState<Folder2>(sampleData[0])
   const [isAddingContact2, setIsAddingContact2] = useState(false)
   const [newContact2, setNewContact2] = useState<Partial<Contact2>>({})
@@ -303,7 +303,7 @@ export default function AddressBook() {
     const results: SearchResult[] = [];
 
     // 1. 폴더 계층에서 모든 루프를 발생시킨다.
-    folder2s.forEach((folder2) => {
+    topFolder2s.forEach((folder2) => {
       // 2. 그룹 계층에서 모든 루프를 발생시킨다.
         folder2.group2s.forEach((group2) => {
           // 3. 그룹 내 연락처에서 동일한 속성 정보가 존재한다면, 포함한다.
@@ -340,7 +340,7 @@ export default function AddressBook() {
      * 2. 검색 필터 [이름, 전화번호, 모두] 중 하나로 변경된 경우
      * 3. 선택된 폴더 정보가 변경된 경우
      */
-  }, [searchTerm, searchFilter, folder2s]);
+  }, [searchTerm, searchFilter, topFolder2s]);
 
   /**
    * 모든 검색어 정보를 초기화하는 핸들러이다.
@@ -397,7 +397,7 @@ export default function AddressBook() {
           // 새로운 그룹을 추가한다.
           // 최상위 그룹 folder2s에서 parentFolder와 동일한 폴더를 순회하여 찾은 후, 해당 객체에 삽입한다.
           // Q. 왜 바로 parentFolder에 추가하지 않은 것?
-          const updatedFolder2s = folder2s.map((folder) => {
+          const updatedTopFolder2s = topFolder2s.map((folder) => {
             // 최상위 폴더에서 동일한 폴더를 발견한 경우
             if (folder.folderId === parentFolder2.folderId) {
                 return {
@@ -409,7 +409,7 @@ export default function AddressBook() {
             return folder;
           });
           // 폴더 수정 후 업데이트
-          setFolder2s(updatedFolder2s);
+          setTopFolder2s(updatedTopFolder2s);
         } else { // 부모 폴더가 없다면
           // 새로운 폴더를 생성한다.
           const newFolder = { // 폴더 생성 API 연결할 것!!!
@@ -419,7 +419,7 @@ export default function AddressBook() {
           }
 
           // 폴더 리스트에 폴더 추가
-          setFolder2s([...folder2s, newFolder]);
+          setTopFolder2s([...topFolder2s, newFolder]);
         }
       } catch (error) {
           console.error('Failed to create folder:', error);
@@ -429,28 +429,41 @@ export default function AddressBook() {
     }
   };
 
-  const updateFolderRecursively = ( // TODO: 최후에 수정할 것
-    folders: Folder2[],
-    folderId: string,
-    updateFn: (folder: Folder2) => Folder2
-  ): Folder2[] => {
-    return folders.map(folder => {
-      // if (folder.id === folderId) {
-      //   return updateFn(folder)
-      // }
-      // if (folder.subFolders.length > 0) {
-      //   return {
-      //     ...folder,
-      //     subFolders: updateFolderRecursively(
-      //       folder.subFolders,
-      //       folderId,
-      //       updateFn
-      //     )
-      //   }
-      // }
-      return folder
-    })
-  }
+  // 그룹에 관한 수정 함수
+const updateFolderRecursively = (
+  folder2s: Folder2[],
+  group2Id: number,
+  updateFn: (group2: Group2) => Group2
+): Folder2[] => {
+  return folder2s.map(folder2 => {
+    const updatedGroups = updateGroup(folder2.group2s, group2Id, updateFn);
+    if (updatedGroups) {
+      return {
+        ...folder2,
+        group2s: updatedGroups, // 업데이트된 그룹 배열로 교체
+      };
+    }
+    return folder2; // 그룹이 업데이트되지 않은 경우 원래의 Folder2 반환
+  });
+};
+
+// 그룹 배열 수정 함수
+const updateGroup = (
+  group2s: Group2[],
+  group2Id: number,
+  updateFn: (group2: Group2) => Group2
+): Group2[] | null => {
+  let isUpdated = false; // 업데이트 여부를 추적
+  const updatedGroups = group2s.map(group2 => {
+    if (group2.groupsId === group2Id) {
+      isUpdated = true; // 업데이트 발생
+      return updateFn(group2); // 업데이트 함수 적용
+    }
+    return group2;
+  });
+
+  return isUpdated ? updatedGroups : null; // 업데이트가 발생했을 경우에만 반환
+};
 
   /**
    * 주소를 추가하는 함수
@@ -462,7 +475,7 @@ export default function AddressBook() {
       setIsLoading(true)
       try {
         const contact2 = { // 폴더 생성 API 연결할 것!!!
-          number: Date.now(),
+          contactId: Date.now(),
           name: "testName",
           telNum: "testNumber",
           var1: "test1",
@@ -477,20 +490,22 @@ export default function AddressBook() {
         
         // 주소록을 추가한 새로운 폴더를 생성
         // TODO: 현재는 폴더인데, 원래는 그룹이 되어야한다!!
+        // 주소록(Contact2)을 추가한 새로운 그룹을 생성
         const updatedFolders = updateFolderRecursively(
-          folder2s,
-          currentFolder2.folderId, // TODO: 오류!!
-          folder => ({
-            ...folder,
-            addresses: [...folder.addresses, contact2] // TODO: 오류!!
+          topFolder2s,
+          currentGroup2.groupsId, // 올바른 필드명 사용
+          group2 => ({
+            ...group2,
+            contact2s: [...group2.contact2s, contact2] // 올바른 속성명 사용
           })
-        )
-        setFolder2s(updatedFolders)
+        );
+
+        setTopFolder2s(updatedFolders)
 
         // Q. currentFolder2와 Folder2의 차이
-        setCurrentFolder2(prev => ({
+        setCurrentGroup2(prev => ({
           ...prev,
-          addresses: [...prev.addresses, address] // TODO: 오류!!
+          contact2: [...prev.contact2s, contact2] // TODO: 오류!!
         }))
         setNewContact2({}) // Q. 역할 무엇인지 모름
         setIsAddingContact2(false)
@@ -511,8 +526,8 @@ export default function AddressBook() {
     // 현재 동작을 수행중임을 명시
     setIsLoading(true)
     try {
-      const address = { // 폴더 수정 API 연결할 것!!!
-        number: Date.now(),
+      const contact2 = { // 폴더 수정 API 연결할 것!!!
+        contactId: Date.now(),
         name: "testNameUpdated",
         telNum: "testNumberUpdated",
         var1: "test1Updated",
@@ -526,25 +541,25 @@ export default function AddressBook() {
       }
 
       // 폴더 정보를 수정한다.
-      const updatedFolders = updateFolderRecursively(  // TODO: 오류!!
-        folder2s,
-        currentFolder2.id,
-        folder => ({
-          ...folder,
-          addresses: folder.addresses.map(addr =>
-            addr.id === address.id ? address : addr
+      const updatedFolders = updateFolderRecursively(  
+        topFolder2s,
+        currentFolder2.group2s[0].groupsId, // TODO: 오류!!
+        group2 => ({
+          ...group2,
+          contact2s: group2.contact2s.map(ct2 =>
+            ct2.contactId === contact2.contactId ? contact2 : ct2
           )
         })
       )
 
       // 폴더 정보 저장
-      setFolder2s(updatedFolders)
+      setTopFolder2s(updatedFolders)
 
       // 현재 폴더 정보를 수정한다.
-      setCurrentFolder2(prev => ({
+      setCurrentGroup2(prev => ({
         ...prev,
-        addresses: prev.addresses.map(addr => // TODO: 오류!!
-          addr.id === address.id ? address : addr
+        contact2s: prev.contact2.map(ct2 => // TODO: 오류!!
+          ct2.contactId === contact2.contactId ? contact2 : ct2
         )
       }))
     } catch (error) {
@@ -554,29 +569,29 @@ export default function AddressBook() {
     }
   }
 
-  const deleteAddress = async (addressId: string) => {
+  const deleteAddress = async (contact2Id: number) => {
     // 현재 동작을 수행중임을 명시
     setIsLoading(true)
     try {
       // TODO: 폴더 생성 API 연결할 것!!!
       //await api.deleteAddress(addressId)
 
-      const updatedFolders = updateFolderRecursively( // TODO: 오류!!
-        folder2s,
-        currentFolder2.id,
-        folder => ({
-          ...folder,
-          addresses: folder.addresses.filter(addr => addr.id !== addressId)
+      const updatedFolders = updateFolderRecursively(
+        topFolder2s,
+        currentFolder2.id, // TODO: 오류!!
+        group2 => ({
+          ...group2,
+          addresses: group2.contact2s.filter(ct2 => ct2.contactId !== contact2Id)
         })
       )
 
       // 폴더 정보 저장
-      setFolder2s(updatedFolders)
+      setTopFolder2s(updatedFolders)
 
       // 현재 폴더 정보를 수정한다.
-      setCurrentFolder2(prev => ({ // TODO: 오류!!
+      setCurrentGroup2(prev => ({ // TODO: 오류!!
         ...prev,
-        addresses: prev.addresses.filter(addr => addr.id !== addressId)
+        contact2s: prev.addresses.filter(ct2 => ct2.contact2Id !== contact2Id)
       }))
     } catch (error) {
       console.error('Failed to delete address:', error)
@@ -586,39 +601,20 @@ export default function AddressBook() {
   }
 
   /**
-   * 매개변수에 있는 폴더를 찾아가는 함수 ???????????????????
+   * 매개변수에 있는 폴더를 찾아가는 함수
    * 
    * 업데이트 될 구조에서는 필요없는 함수이다.
    * 
    * @param folder 경로를 얻을 Folder2 객체
    * @returns folder 매개변수가 어디 들어있는지(부모 folder 리스트)
    */
-  const getBreadcrumbPath = (folder: Folder2): Folder2[] => {
-    // 새로운 경로 생성??
-    const path: Folder2[] = []
-    
-    // 현재 폴더??
-    let currentFolder: Folder2 | undefined = folder
-
-    const findParent = (
-      folders: Folder2[],
-      targetId: string
-    ): Folder2 | undefined => {
-      for (const f of folders) {
-        if (f.subFolders.some(sf => sf.id === targetId)) {
-          return f
+  const getBreadcrumbPath = (group: Group2): Folder2[] => {
+      for (const f of topFolder2s) {
+        if (f.group2s.some(sf => sf.groupsId === group.groupsId)) {
+          return [f]
         }
-        const found = findParent(f.subFolders, targetId)
-        if (found) return found
       }
-      return undefined
-    }
-
-    while (currentFolder) {
-      path.unshift(currentFolder)
-      currentFolder = findParent(folder2s, currentFolder.id)
-    }
-    return path
+    return []
   }
 
   return (
@@ -693,11 +689,11 @@ export default function AddressBook() {
         <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 p-4 max-h-[calc(100vh-8rem)] overflow-y-auto custom-scrollbar">
           {/* 폴더 정보가 나타날 좌측 공간 */}
           <FolderTree
-            folders={folder2s}
+            folders={topFolder2s}
             currentFolder={currentFolder2}
             setCurrentFolder={setCurrentFolder2}
             addFolder={addFolder2AndGroup2}
-            setFolders={setFolder2s}
+            setFolders={setTopFolder2s}
             isLoading={isLoading}
           />
         </div>
@@ -715,7 +711,7 @@ export default function AddressBook() {
             </Button>
           </div>
           <Breadcrumb>
-            {getBreadcrumbPath(currentFolder2).map((folder, index, array) => (
+            {getBreadcrumbPath(current).map((folder, index, array) => (
               <BreadcrumbItem key={folder.folderId}>
                 <BreadcrumbLink onClick={() => setCurrentFolder2(folder)}>
                   {folder.name}
@@ -729,8 +725,8 @@ export default function AddressBook() {
           {searchResults.length > 0 ? (
             <SearchResultsView
               searchResults={searchResults}
-              setFolders={setFolder2s}
-              folders={folder2s}
+              setFolders={setTopFolder2s}
+              folders={topFolder2s}
               setCurrentFolder={setCurrentFolder2}
               updateAddress={updateAddress}
               deleteAddress={deleteAddress}
@@ -739,8 +735,8 @@ export default function AddressBook() {
           ) : (
             <AddressListView
               addresses={currentFolder2.group2s[0].contact2s} // TODO: 수정할 것
-              setFolders={setFolder2s}
-              folders={folder2s}
+              setFolders={setTopFolder2s}
+              folders={topFolder2s}
               currentFolder={currentFolder2}
               updateAddress={updateAddress}
               deleteAddress={deleteAddress}
