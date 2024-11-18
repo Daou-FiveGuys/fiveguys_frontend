@@ -663,6 +663,7 @@ export function PromptForm({
           <UserTextMessage
             message={lastTextInput}
             onCreatedMessage={setLastCreatedMessage}
+            onCommunicationStatus={handleMS}
           />
         )
       },
@@ -1107,6 +1108,8 @@ export function PromptForm({
     setSaveNum(prevSaveNum => prevSaveNum + 1)
     setCurrentMode('normal')
   }
+  const [messageSuccess, setMessagSuccess] = React.useState(false);
+  const handleMS = (result:boolean) => setMessagSuccess(result)
 
   const handleText = (value: string) => {
     setLastTextInput(value)
@@ -1122,6 +1125,7 @@ export function PromptForm({
           <UserTextMessage
             message={value}
             onCreatedMessage={setLastCreatedMessage}
+            onCommunicationStatus={handleMS}
           />
         )
       },
