@@ -357,57 +357,51 @@ export default function AddressBook() {
    * @param parentFolder 폴더의 유무 ※ 만약 해당 변수가 null이라면, 폴더로 간주 아니면 그룹으로 판단한다.
    */
   const addFolder2AndGroup2 = async (
-    name: string,
-    parentFolder2: Folder2 | null = null
-  ) => {
-    // [에러처리] 추가한 이름이 공백인 경우는 실행되지 않는다.
-    if (name.trim()) {
-      // 현재 동작을 수행중임을 명시
-      setIsLoading(true);
-      try {
-        // 부모 폴더가 있다면, (추가할 객체가 그룹인 경우)
-        if (parentFolder2) {
-          // 새로운 그룹을 생성한다.
-          const newGroup =  {  // 그룹 생성 API 연결할 것!!!
-            groupsId: Date.now(),
-            name: name.trim(),
-            contact2s: []
-          };
-          
-          // 새로운 그룹을 추가한다.
-          // 최상위 그룹 folder2s에서 parentFolder와 동일한 폴더를 순회하여 찾은 후, 해당 객체에 삽입한다.
-          // Q. 왜 바로 parentFolder에 추가하지 않은 것?
-          const updatedTopFolder2s = topFolder2s.map((folder) => {
-            // 최상위 폴더에서 동일한 폴더를 발견한 경우
-            if (folder.folderId === parentFolder2.folderId) {
-                return {
-                    ...folder,
-                    group2s: [...folder.group2s, newGroup],
-                };
-            }
-            // 조회되지 않은 경우 변경하지 않고, 반환한다
-            return folder;
-          });
-          // 폴더 수정 후 업데이트
-          setTopFolder2s(updatedTopFolder2s);
-        } else { // 부모 폴더가 없다면
-          // 새로운 폴더를 생성한다.
-          const newFolder = { // 폴더 생성 API 연결할 것!!!
-            folderId: Date.now(),
-            name: name.trim(),
-            group2s: []
-          }
+  name: string,
+  parentFolder2: Folder2 | null = null
+) => {
+  if (name.trim()) {
+    setIsLoading(true);
+    try {
+      if (parentFolder2) {
+        // 부모 폴더가 있는 경우 (그룹 추가 로직)
+        const newGroup = {
+          groupsId: Date.now(),
+          name: name.trim(),
+          contact2s: [],
+        };
 
-          // 폴더 리스트에 폴더 추가
-          setTopFolder2s([...topFolder2s, newFolder]);
-        }
-      } catch (error) {
-          console.error('Failed to create folder:', error);
-      } finally {
-          setIsLoading(false);
+        const updatedFolders = topFolder2s.map((folder) =>
+          folder.folderId === parentFolder2.folderId
+            ? { ...folder, group2s: [...folder.group2s, newGroup] }
+            : folder
+        );
+
+        setTopFolder2s(updatedFolders);
+      } else {
+        // 부모 폴더가 없는 경우 (새 폴더 생성)
+        const newFolder = {
+          folderId: Date.now(),
+          name: name.trim(),
+          group2s: [
+            {
+              groupsId: Date.now(), // 기본 그룹 ID
+              name: "새 그룹", // 기본 그룹 이름
+              contact2s: [],
+            },
+          ],
+        };
+
+        setTopFolder2s([...topFolder2s, newFolder]);
       }
+    } catch (error) {
+      console.error("Failed to create folder or group:", error);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }
+};
+
 
   // 그룹에 관한 수정 함수
 const updateFolderRecursively = (
@@ -561,7 +555,7 @@ const updateGroup = (
         currentGroup2.groupsId, // TODO: 오류!!
         group2 => ({
           ...group2,
-          addresses: group2.contact2s.filter(ct2 => ct2.contactId !== contact2Id)
+          contact2s: group2.contact2s.filter(ct2 => ct2.contactId !== contact2Id)
         })
       )
 
@@ -828,11 +822,10 @@ function SearchResultsView({
       {searchResults.map((result: any, index: number) => (
         <div key={result.folder?.folderId || index} className="mb-6">
           <h3 className="text-lg font-semibold mb-2">
-            {result.folder?.name || '폴더 이름 없음'}
+            {result.group2.name}
           </h3>
           <AddressListView
-            key={`address-list-${result.folder?.folderId || index}`}
-            addresses={result.contact2s || []} // contact2s가 없으면 빈 배열로 처리
+            addresses={result.contact2s || []} // contact2s가 없으면 빈 배열로 설정
             setFolders={setFolders}
             folders={folders}
             currentFolder={result.folder || {}}

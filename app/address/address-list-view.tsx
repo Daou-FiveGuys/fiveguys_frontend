@@ -9,7 +9,7 @@ import { Contact2 } from './entity';
 import { CustomSelect } from './address-book';
 
 export default function AddressListView({
-  addresses,
+  addresses = [],
   updateAddress,
   deleteAddress,
   isLoading,
