@@ -43,3 +43,9 @@ export type Contact2 = {
     group2: Group2;
     contact2s: Contact2[];
 };
+
+export interface CommonResponse<T> {
+  code: number;
+  message: string;
+  data: T;
+}

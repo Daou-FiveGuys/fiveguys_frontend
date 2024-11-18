@@ -360,11 +360,8 @@ export default function AddressBook() {
     try {
       if (parentFolder2) {
         // 부모 폴더가 있는 경우 (그룹 추가 로직)
-        const newGroup = {
-          groupsId: Date.now(),
-          name: name.trim(),
-          contact2s: [],
-        };
+        const newGroup = await api.createGroup(name, parentFolder2);
+        if(newGroup == undefined) return
 
         const updatedFolders = topFolder2s.map((folder) =>
           folder.folderId === parentFolder2.folderId
@@ -375,17 +372,8 @@ export default function AddressBook() {
         setTopFolder2s(updatedFolders);
       } else {
         // 부모 폴더가 없는 경우 (새 폴더 생성)
-        const newFolder = {
-          folderId: Date.now(),
-          name: name.trim(),
-          group2s: [
-            {
-              groupsId: Date.now(), // 기본 그룹 ID
-              name: "새 그룹", // 기본 그룹 이름
-              contact2s: [],
-            },
-          ],
-        };
+        const newFolder = await api.createFolder(name);
+        if(newFolder == undefined) return
 
         setTopFolder2s([...topFolder2s, newFolder]);
       }
@@ -443,22 +431,23 @@ const updateGroup = (
       // 현재 동작을 수행중임을 명시
       setIsLoading(true)
       try {
-        const contact2 = { // 폴더 생성 API 연결할 것!!!
-          contactId: Date.now(),
-          name: "testName",
-          telNum: "testNumber",
-          var1: "test1",
-          var2: "test2",
-          var3: "test3",
-          var4: "test4",
-          var5: "test5",
-          var6: "test6",
-          var7: "test7",
-          var8: "test8",
-        }
+        const contact2 = await api.createAddress({ // 강제 주입 에러 유발 주의
+          contactId: -1,
+          name: newContact2.name,
+          telNum: newContact2.telNum,
+          var1: newContact2.var1 || "",
+          var2: newContact2.var2 || "",
+          var3: newContact2.var3 || "",
+          var4: newContact2.var4 || "",
+          var5: newContact2.var5 || "",
+          var6: newContact2.var6 || "",
+          var7: newContact2.var7 || "",
+          var8: newContact2.var8 || "",
+        }, currentGroup2.groupsId)
         
+        if(contact2 == undefined) return;
+
         // 주소록을 추가한 새로운 폴더를 생성
-        // TODO: 현재는 폴더인데, 원래는 그룹이 되어야한다!!
         // 주소록(Contact2)을 추가한 새로운 그룹을 생성
         const updatedFolders = updateFolderRecursively(
           topFolder2s,
@@ -474,7 +463,7 @@ const updateGroup = (
         // Q. currentFolder2와 Folder2의 차이
         setCurrentGroup2(prev => ({
           ...prev,
-          contact2: [...prev.contact2s, contact2] // TODO: 오류!!
+          contact2: [...prev.contact2s, contact2]
         }))
         setNewContact2({}) // Q. 역할 무엇인지 모름
         setIsAddingContact2(false)
@@ -495,24 +484,26 @@ const updateGroup = (
     // 현재 동작을 수행중임을 명시
     setIsLoading(true)
     try {
-      const contact2 = { // 폴더 수정 API 연결할 것!!!
-        contactId: Date.now(),
-        name: "testNameUpdated",
-        telNum: "testNumberUpdated",
-        var1: "test1Updated",
-        var2: "test2Updated",
-        var3: "test3Updated",
-        var4: "test4Updated",
-        var5: "test5Updated",
-        var6: "test6Updated",
-        var7: "test7Updated",
-        var8: "test8Updated",
-      }
+      const contact2 = await api.updateAddress({
+        contactId: updatedAddress.contactId,
+        name: updatedAddress.name,
+        telNum: updatedAddress.telNum,
+        var1: updatedAddress.var1,
+        var2: updatedAddress.var2,
+        var3: updatedAddress.var3,
+        var4: updatedAddress.var4,
+        var5: updatedAddress.var5,
+        var6: updatedAddress.var6,
+        var7: updatedAddress.var7,
+        var8: updatedAddress.var8,
+      })
+
+      if(contact2 == undefined) return
 
       // 폴더 정보를 수정한다.
       const updatedFolders = updateFolderRecursively(  
         topFolder2s,
-        currentGroup2.groupsId, // TODO: 오류!!
+        currentGroup2.groupsId,
         group2 => ({
           ...group2,
           contact2s: group2.contact2s.map(ct2 =>
@@ -527,7 +518,7 @@ const updateGroup = (
       // 현재 폴더 정보를 수정한다.
       setCurrentGroup2(prev => ({
         ...prev,
-        contact2s: prev.contact2s.map(ct2 => // TODO: 오류!!
+        contact2s: prev.contact2s.map(ct2 => 
           ct2.contactId === contact2.contactId ? contact2 : ct2
         )
       }))
@@ -542,12 +533,12 @@ const updateGroup = (
     // 현재 동작을 수행중임을 명시
     setIsLoading(true)
     try {
-      // TODO: 폴더 생성 API 연결할 것!!!
-      //await api.deleteAddress(addressId)
+      const state = await api.deleteAddress(contact2Id)
+      if(!state) return
 
       const updatedFolders = updateFolderRecursively(
         topFolder2s,
-        currentGroup2.groupsId, // TODO: 오류!!
+        currentGroup2.groupsId,
         group2 => ({
           ...group2,
           contact2s: group2.contact2s.filter(ct2 => ct2.contactId !== contact2Id)
@@ -558,7 +549,7 @@ const updateGroup = (
       setTopFolder2s(updatedFolders)
 
       // 현재 폴더 정보를 수정한다.
-      setCurrentGroup2(prev => ({ // TODO: 오류!!
+      setCurrentGroup2(prev => ({
         ...prev,
         contact2s: prev.contact2s.filter(ct2 => ct2.contactId !== contact2Id)
       }))
@@ -612,7 +603,7 @@ const updateGroup = (
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
-          {/* TODO: 뭔진 모르겠는데 암튼 검색 버튼 */}
+        
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
 
           {/* 검색 버튼 및 초기화 버튼 */}
@@ -708,7 +699,7 @@ const updateGroup = (
             />
           ) : (
             <AddressListView
-              addresses={currentGroup2.contact2s} // TODO: 수정할 것
+              addresses={currentGroup2.contact2s}
               setFolders={setTopFolder2s}
               folders={topFolder2s}
               currentFolder={currentGroup2}

@@ -7,6 +7,7 @@ import { ChevronDown, ChevronUp, Edit, FolderPlus, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { CustomSelect } from '@/app/address/address-book';
 import { Group2, Folder2 } from '@/app/address/entity';
+import { api } from '@/app/address/service';
 
 /**
  * 폴더 및 그룹의 재귀 트리를 렌더링하는 컴포넌트
@@ -87,9 +88,12 @@ function FolderItem({
   const [groupSortOrder, setFolderSortOrder] = useState<'asc' | 'desc'>('asc')
 
   // 폴더 수정
-  const handleEditFolder = () => {
+  const handleEditFolder = async () => {
     const newName = prompt('새 폴더 이름을 입력하세요:', folder.name);
     if (newName) {
+      const updatedFolder = await api.updateFolder(folder)
+      if(updatedFolder == undefined) return
+
       setFolders((prevFolders) =>
         prevFolders.map((f) =>
           f.folderId === folder.folderId ? { ...f, name: newName } : f
@@ -99,8 +103,11 @@ function FolderItem({
   };
 
   // 폴더 삭제
-  const handleDeleteFolder = () => {
+  const handleDeleteFolder = async () => {
     if (window.confirm('해당 폴더를 삭제하시겠습니까?')) {
+      const isDeleted = await api.deleteFolder(folder.folderId)
+      if(!isDeleted) return
+
       setFolders((prevFolders) =>
         prevFolders.filter((f) => f.folderId !== folder.folderId)
       );
@@ -108,9 +115,12 @@ function FolderItem({
   };
 
   // 그룹 수정
-  const handleEditGroup = (group: Group2) => {
+  const handleEditGroup = async (group: Group2) => {
     const newName = prompt('새 그룹 이름을 입력하세요:', group.name);
     if (newName) {
+      const updatedGroup = await api.updateGroup2(group)
+      if(updatedGroup == undefined) return
+
       setFolders((prevFolders) =>
         prevFolders.map((f) =>
           f.folderId === folder.folderId
@@ -127,7 +137,7 @@ function FolderItem({
   };
 
   // 그룹 삭제
-  const handleDeleteGroup = (group: Group2) => {
+  const handleDeleteGroup = async (group: Group2) => {
     const parentFolder = folders.find((folder) =>
       folder.group2s.some((g) => g.groupsId === group.groupsId)
     );
@@ -139,6 +149,8 @@ function FolderItem({
       }
   
       if (window.confirm("해당 그룹을 삭제하시겠습니까?")) {
+        const isDeleted = await api.deleteGroup(group.groupsId)
+        if(!isDeleted) return
         const updatedFolders = folders.map((folder) =>
           folder.folderId === parentFolder.folderId
             ? {

@@ -1,40 +1,170 @@
-import { Folder2, Contact2 } from './entity'
+import apiClient from '@/services/apiClient';
+import { Folder2, Contact2, CommonResponse, Group2 } from './entity'
 
   // Simulated API control code
 export const api = {
-    // createFolder: async (
-    //   name: string,
-    //   parentId: string | null
-    // ): Promise<Folder2> => {
-    //   await new Promise((resolve) => setTimeout(resolve, 500)) // Simulated delay
-    //   return { id: Date.now().toString(), name, subFolders: [], addresses: [] }
-    // },
-    // updateFolder: async (
-    //   id: string,
-    //   name: string
-    // ): Promise<{ id: string; name: string }> => {
-    //   await new Promise((resolve) => setTimeout(resolve, 500)) // Simulated delay
-    //   return { id, name }
-    // },
-    // deleteFolder: async (id: string): Promise<boolean> => {
-    //   await new Promise((resolve) => setTimeout(resolve, 500)) // Simulated delay
-    //   return true
-    // },
-    // createAddress: async (
-    //   address: Omit<Contact2, 'id'>,
-    //   folderId: string
-    // ): Promise<Contact2> => {
-    //   await new Promise((resolve) => setTimeout(resolve, 500)) // Simulated delay
-    //   return { ...address, id: Date.now().toString() }
-    // },
-    // updateAddress: async (address: Contact2): Promise<Contact2> => {
-    //   await new Promise((resolve) => setTimeout(resolve, 500)) // Simulated delay
-    //   return address
-    // },
-    // deleteAddress: async (id: string): Promise<boolean> => {
-    //   await new Promise((resolve) => setTimeout(resolve, 500)) // Simulated delay
-    //   return true
-    // }
+    createFolder: async (
+      folder2Name: String
+    ): Promise<Folder2|undefined> => {
+      try {
+        const response = await apiClient.post<CommonResponse<Folder2>>(`/folder2/`, {name: folder2Name})
+        
+        const newFolder2 = response.data.data;
+        if(response.data.code == 200) return newFolder2
+
+        return undefined;
+      } catch(error) {
+        return undefined
+      }
+    },
+
+    updateFolder: async (
+      folder2:Folder2,
+    ): Promise<Folder2 | undefined> => {
+      try {
+        const response = await apiClient.patch<CommonResponse<Folder2>>(`/folder2/`, {
+          folder2Id: folder2.folderId,
+          name: folder2.name
+        })
+        
+        const updatedFolder2 = response.data.data;
+        if(response.data.code == 200) return updatedFolder2
+
+        return undefined
+      } catch(error) {
+        return undefined
+      }
+    },
+    
+    deleteFolder: async (folder2Id: Number): Promise<boolean> => {
+      try {
+        const response = await apiClient.delete<CommonResponse<Folder2>>(`/group2/${folder2Id}`)
+
+        const deletedFolder2 = response.data.data;
+        if(response.data.code == 200) return true
+        return false
+      } catch(error) {
+        return false
+      }
+    },
+
+    createGroup: async (
+      group2Name: String,
+      folder2: Folder2
+    ): Promise<Group2|undefined> => {
+      try {
+        const response = await apiClient.post<CommonResponse<Group2>>(`/group2/`, 
+          {
+            folder2Id: folder2.folderId,
+            name: group2Name
+          })
+        
+        const newGroup2 = response.data.data;
+        if(response.data.code == 200) return newGroup2
+
+        return undefined;
+      } catch(error) {
+        return undefined
+      }
+    },
+
+    updateGroup2: async (
+      group2: Group2
+    ): Promise<Group2|undefined> => {
+      try {
+        const response = await apiClient.patch<CommonResponse<Group2>>(`/group2/`, {
+          group2Id: group2.groupsId,
+          // folder2Id: folder2Id << 폴더 이전에 대한 기능은 없음
+          name: group2.name
+        })
+        
+        const updatedGroup2 = response.data.data;
+        if(response.data.code == 200) return updatedGroup2
+
+        return undefined
+      } catch(error) {
+        return undefined
+      }
+    },
+    
+    deleteGroup: async (group2Id: Number): Promise<boolean> => {
+      try {
+        const response = await apiClient.delete<CommonResponse<Group2>>(`/group2/${group2Id}`)
+
+        const deletedGroup2 = response.data.data;
+        if(response.data.code == 200) return true
+        return false
+      } catch(error) {
+        return false
+      }
+    },
+
+    createAddress: async (
+      contact2: Contact2,
+      group2Id: Number
+    ): Promise<Contact2|undefined> => {
+      try {
+        const response = await apiClient.post<CommonResponse<Contact2>>(`/contact2/`, {
+          group2Id: group2Id,
+          name: contact2.name,
+          telNum: contact2.telNum,
+          one: contact2.var1,
+          two: contact2.var2,
+          three: contact2.var3,
+          four: contact2.var4,
+          five: contact2.var5,
+          six: contact2.var6,
+          seven: contact2.var7,
+          eight: contact2.var8
+        })
+
+        const newContact2 = response.data.data;
+        if(response.data.code == 200) return newContact2
+
+        return undefined;
+      } catch(error) {
+        return undefined
+      }
+    },
+    
+    updateAddress: async (
+      contact2: Contact2
+    ): Promise<Contact2 | undefined> => {
+      try{
+        const response = await apiClient.patch<CommonResponse<Contact2>>(`/contact2/`, {
+          contact2: contact2.contactId,
+          name: contact2.name,
+          telNum: contact2.telNum,
+          one: contact2.var1,
+          two: contact2.var2,
+          three: contact2.var3,
+          four: contact2.var4,
+          five: contact2.var5,
+          six: contact2.var6,
+          seven: contact2.var7,
+          eight: contact2.var8
+        })
+
+        const newContact2 = response.data.data;
+        if(response.data.code == 200) return newContact2
+
+        return undefined;
+      } catch(error) {
+        return undefined
+      }
+    },
+
+    deleteAddress: async (contact2Id: number): Promise<boolean> => {
+      try{
+        const response = await apiClient.delete<CommonResponse<Contact2>>(`/contact2/${contact2Id}`)
+
+        const removedContact2 = response.data.data;
+        if(response.data.code == 200) return true
+        return false
+      } catch(error) {
+        return false
+      }
+    }
 }
 
 export type { Contact2 };
