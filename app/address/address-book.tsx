@@ -288,7 +288,7 @@ export default function AddressBook() {
   )
   // 유저가 가진 모든 폴더를 관리하는 객체이다.
   const [topFolder2s, setTopFolder2s] = useState<Folder2[]>(sampleData)
-  const [currentFolder2, setCurrentFolder2] = useState<Folder2>(sampleData[0])
+  const [currentGroup2, setCurrentGroup2] = useState<Group2>(sampleData[0].group2s[0]) // 초기값은 가장 빠른 값.
   const [isAddingContact2, setIsAddingContact2] = useState(false)
   const [newContact2, setNewContact2] = useState<Partial<Contact2>>({})
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
@@ -543,7 +543,7 @@ const updateGroup = (
       // 폴더 정보를 수정한다.
       const updatedFolders = updateFolderRecursively(  
         topFolder2s,
-        currentFolder2.group2s[0].groupsId, // TODO: 오류!!
+        currentGroup2.groupsId, // TODO: 오류!!
         group2 => ({
           ...group2,
           contact2s: group2.contact2s.map(ct2 =>
@@ -558,7 +558,7 @@ const updateGroup = (
       // 현재 폴더 정보를 수정한다.
       setCurrentGroup2(prev => ({
         ...prev,
-        contact2s: prev.contact2.map(ct2 => // TODO: 오류!!
+        contact2s: prev.contact2s.map(ct2 => // TODO: 오류!!
           ct2.contactId === contact2.contactId ? contact2 : ct2
         )
       }))
@@ -578,7 +578,7 @@ const updateGroup = (
 
       const updatedFolders = updateFolderRecursively(
         topFolder2s,
-        currentFolder2.id, // TODO: 오류!!
+        currentGroup2.groupsId, // TODO: 오류!!
         group2 => ({
           ...group2,
           addresses: group2.contact2s.filter(ct2 => ct2.contactId !== contact2Id)
@@ -591,7 +591,7 @@ const updateGroup = (
       // 현재 폴더 정보를 수정한다.
       setCurrentGroup2(prev => ({ // TODO: 오류!!
         ...prev,
-        contact2s: prev.addresses.filter(ct2 => ct2.contact2Id !== contact2Id)
+        contact2s: prev.contact2s.filter(ct2 => ct2.contactId !== contact2Id)
       }))
     } catch (error) {
       console.error('Failed to delete address:', error)
@@ -689,9 +689,9 @@ const updateGroup = (
         <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 p-4 max-h-[calc(100vh-8rem)] overflow-y-auto custom-scrollbar">
           {/* 폴더 정보가 나타날 좌측 공간 */}
           <FolderTree
-            folders={topFolder2s}
-            currentFolder={currentFolder2}
-            setCurrentFolder={setCurrentFolder2}
+            topFolder2s={topFolder2s}
+            currentGroup2={currentGroup2}
+            setCurrentGroup2={setCurrentGroup2}
             addFolder={addFolder2AndGroup2}
             setFolders={setTopFolder2s}
             isLoading={isLoading}
@@ -701,7 +701,7 @@ const updateGroup = (
           
           {/* 현재 폴더에 대한 정보가 나타난다. */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">{currentFolder2.name}</h2>
+            <h2 className="text-2xl font-bold">{currentGroup2.name}</h2>
             <Button
               onClick={() => setIsAddingContact2(true)}
               className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-sm transition-colors duration-300"
@@ -711,12 +711,21 @@ const updateGroup = (
             </Button>
           </div>
           <Breadcrumb>
-            {getBreadcrumbPath(current).map((folder, index, array) => (
+            {getBreadcrumbPath(currentGroup2).map((folder, index, array) => (
               <BreadcrumbItem key={folder.folderId}>
-                <BreadcrumbLink onClick={() => setCurrentFolder2(folder)}>
+                // 의미 없다.
+                <BreadcrumbLink onClick={() => setCurrentGroup2(currentGroup2)}>
                   {folder.name}
                 </BreadcrumbLink>
-                {index < array.length - 1 && <BreadcrumbSeparator />}
+              <BreadcrumbSeparator />
+              
+              <BreadcrumbItem key={currentGroup2.groupsId}>
+                // 의미 없다.
+                <BreadcrumbLink onClick={() => setCurrentGroup2(currentGroup2)}>
+                  {currentGroup2.name}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+
               </BreadcrumbItem>
             ))}
           </Breadcrumb>
@@ -727,17 +736,17 @@ const updateGroup = (
               searchResults={searchResults}
               setFolders={setTopFolder2s}
               folders={topFolder2s}
-              setCurrentFolder={setCurrentFolder2}
+              setCurrentFolder={setCurrentGroup2}
               updateAddress={updateAddress}
               deleteAddress={deleteAddress}
               isLoading={isLoading}
             />
           ) : (
             <AddressListView
-              addresses={currentFolder2.group2s[0].contact2s} // TODO: 수정할 것
+              addresses={currentGroup2.contact2s} // TODO: 수정할 것
               setFolders={setTopFolder2s}
               folders={topFolder2s}
-              currentFolder={currentFolder2}
+              currentFolder={currentGroup2}
               updateAddress={updateAddress}
               deleteAddress={deleteAddress}
               isLoading={isLoading}
@@ -832,14 +841,15 @@ function SearchResultsView({
   setCurrentFolder,
   updateAddress,
   deleteAddress,
-  isLoading
+  isLoading,
 }: any) {
   return (
     <div>
-      {searchResults.map((result: any, index: any) => (
-        <div key={index} className="mb-6">
+      {searchResults.map((result: any, index: number) => (
+        <div key={result.folder.folderId || index} className="mb-6">
           <h3 className="text-lg font-semibold mb-2">{result.folder.name}</h3>
           <AddressListView
+            key={`address-list-${result.folder.folderId || index}`} // 고유 key 추가
             addresses={result.addresses}
             setFolders={setFolders}
             folders={folders}
@@ -852,5 +862,5 @@ function SearchResultsView({
         </div>
       ))}
     </div>
-  )
+  );
 }
