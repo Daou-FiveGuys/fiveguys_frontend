@@ -4,35 +4,46 @@ import { fetchImageSources, reFetchImageSources } from './image-generator-api'
 interface ImageGeneratorProps {
   selectedImage?: string
   createdMessage?: string
-  seed?: string
+  seed?:string
+  onSuccess: (success: boolean) => void
 }
 
 interface ImageData {
-  id: string;
-  src: string;
-  seed: string;
+  requestId: string;
+  url: string;
 }
 
-// 전역 변수로 initialImages 선언
 let initialImages: ImageData[] = [
-  { id: '1', src: '/sampleImage1.jpg', seed: '' },
-  { id: '2', src: '/sampleImage2.jpg', seed: '' },
-  { id: '3', src: '/sampleImage3.jpg', seed: '' },
-  { id: '4', src: '/sampleImage4.jpg', seed: '' }
 ];
 
-export async function showExistingImages(seed?: string): Promise<boolean> {
+export function checkImageGenerationSuccess(
+  lastCreatedMessage: string,
+  selectedSeed: string,
+  callback: (success: boolean) => void
+) {
+  return (
+    <ImageGenerator
+      createdMessage={lastCreatedMessage}
+      seed={selectedSeed}
+      onSuccess={callback}
+    />
+  );
+}
+
+export async function showExistingImages(prompt?: string, seed?: string): Promise<boolean> {
   try {
-    const result = seed ? await reFetchImageSources(seed) : await fetchImageSources();
-    if (result === "error") {
+    const result = seed ? await reFetchImageSources(seed, prompt || '') : await fetchImageSources(prompt || '');
+    if ('error' in result) {
+      console.error(result.error);
       return false;
     }
     // 성공적으로 이미지를 받아온 경우 initialImages 업데이트
-    initialImages = result.map((image, index) => ({
-      id: (index + 1).toString(),
-      src: image.src,
-      seed: image.seed
-    }));
+    if (Array.isArray(result)) {
+      initialImages = result.map((image, index) => ({
+        requestId: image.requestId,
+        url: image.url
+      }));
+    }
     return true;
   } catch (error) {
     console.error('Error in showExistingImages:', error);
@@ -44,47 +55,47 @@ export function ImageGenerator({ selectedImage, createdMessage, seed }: ImageGen
   const [images, setImages] = useState<ImageData[]>(initialImages);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0); // 추가된 상태
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     async function loadImages() {
       setIsLoading(true);
-      const success = await showExistingImages(seed);
+      const success = await showExistingImages(createdMessage,seed);
       if (success) {
-        setImages(initialImages); // 업데이트된 initialImages 사용
+        setImages(initialImages);
         setError(null);
       } else {
-        setError('Failed to load images');
+        setError('이미지를 불러오는데 실패했습니다');
       }
       setIsLoading(false);
-      setRefreshKey(prevKey => prevKey + 1); // 추가된 코드
+      setRefreshKey(prevKey => prevKey + 1);
     }
     loadImages();
-  }, [seed, createdMessage]); // createdMessage를 의존성 배열에 추가
+  }, [seed, createdMessage]);
 
   useEffect(() => {
     if (createdMessage) {
-      console.log('Saving created message:', createdMessage)
+      console.log('생성된 메시지 저장:', createdMessage)
     }
   }, [createdMessage]);
 
   if (isLoading) {
-    return <div>Loading images...</div>;
+    return <div>이미지 로딩 중...</div>;
   }
 
   if (error) {
-    return <div>{error}</div>;
+    return <div className="text-red-500">오류: {error}</div>;
   }
 
   if (selectedImage) {
-    const image = images.find(img => img.id === selectedImage)
+    const image = images.find(img => img.url === selectedImage)
     if (image) {
       return (
         <div className="mt-4">
           <h3 className="text-lg font-bold mb-2 text-black">선택된 이미지</h3>
           <img 
-            src={image.src} 
-            alt={`Selected image ${image.id}`} 
+            src={image.url} 
+            alt={`선택된 이미지 ${image.requestId}`} 
             className="w-full h-auto rounded-md mb-2"
           />
           {createdMessage && (
@@ -100,14 +111,14 @@ export function ImageGenerator({ selectedImage, createdMessage, seed }: ImageGen
       <h3 className="text-lg font-bold mb-2 text-black">생성된 이미지</h3>
       <div className="grid grid-cols-2 gap-2">
         {images.map((image) => (
-          <div key={image.id} className="relative">
+          <div key={image.requestId} className="relative">
             <img 
-              src={image.src} 
-              alt={`Generated image ${image.id}`} 
+              src={image.url} 
+              alt={`생성된 이미지 ${image.requestId}`} 
               className="w-full h-auto rounded-md"
             />
             <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded">
-              {image.id}
+              {image.requestId}
             </div>
           </div>
         ))}
@@ -120,7 +131,7 @@ export function ImageGenerator({ selectedImage, createdMessage, seed }: ImageGen
 }
 
 export function returnSelectedImage(value: string) {
-  const image = initialImages.find(img => img.id === value);
+  const image = initialImages.find(img => img.requestId === value);
   console.log(image)
-  return image ? {src:image.src, seed:image.id}:{src:'s',seed:'a'};
+  return image ? image.url :'';
 }

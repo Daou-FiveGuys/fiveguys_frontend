@@ -28,7 +28,6 @@ import {
   returnSelectedImage,
   showExistingImages
 } from './image-generator'
-import { ImageEnhance, ReturnEnhanceImage } from './image-enhance'
 
 import {
   SendPhoneNumberData,
@@ -70,7 +69,7 @@ export function PromptForm({
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
 
-  const [currentMode, setCurrentMode] = React.useState<'phone-group-noninput'| 'text-create-action'|'image-Reselect'|'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'image-enhance-action'| 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'|'image-enhancing-action'| 'history-action' >('normal')
+  const [currentMode, setCurrentMode] = React.useState<'phone-group-noninput'| 'text-create-action'|'image-Reselect'|'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'| 'history-action' >('normal')
   const [selectedImage, setSelectedImage] = React.useState('');
   const [phoneData, setPhoneData] = React.useState<PhoneNumberData>({ name: '', phoneNumber: '', groupName: 'default' })
 
@@ -81,7 +80,6 @@ export function PromptForm({
     | 'text-action-generate'
     | 'send-message'
     | 'image-edit'
-    | 'image-enhance'
     | 'image-save'
   const [message, setMessage] = React.useState('')
   const { getNextNumber } = useNumberManager()
@@ -702,13 +700,15 @@ export function PromptForm({
   const [lastCreatedMessage, setLastCreatedMessage] = React.useState('')
   const [currentImageUrl, setCurrentImageUrl] = React.useState('')
 
+  const [imgSuccess, setImgSuccess] = React.useState(false);
+  const handleIS = (result:boolean) => setImgSuccess(result);
   const handleImageGeneration = () => {
     setMessages(currentMessages => [
       ...currentMessages,
       //추가
       {
         id: nanoid(),
-        display: <ImageGenerator createdMessage={lastCreatedMessage} />
+        display: <ImageGenerator createdMessage={lastCreatedMessage} onSuccess={handleIS} />
       },
       {
         id: nanoid(),
@@ -730,7 +730,7 @@ export function PromptForm({
       //추가
       {
         id: nanoid(),
-        display: <ImageGenerator createdMessage={lastCreatedMessage} seed={seed}/>
+        display: <ImageGenerator createdMessage={lastCreatedMessage} seed={seed} onSuccess={handleIS}/>
       },
       {
         id: nanoid(),
@@ -752,54 +752,6 @@ export function PromptForm({
     ])
   }
   //이미지 생성 기능 2: 이미지 선택 후 이미지 편집, 보강, 종료 선택 기능.
-
-  const [enhancedImg, setEnhancedImg] = React.useState('')
-
-  React.useEffect(() => {
-    if (enhancedImg) {
-    }
-  }, [enhancedImg])
-
-  const handleImageEnhance = async (value: string, enhance: string) => {
-    // const EnhanceImage = ReturnEnhanceImage()
-    // setEnhancedImg(EnhanceImage)
-    //handleDeductTokens()
-    setMessages(currentMessages => [
-      ...currentMessages,
-      //추가
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: <ImageEnhance enhancedImageSrc={enhance} />
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            변경된 이미지를 저장하시겠습니까? (
-            <ButtonCommand setInput={setInput} command={'예'} ref={inputRef} />/
-            <ButtonCommand
-              setInput={setInput}
-              command={'아니오'}
-              ref={inputRef}
-            />
-            /
-            <ButtonCommand
-              setInput={setInput}
-              command={'재보강'}
-              ref={inputRef}
-            />
-            ).
-          </BotCard>
-        )
-      }
-    ])
-    setCurrentMode('image-enhancing-action')
-  }
-  //이미지 생성 기능 3: 이미지 보강 기능
 
   const handleImageEdit = (value: string) => {
     //handleDeductTokens()
@@ -887,7 +839,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: <ImageGenerator selectedImage={value} />
+        display: <ImageGenerator selectedImage={value} onSuccess={handleIS}/>
       }
     ])
 
@@ -932,39 +884,6 @@ export function PromptForm({
     ])
     handleImageGeneration()
   }
-  const HandleimageEnhancingAction = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: <BotCard>향상된 이미지가 저장되었습니다.</BotCard>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            <ButtonCommand
-              setInput={setInput}
-              command={'이미지 편집'}
-              ref={inputRef}
-            />
-            ,
-            <ButtonCommand
-              setInput={setInput}
-              command={'종료'}
-              ref={inputRef}
-            />{' '}
-            중에 하나를 입력하세요.
-          </BotCard>
-        )
-      }
-    ])
-    setCurrentMode('image-enhance-action')
-  }
   const errorMessageAutoSave = (value: string) => {
     setMessages(currentMessages => [
       ...currentMessages,
@@ -978,39 +897,6 @@ export function PromptForm({
       }
     ])
     handleTextSave(value)
-  }
-  const HandleimageEnhancingCancle = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: <BotCard>이미지가 저장되지 않았습니다.</BotCard>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            <ButtonCommand
-              setInput={setInput}
-              command={'이미지 편집'}
-              ref={inputRef}
-            />
-            ,
-            <ButtonCommand
-              setInput={setInput}
-              command={'종료'}
-              ref={inputRef}
-            />{' '}
-            중에 하나를 입력하세요.
-          </BotCard>
-        )
-      }
-    ])
-    setCurrentMode('image-enhance-action')
   }
   const handleHistory = () => {
     setMessages(currentMessages => [
@@ -1473,89 +1359,6 @@ export function PromptForm({
       }
     ])
   }
-  const handleErrorEnhance = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            토큰이 부족합니다.
-            <ButtonCommand
-              setInput={setInput}
-              command={'이미지 편집'}
-              ref={inputRef}
-            />
-            ,
-            <ButtonCommand
-              setInput={setInput}
-              command={'종료'}
-              ref={inputRef}
-            />{' '}
-            중에 하나를 입력하세요.
-          </BotCard>
-        )
-      }
-    ])
-    HandleimageEnhancingAction(value)
-  }
-  const handleErrorImageEnhancingAction = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            잘못된 입력입니다.
-            <ButtonCommand setInput={setInput} command={'예'} ref={inputRef} />,
-            <ButtonCommand
-              setInput={setInput}
-              command={'아니오'}
-              ref={inputRef}
-            />
-            로 답해주세요.
-          </BotCard>
-        )
-      }
-    ])
-  }
-  const handleErrorImageEnhanceAction = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            잘못된 입력입니다.
-            <ButtonCommand
-              setInput={setInput}
-              command={'이미지 편집'}
-              ref={inputRef}
-            />
-            ,
-            <ButtonCommand
-              setInput={setInput}
-              command={'종료'}
-              ref={inputRef}
-            />
-            중에 입력하시오.
-          </BotCard>
-        )
-      }
-    ])
-  }
   const handleErrorGenerateImageApi = (value: string) => {
     setMessages(currentMessages => [
       ...currentMessages,
@@ -1658,8 +1461,8 @@ export function PromptForm({
             } else handleErrorImage(value)
           } else if (['1', '2', '3', '4'].includes(value)) {
             const selectImage = returnSelectedImage(value)
-            setSelectedImage(selectImage.src)
-            setCurrentImageUrl(selectImage.src)
+            setSelectedImage(selectImage)
+            setCurrentImageUrl(selectImage)
             handleSelectedImageSave(value)
             handleImageAction(value)
             setCurrentMode('image-action')
@@ -1668,58 +1471,15 @@ export function PromptForm({
           if (['1', '2', '3', '4'].includes(value)) {
             handleSelectedImageSave(value)
             const selectImage = returnSelectedImage(value)
-            setSelectedImage(selectImage.src)
-            setCurrentImageUrl(selectImage.src)
+            setSelectedImage(selectImage)
+            setCurrentImageUrl(selectImage)
             handleImageAction(value)
           } else handleErrorImageReselected(value)
         } else if (currentMode === 'image-action') {
           if (value === '이미지 편집') {
             handleImageEdit(value)
-          } else if (value === '이미지 보강') {
-            const hasEnoughTokens = await handleCheckTokens()
-            if (hasEnoughTokens) {
-              const enhance = await ReturnEnhanceImage(selectedImage)
-              console.log(enhance)
-              setEnhancedImg(enhance)
-              handleImageEnhance(value, enhance)
-            } else handleErrorEnhance(value)
           } else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
           else handleErrorImageAction(value)
-        } else if (currentMode === 'image-enhancing-action') {
-          if (value.toLowerCase() === '예') {
-            setCurrentImageUrl(enhancedImg)
-            HandleimageEnhancingAction(value)
-          } else if (value.toLowerCase() === '아니오') {
-            setCurrentImageUrl(selectedImage)
-            HandleimageEnhancingCancle(value)
-          } else if (value.toLowerCase() === '재보강') {
-            const hasEnoughTokens = await handleCheckTokens()
-            if (hasEnoughTokens) {
-              const enhance = await ReturnEnhanceImage(selectedImage)
-              flushSync(() => {
-                setEnhancedImg(enhance)
-              })
-              handleImageEnhance(value, enhance)
-
-
-              } else if (['1', '2', '3', '4'].includes(value)) {
-                const {src, seed} = returnSelectedImage(value)
-                console.log(src)
-                setSelectedSeed(seed)
-                setSelectedImage(src)
-                setCurrentImageUrl(src)
-                handleSelectedImageSave(value)  
-                handleImageAction(value)
-                setCurrentMode('image-action')
-              } else handleErrorImageSelected(value)
-          } else handleErrorImageEnhancingAction(value)
-        } else if (currentMode === 'image-enhance-action') {
-          if (value === '이미지 편집') {
-            handleImageEdit(value)
-          } else if (value.toLowerCase() === '종료') {
-            setCurrentImageUrl(enhancedImg)
-            handleSaveMessageAndImage()
-          } else handleErrorImageEnhanceAction(value)
         } else if (currentMode === 'history') {
           handleHistory()
         } else if (currentMode === 'history-action') {
@@ -1739,7 +1499,7 @@ export function PromptForm({
       }}
     >
       <div className="flex justify-center space-x-2 mt-2 mb-8">
-        {predefinedMessages.map((msg, index) => (
+      {predefinedMessages.map((msg, index) => (
           <Button
             key={index}
             onClick={() =>
