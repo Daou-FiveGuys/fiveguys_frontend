@@ -110,19 +110,41 @@ function FolderItem({
 
   // 그룹 삭제
   const handleDeleteGroup = (group: Group2) => {
-    if (window.confirm('해당 그룹을 삭제하시겠습니까?')) {
-      setFolders((prevFolders) =>
-        prevFolders.map((f) =>
-          f.folderId === folder.folderId
+    const parentFolder = folders.find((folder) =>
+      folder.group2s.some((g) => g.groupsId === group.groupsId)
+    );
+  
+    if (parentFolder) {
+      if (parentFolder.group2s.length <= 1) {
+        alert("폴더 내에는 최소 하나의 그룹이 있어야 합니다.");
+        return;
+      }
+  
+      if (window.confirm("해당 그룹을 삭제하시겠습니까?")) {
+        const updatedFolders = folders.map((folder) =>
+          folder.folderId === parentFolder.folderId
             ? {
-                ...f,
-                group2s: f.group2s.filter((g) => g.groupsId !== group.groupsId),
+                ...folder,
+                group2s: folder.group2s.filter(
+                  (g) => g.groupsId !== group.groupsId
+                ),
               }
-            : f
-        )
-      );
+            : folder
+        );
+  
+        setFolders(updatedFolders);
+  
+        // 현재 선택된 그룹이 삭제된 그룹이라면, 새로운 그룹으로 업데이트
+        if (currentGroup2.groupsId === group.groupsId) {
+          const remainingGroups = parentFolder.group2s.filter(
+            (g) => g.groupsId !== group.groupsId
+          );
+          setCurrentGroup2(remainingGroups[0]); // 첫 번째 그룹 선택
+        }
+      }
     }
   };
+  
 
   return (
     <div>

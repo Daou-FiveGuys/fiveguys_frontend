@@ -212,11 +212,6 @@ const sampleData: Folder2[] = [
             "contact2s": []
           }
         ]
-      },
-      {
-        "folderId": 4,
-        "name": "폴더4",
-        "group2s": []
       }
     ]
 
