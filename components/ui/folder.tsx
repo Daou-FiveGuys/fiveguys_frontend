@@ -3,7 +3,7 @@ import {AnimatePresence, motion} from "framer-motion";
 import {Button} from "@/components/ui/button";
 import {ChevronDown, ChevronUp, Edit, FolderPlus, Trash2} from "lucide-react";
 import {Input} from "@/components/ui/input";
-import {AddressEntry, CustomSelect} from "@/components/address-book";
+import {AddressEntry, CustomSelect} from "@/app/address/address-book";
 
 type Folder = {
     id: string

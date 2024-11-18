@@ -24,21 +24,8 @@ import {
   BreadcrumbSeparator
 } from '@/components/ui/breadcrumb'
 import { Folder, FolderTree } from '@/components/ui/folder'
-
-export type AddressEntry = {
-  id: string
-  name: string
-  phoneNumber: string
-  var1?: string
-  var2?: string
-  var3?: string
-  var4?: string
-}
-
-type SearchResult = {
-  folder: Folder
-  addresses: AddressEntry[]
-}
+import { AddressEntry, SearchResult } from './entity'
+import {api} from './service'
 
 // Sample data
 const sampleData: Folder[] = [
@@ -119,43 +106,6 @@ const sampleData: Folder[] = [
     ]
   }
 ]
-
-// API control code
-const api = {
-  createFolder: async (
-    name: string,
-    parentId: string | null
-  ): Promise<Folder> => {
-    await new Promise(resolve => setTimeout(resolve, 500)) // Simulated delay
-    return { id: Date.now().toString(), name, subFolders: [], addresses: [] }
-  },
-  updateFolder: async (
-    id: string,
-    name: string
-  ): Promise<{ id: string; name: string }> => {
-    await new Promise(resolve => setTimeout(resolve, 500)) // Simulated delay
-    return { id, name }
-  },
-  deleteFolder: async (id: string): Promise<boolean> => {
-    await new Promise(resolve => setTimeout(resolve, 500)) // Simulated delay
-    return true
-  },
-  createAddress: async (
-    address: Omit<AddressEntry, 'id'>,
-    folderId: string
-  ): Promise<AddressEntry> => {
-    await new Promise(resolve => setTimeout(resolve, 500)) // Simulated delay
-    return { ...address, id: Date.now().toString() }
-  },
-  updateAddress: async (address: AddressEntry): Promise<AddressEntry> => {
-    await new Promise(resolve => setTimeout(resolve, 500)) // Simulated delay
-    return address
-  },
-  deleteAddress: async (id: string): Promise<boolean> => {
-    await new Promise(resolve => setTimeout(resolve, 500)) // Simulated delay
-    return true
-  }
-}
 
 export const CustomSelect = ({
   value,
