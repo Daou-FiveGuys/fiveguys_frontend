@@ -80,7 +80,7 @@ export default function AddressListView({
       <AnimatePresence>
         {paginatedAddresses.map((address) => (
           <motion.div
-            key={address.contactId}
+            key={address.id}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -124,6 +124,7 @@ export default function AddressListView({
           </motion.div>
         ))}
       </AnimatePresence>
+
       <div className="flex justify-center space-x-2 mt-6">
         {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
           <Button
