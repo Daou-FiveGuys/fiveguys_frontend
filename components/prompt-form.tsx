@@ -28,7 +28,6 @@ import {
   returnSelectedImage,
   showExistingImages
 } from './image-generator'
-import { ImageEnhance, ReturnEnhanceImage } from './image-enhance'
 
 import {
   SendPhoneNumberData,
@@ -70,9 +69,11 @@ export function PromptForm({
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
 
-  const [currentMode, setCurrentMode] = React.useState<'phone-group-noninput'| 'text-create-action'|'image-Reselect'|'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'|'history-action' >('normal')
+  const [currentMode, setCurrentMode] = React.useState<'phone-group-noninput' | 'image-reselect' | 'text-create-action'|'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'| 'history-action' >('normal')
   const [selectedImage, setSelectedImage] = React.useState('');
   const [phoneData, setPhoneData] = React.useState<PhoneNumberData>({ name: '', phoneNumber: '', groupName: 'default' })
+
+  const [subMode, setSubMode] = React.useState<'text-create-action'|'normal' | 'text' | 'image-select' | 'image-reselect' | 'image-action' |'text-action'>('normal');
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   type Action =
@@ -81,7 +82,6 @@ export function PromptForm({
     | 'text-action-generate'
     | 'send-message'
     | 'image-edit'
-    | 'image-enhance'
     | 'image-save'
   const [message, setMessage] = React.useState('')
   const { getNextNumber } = useNumberManager()
@@ -292,7 +292,58 @@ export function PromptForm({
         }
       ])
       setCurrentMode('history-action')
-    } else {
+    } else if (mode === 'send-message' && subMode === 'text') {
+            setMessages(currentMessages => [
+        {
+          id: nanoid(),
+          display: <UserMessage>{message}</UserMessage>
+        },
+        {
+          id: nanoid(),
+          display: <BotCard>{response}</BotCard>
+        },
+                {
+          id: nanoid(),
+          display: "주제를 입력해주세요."
+        }
+      ])
+    }else if (( currentMode === 'send-message-recipient' || currentMode === 'send-message-group') && subMode === 'text') {
+      setMessages(currentMessages => [
+  {
+    id: nanoid(),
+    display: <UserMessage>{message}</UserMessage>
+  },
+  {
+    id: nanoid(),
+    display: <BotCard>{response}</BotCard>
+  },
+          {
+    id: nanoid(),
+    display: "주제를 입력해주세요."
+  }
+])
+}else if (mode === 'text') {
+      setMessages(currentMessages => [
+  ...currentMessages,
+  {
+    id: nanoid(),
+    display: <UserMessage>{message}</UserMessage>
+  },
+  {
+    id: nanoid(),
+    display: <BotCard>{response}</BotCard>
+  },
+          {
+    id: nanoid(),
+    display: "주제를 입력해주세요."
+  }
+])
+//handleText()
+if(currentMode === 'send-message'||currentMode === 'send-message-recipient'||currentMode === 'send-message-group'){
+  setSubMode('text');
+}
+else setCurrentMode('text')
+} else {
       setMessages(currentMessages => [
         ...currentMessages,
         {
@@ -663,6 +714,7 @@ export function PromptForm({
           <UserTextMessage
             message={lastTextInput}
             onCreatedMessage={setLastCreatedMessage}
+            onCommunicationStatus={handleMS}
           />
         )
       },
@@ -692,7 +744,8 @@ export function PromptForm({
         )
       }
     ])
-    setCurrentMode('text-create-action')
+    if(subMode === 'text-create-action'){setSubMode('text-create-action')}
+      else setCurrentMode('text-create-action')
   }
   //문자 생성 기능 4: 문자 저장 후 이미지 생성 여부 확인
 
@@ -701,24 +754,29 @@ export function PromptForm({
   const [lastCreatedMessage, setLastCreatedMessage] = React.useState('')
   const [currentImageUrl, setCurrentImageUrl] = React.useState('')
 
+  const [imgSuccess, setImgSuccess] = React.useState(false);
+  const handleIS = (result:boolean) => setImgSuccess(result);
   const handleImageGeneration = () => {
+    if(subMode === 'text-action' || subMode === 'image-action')setSubMode('image-select')
+    else setCurrentMode('image-select')
+
     setMessages(currentMessages => [
       ...currentMessages,
       //추가
       {
         id: nanoid(),
-        display: <ImageGenerator createdMessage={lastCreatedMessage} />
+        display: <ImageGenerator createdMessage={lastCreatedMessage} onSuccess={handleIS} seed={selectedSeed}/>
       },
       {
         id: nanoid(),
         display: (
           <BotCard>
-            0, 1, 2, 3, 4번 중 하나를 선택해주세요. (0: 이미지 재생성)
+            1, 2, 3, 4번 중 하나를 선택해주세요.
           </BotCard>
         )
       }
     ])
-    setCurrentMode('image-select')
+
   }
   //이미지 생성 기능 1: 이미지 4장 생성 기능.
 
@@ -729,11 +787,11 @@ export function PromptForm({
       //추가
       {
         id: nanoid(),
-        display: <ImageGenerator createdMessage={lastCreatedMessage} seed={seed}/>
+        display: <ImageGenerator createdMessage={lastCreatedMessage} seed={seed} onSuccess={handleIS}/>
       },
       {
         id: nanoid(),
-        display: "0, 1, 2, 3, 4번 중 하나를 선택해주세요. (0: 이미지 재생성)"
+        display: "1, 2, 3, 4번 중 하나를 선택해주세요."
       }
     ])
     setCurrentMode('image-select')
@@ -745,62 +803,14 @@ export function PromptForm({
       {
         id: nanoid(),
 
-        display: "이미지 재생성, 이미지 편집, 종료 중에 하나를 입력하세요."
+        display: "재생성, 편집, 종료 중에 하나를 입력하세요."
 
       }
     ])
+    if(subMode === 'image-select')setSubMode('image-action')
+    else setCurrentMode('image-action')
   }
   //이미지 생성 기능 2: 이미지 선택 후 이미지 편집, 보강, 종료 선택 기능.
-
-  const [enhancedImg, setEnhancedImg] = React.useState('')
-
-  React.useEffect(() => {
-    if (enhancedImg) {
-    }
-  }, [enhancedImg])
-
-  // const handleImageEnhance = async (value: string, enhance: string) => {
-  //   // const EnhanceImage = ReturnEnhanceImage()
-  //   // setEnhancedImg(EnhanceImage)
-  //   //handleDeductTokens()
-  //   setMessages(currentMessages => [
-  //     ...currentMessages,
-  //     //추가
-  //     {
-  //       id: nanoid(),
-  //       display: <UserMessage>{value}</UserMessage>
-  //     },
-  //     {
-  //       id: nanoid(),
-  //       display: <ImageEnhance enhancedImageSrc={enhance} />
-  //     },
-  //     {
-  //       id: nanoid(),
-  //       display: (
-  //         <BotCard>
-  //           변경된 이미지를 저장하시겠습니까? (
-  //           <ButtonCommand setInput={setInput} command={'예'} ref={inputRef} />/
-  //           <ButtonCommand
-  //             setInput={setInput}
-  //             command={'아니오'}
-  //             ref={inputRef}
-  //           />
-  //           /
-  //           <ButtonCommand
-  //             setInput={setInput}
-  //             command={'재보강'}
-  //             ref={inputRef}
-  //           />
-  //           ).
-  //         </BotCard>
-  //       )
-  //     }
-  //   ])
-  //   setCurrentMode('image-enhancing-action')
-  // }
-  //이미지 생성 기능 3: 이미지 보강 기능
-
-  //삭제1: 이미지 보강
 
   const handleImageEdit = (value: string) => {
     //handleDeductTokens()
@@ -816,21 +826,7 @@ export function PromptForm({
       }
       //추가 2번
     ])
-    if (currentImageUrl) {
-      router.push(`/edit/${encodeURIComponent(selectedImage)}`)
-    } else {
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: (
-            <BotCard>
-              편집할 이미지가 없습니다. 먼저 이미지를 선택해주세요.
-            </BotCard>
-          )
-        }
-      ])
-    }
+    router.push(`/edit`)
   }
   //이미지 생성 기능 4: 이미지 편집 기능
 
@@ -865,7 +861,18 @@ export function PromptForm({
       }
     ])
     setSaveNum(prevSaveNum => prevSaveNum + 1)
-    setCurrentMode('normal')
+    if(subMode !== 'normal') {
+      setMessages(currentMessages => [
+        ...currentMessages,
+  
+        {
+          id: nanoid(),
+          display: "이미지 생성이 완료되었습니다. 메시지 전송으로 돌아갑니다."
+        }
+      ])
+      setSubMode('normal')
+    }
+    else setCurrentMode('normal')
   }
   // 이미지 생성 기능 5: 이미지 생성 종료 후 이미지와 문자 저장.
   //`MessageSaver` 컴포넌트를 사용해 `lastTextInput`과 `lastCreatedMessage`를 저장합니다.
@@ -888,7 +895,7 @@ export function PromptForm({
       },
       {
         id: nanoid(),
-        display: <ImageGenerator selectedImage={value} />
+        display: <ImageGenerator selectedImage={value} onSuccess={handleIS}/>
       }
     ])
 
@@ -902,7 +909,6 @@ export function PromptForm({
           }
         ])
       }
-      setCurrentMode('normal')
     }
   }
   const stopImageCreate = (value: string) => {
@@ -933,42 +939,6 @@ export function PromptForm({
     ])
     handleImageGeneration()
   }
-  // const HandleimageEnhancingAction = (value: string) => {
-  //   setMessages(currentMessages => [
-  //     ...currentMessages,
-  //     {
-  //       id: nanoid(),
-  //       display: <UserMessage>{value}</UserMessage>
-  //     },
-  //     {
-  //       id: nanoid(),
-  //       display: <BotCard>향상된 이미지가 저장되었습니다.</BotCard>
-  //     },
-  //     {
-  //       id: nanoid(),
-  //       display: (
-  //         <BotCard>
-  //           <ButtonCommand
-  //             setInput={setInput}
-  //             command={'이미지 편집'}
-  //             ref={inputRef}
-  //           />
-  //           ,
-  //           <ButtonCommand
-  //             setInput={setInput}
-  //             command={'종료'}
-  //             ref={inputRef}
-  //           />{' '}
-  //           중에 하나를 입력하세요.
-  //         </BotCard>
-  //       )
-  //     }
-  //   ])
-  //   setCurrentMode('image-enhance-action')
-  // }
-
-  //삭제2: 이미지 보강
-
   const errorMessageAutoSave = (value: string) => {
     setMessages(currentMessages => [
       ...currentMessages,
@@ -983,41 +953,6 @@ export function PromptForm({
     ])
     handleTextSave(value)
   }
-  // const HandleimageEnhancingCancle = (value: string) => {
-  //   setMessages(currentMessages => [
-  //     ...currentMessages,
-  //     {
-  //       id: nanoid(),
-  //       display: <UserMessage>{value}</UserMessage>
-  //     },
-  //     {
-  //       id: nanoid(),
-  //       display: <BotCard>이미지가 저장되지 않았습니다.</BotCard>
-  //     },
-  //     {
-  //       id: nanoid(),
-  //       display: (
-  //         <BotCard>
-  //           <ButtonCommand
-  //             setInput={setInput}
-  //             command={'이미지 편집'}
-  //             ref={inputRef}
-  //           />
-  //           ,
-  //           <ButtonCommand
-  //             setInput={setInput}
-  //             command={'종료'}
-  //             ref={inputRef}
-  //           />{' '}
-  //           중에 하나를 입력하세요.
-  //         </BotCard>
-  //       )
-  //     }
-  //   ])
-  //   setCurrentMode('image-enhance-action')
-  // }
-  // 삭제3: 이미지 보강
-
   const handleHistory = () => {
     setMessages(currentMessages => [
       ...currentMessages,
@@ -1112,8 +1047,21 @@ export function PromptForm({
       }
     ])
     setSaveNum(prevSaveNum => prevSaveNum + 1)
-    setCurrentMode('normal')
+
+    if(subMode ==='text-action'){
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: "메시지가 생성되었습니다. 메시지 전송으로 돌아갑니다."
+        }
+      ])
+      setSubMode('normal')
+    }
+    else setCurrentMode('normal')
   }
+  const [messageSuccess, setMessagSuccess] = React.useState(false);
+  const handleMS = (result:boolean) => setMessagSuccess(result)
 
   const handleText = (value: string) => {
     setLastTextInput(value)
@@ -1129,6 +1077,7 @@ export function PromptForm({
           <UserTextMessage
             message={value}
             onCreatedMessage={setLastCreatedMessage}
+            onCommunicationStatus={handleMS}
           />
         )
       },
@@ -1159,7 +1108,10 @@ export function PromptForm({
         )
       }
     ])
-    setCurrentMode('text-create-action')
+    if(subMode === 'text'){
+      setSubMode('text-create-action')
+    }
+    else setCurrentMode('text-create-action')
   }
   const [awaitingReselection, setAwaitingReselection] = React.useState(false)
   const requestReselection = () => {
@@ -1173,8 +1125,6 @@ export function PromptForm({
           id: nanoid(),
           display: (
             <BotCard>
-              <ButtonCommand setInput={setInput} command={'0'} ref={inputRef} />
-              ,
               <ButtonCommand setInput={setInput} command={'1'} ref={inputRef} />
               ,
               <ButtonCommand setInput={setInput} command={'2'} ref={inputRef} />
@@ -1182,7 +1132,7 @@ export function PromptForm({
               <ButtonCommand setInput={setInput} command={'3'} ref={inputRef} />
               ,
               <ButtonCommand setInput={setInput} command={'4'} ref={inputRef} />
-              , 중 하나를 선택해주세요. (0: 이미지 재생성)
+              , 중 하나를 선택해주세요.
             </BotCard>
           )
         }
@@ -1198,11 +1148,11 @@ export function PromptForm({
         display: <BotCard>주제를 다시 입력해 주세요.</BotCard>
       }
     ])
-    setCurrentMode('text')
+    if(subMode === 'text-create-action')setSubMode('text')
+    else setCurrentMode('text')
   }
   //문자 재생성 기능
   const handleStopGenerateText = () => {
-    setCurrentMode('text-action')
     setMessages(currentMessages => [
       ...currentMessages,
       {
@@ -1217,6 +1167,12 @@ export function PromptForm({
             ,
             <ButtonCommand
               setInput={setInput}
+              command={'이미지 불러오기'}
+              ref={inputRef}
+            />
+            ,
+            <ButtonCommand
+              setInput={setInput}
               command={'메시지 저장'}
               ref={inputRef}
             />
@@ -1225,6 +1181,8 @@ export function PromptForm({
         )
       }
     ])
+    if(subMode === 'text-create-action') setSubMode('text-action');
+    else setCurrentMode('text-action')
   }
   //문자 생성을 멈추고 이미지 생성, 메시지 저장 선택 단계로 넘어감.
 
@@ -1267,7 +1225,8 @@ export function PromptForm({
       }
     ])
     setSaveNum(prevSaveNum => prevSaveNum + 1)
-    setCurrentMode('normal')
+    if(subMode !=='normal'){setSubMode('normal')}
+    else setCurrentMode('normal')
   }
   const handleErrorRegenerateText = (value: string) => {
     setMessages(currentMessages => [
@@ -1352,6 +1311,12 @@ export function PromptForm({
             또는
             <ButtonCommand
               setInput={setInput}
+              command={'이미지 불러오기'}
+              ref={inputRef}
+            />{' '}
+            또는
+            <ButtonCommand
+              setInput={setInput}
               command={'메시지 저장'}
               ref={inputRef}
             />{' '}
@@ -1387,59 +1352,15 @@ export function PromptForm({
         display: (
           <BotCard>
             잘못된 선택입니다.
-            <ButtonCommand setInput={setInput} command={'0'} ref={inputRef} />,
             <ButtonCommand setInput={setInput} command={'1'} ref={inputRef} />,
             <ButtonCommand setInput={setInput} command={'2'} ref={inputRef} />,
             <ButtonCommand setInput={setInput} command={'3'} ref={inputRef} />,
             <ButtonCommand setInput={setInput} command={'4'} ref={inputRef} />,
-            중 하나를 선택해주세요. (0: 이미지 재생성)
+            중 하나를 선택해주세요.
           </BotCard>
         )
       }
     ])
-  }
-  const handleErrorImage = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            토큰이 부족합니다. 생성된 이미지 중에서 선택해 주세요.
-          </BotCard>
-        )
-      }
-    ])
-    setCurrentMode('image-Reselect')
-  }
-  const handleErrorImageReselected = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            잘못된 선택입니다.
-            <ButtonCommand setInput={setInput} command={'0'} ref={inputRef} />,
-            <ButtonCommand setInput={setInput} command={'1'} ref={inputRef} />,
-            <ButtonCommand setInput={setInput} command={'2'} ref={inputRef} />,
-            <ButtonCommand setInput={setInput} command={'3'} ref={inputRef} />,
-            <ButtonCommand setInput={setInput} command={'4'} ref={inputRef} />,
-            중 하나를 선택해주세요. (0: 이미지 재생성)
-          </BotCard>
-        )
-      }
-    ])
-    // 현재 모드를 유지하여 다시 선택하도록 함
-    setCurrentMode('image-Reselect')
   }
   const handleErrorImageAction = (value: string) => {
     setMessages(currentMessages => [
@@ -1455,7 +1376,13 @@ export function PromptForm({
             잘못된 입력입니다.
             <ButtonCommand
               setInput={setInput}
-              command={'이미지 편집'}
+              command={'편집'}
+              ref={inputRef}
+            />
+            ,
+            <ButtonCommand
+              setInput={setInput}
+              command={'재생성'}
               ref={inputRef}
             />
             ,
@@ -1465,92 +1392,6 @@ export function PromptForm({
               ref={inputRef}
             />{' '}
             중에 하나를 입력하세요.
-          </BotCard>
-        )
-      }
-    ])
-  }
-  // const handleErrorEnhance = (value: string) => {
-  //   setMessages(currentMessages => [
-  //     ...currentMessages,
-  //     {
-  //       id: nanoid(),
-  //       display: <UserMessage>{value}</UserMessage>
-  //     },
-  //     {
-  //       id: nanoid(),
-  //       display: (
-  //         <BotCard>
-  //           토큰이 부족합니다.
-  //           <ButtonCommand
-  //             setInput={setInput}
-  //             command={'이미지 편집'}
-  //             ref={inputRef}
-  //           />
-  //           ,
-  //           <ButtonCommand
-  //             setInput={setInput}
-  //             command={'종료'}
-  //             ref={inputRef}
-  //           />{' '}
-  //           중에 하나를 입력하세요.
-  //         </BotCard>
-  //       )
-  //     }
-  //   ])
-  //   HandleimageEnhancingAction(value)
-  // }
-  //삭제4: 이미지 보강
-
-
-  const handleErrorImageEnhancingAction = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            잘못된 입력입니다.
-            <ButtonCommand setInput={setInput} command={'예'} ref={inputRef} />,
-            <ButtonCommand
-              setInput={setInput}
-              command={'아니오'}
-              ref={inputRef}
-            />
-            로 답해주세요.
-          </BotCard>
-        )
-      }
-    ])
-  }
-  const handleErrorImageEnhanceAction = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            잘못된 입력입니다.
-            <ButtonCommand
-              setInput={setInput}
-              command={'이미지 편집'}
-              ref={inputRef}
-            />
-            ,
-            <ButtonCommand
-              setInput={setInput}
-              command={'종료'}
-              ref={inputRef}
-            />
-            중에 입력하시오.
           </BotCard>
         )
       }
@@ -1659,54 +1500,203 @@ export function PromptForm({
           }
         } else if (currentMode === 'text-action') {
           if (value.toLowerCase() === '이미지 생성') {
+            
             const result = await showExistingImages()
             console.log(result)
-            if (result) {
+            if (true) {
               const hasEnoughTokens = await handleCheckTokens()
-              if (hasEnoughTokens) {
+              if (true) {
                 handleImageGeneration()
               } else {
                 handleErrorGenerateImage(value)
               }
             } else handleErrorGenerateImageApi(value)
-          } else if (value.toLowerCase() === '메시지 저장')
+          } else if (value.toLowerCase() === '이미지 불러오기') 
+            handleImageEdit(value)
+            else if (value.toLowerCase() === '메시지 저장')
             handleTextSave(value)
           else handleErrorTextAction(value)
         } else if (
-          currentMode === 'send-message' ||
-          currentMode === 'send-message-recipient' ||
-          currentMode === 'send-message-group'
+          currentMode === 'send-message'
         ) {
+
+          if(subMode ==='normal'){
           const hasEnoughTokens = await handleCheckTokens()
           if (hasEnoughTokens) handleSendMessage(value)
           else handleErrorSendingMessage(value)
-        } else if (currentMode === 'image-select') {
-          if (value === '0') {
+          }else if(subMode === 'text'){
+            console.log('문자생성');
             const hasEnoughTokens = await handleCheckTokens()
-            if (hasEnoughTokens) {
-              handleImageRegeneration(value)
-              setAwaitingReselection(false)
-            } else handleErrorImage(value)
-          } else if (['1', '2', '3', '4'].includes(value)) {
-            const selectImage = returnSelectedImage(value)
-            setSelectedImage(selectImage.src)
-            setCurrentImageUrl(selectImage.src)
-            handleSelectedImageSave(value)
-            handleImageAction(value)
-            setCurrentMode('image-action')
-          } else handleErrorImageSelected(value)
-        } else if (currentMode === 'image-Reselect') {
+            if (hasEnoughTokens) handleText(value)
+              else handleErrorText(value)
+          }else if(subMode === 'text-create-action'){
+            if (value.toLowerCase() === '재생성') {
+              console.log('재생성');
+              const hasEnoughTokens = await handleCheckTokens()
+              if (hasEnoughTokens) handleRegenerateMessage()
+              else handleErrorRegenerateText(value)
+            } else if (value.toLowerCase() === '주제') {
+              console.log('주제');
+              handleReenterTopic()
+            } else if (value.toLowerCase() === '메시지 생성 완료') {
+              console.log('메생완');
+              handleStopGenerateText()
+            
+            } else {
+              handleErrorTextCreateAction(value)
+            }
+          } else if (subMode === 'text-action') {
+            if (value.toLowerCase() === '이미지 생성') {
+              const result = await showExistingImages()
+              console.log(result)
+              if (true) {//되나볼려고
+                const hasEnoughTokens = await handleCheckTokens()
+                if (hasEnoughTokens) {
+                  handleImageGeneration()
+                } else {
+                  handleErrorGenerateImage(value)
+                }
+              } else handleErrorGenerateImageApi(value)
+            } else if (value.toLowerCase() === '이미지 불러오기') {
+              handleImageEdit(value)
+            }
+              else if (value.toLowerCase() === '메시지 저장')
+              handleTextSave(value)
+            else handleErrorTextAction(value)
+          } 
+          
+          else if (subMode === 'image-select') {
+            if (['1', '2', '3', '4'].includes(value)) {
+              //const selectImage = returnSelectedImage(value)
+              const selectImage ='1';
+              setSelectedImage(selectImage)
+              setCurrentImageUrl(selectImage)
+              setSelectedSeed(value)
+              handleSelectedImageSave(value)
+              handleImageAction(value)
+              
+            } else handleErrorImageSelected(value)
+          }
+          else if (subMode === 'image-action') {
+            if (value === '편집') {
+              handleImageEdit(value)
+            } 
+            else if (value.toLowerCase() === '재생성'){
+              const hasEnoughTokens = await handleCheckTokens()
+              if (hasEnoughTokens) {
+                handleImageRegeneration(value)
+              }
+              else {
+                handleErrorGenerateImage(value)
+              }
+            }
+            else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
+            else handleErrorImageAction(value)
+          }
+
+        }else if (
+          currentMode === 'send-message-recipient' ||
+          currentMode === 'send-message-group'
+        ) {
+
+          if(subMode ==='normal'){
+          const hasEnoughTokens = await handleCheckTokens()
+          if (hasEnoughTokens) handleSendMessage(value)
+          else handleErrorSendingMessage(value)
+          }else if(subMode === 'text'){
+            console.log('문자생성');
+            const hasEnoughTokens = await handleCheckTokens()
+            if (hasEnoughTokens) handleText(value)
+              else handleErrorText(value)
+          }else if(subMode === 'text-create-action'){
+            if (value.toLowerCase() === '재생성') {
+              console.log('재생성');
+              const hasEnoughTokens = await handleCheckTokens()
+              if (hasEnoughTokens) handleRegenerateMessage()
+              else handleErrorRegenerateText(value)
+            } else if (value.toLowerCase() === '주제') {
+              console.log('주제');
+              handleReenterTopic()
+            } else if (value.toLowerCase() === '메시지 생성 완료') {
+              console.log('메생완');
+              handleStopGenerateText()
+            
+            } else {
+              handleErrorTextCreateAction(value)
+            }
+          } else if (subMode === 'text-action') {
+            if (value.toLowerCase() === '이미지 생성') {
+              const result = await showExistingImages()
+              console.log(result)
+              if (true) {//되나볼려고
+                const hasEnoughTokens = await handleCheckTokens()
+                if (hasEnoughTokens) {
+                  handleImageGeneration()
+                } else {
+                  handleErrorGenerateImage(value)
+                }
+              } else handleErrorGenerateImageApi(value)
+            } else if (value.toLowerCase() === '이미지 불러오기') {
+              handleImageEdit(value)
+            }
+              else if (value.toLowerCase() === '메시지 저장')
+              handleTextSave(value)
+            else handleErrorTextAction(value)
+          } 
+          
+          else if (subMode === 'image-select') {
+            if (['1', '2', '3', '4'].includes(value)) {
+              //const selectImage = returnSelectedImage(value)
+              const selectImage ='1';
+              setSelectedImage(selectImage)
+              setCurrentImageUrl(selectImage)
+              setSelectedSeed(value)
+              handleSelectedImageSave(value)
+              handleImageAction(value)
+              
+            } else handleErrorImageSelected(value)
+          }
+          else if (subMode === 'image-action') {
+            if (value === '편집') {
+              handleImageEdit(value)
+            } 
+            else if (value.toLowerCase() === '재생성'){
+              const hasEnoughTokens = await handleCheckTokens()
+              if (hasEnoughTokens) {
+                handleImageRegeneration(value)
+              }
+              else {
+                handleErrorGenerateImage(value)
+              }
+            }
+            else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
+            else handleErrorImageAction(value)
+          }
+
+        } else if (currentMode === 'image-select') {
           if (['1', '2', '3', '4'].includes(value)) {
-            handleSelectedImageSave(value)
             const selectImage = returnSelectedImage(value)
-            setSelectedImage(selectImage.src)
-            setCurrentImageUrl(selectImage.src)
+            setSelectedImage(selectImage)
+            setCurrentImageUrl(selectImage)
+            handleSelectedImageSave(value)
+            setSelectedSeed(value)
             handleImageAction(value)
-          } else handleErrorImageReselected(value)
-        } else if (currentMode === 'image-action') {
-          if (value === '이미지 편집') {
+
+          } else handleErrorImageSelected(value)
+
+        }
+        else if (currentMode === 'image-action') {
+          if (value === '편집') {
             handleImageEdit(value)
-          } else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
+          } 
+          else if (value.toLowerCase() === '재생성'){
+            const selectImage = returnSelectedImage(value)
+            setSelectedImage(selectImage)
+            setCurrentImageUrl(selectImage)
+            handleSelectedImageSave(value)
+            handleImageAction(value)
+          }
+          else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
           else handleErrorImageAction(value)
         } else if (currentMode === 'history') {
           handleHistory()
@@ -1727,7 +1717,7 @@ export function PromptForm({
       }}
     >
       <div className="flex justify-center space-x-2 mt-2 mb-8">
-        {predefinedMessages.map((msg, index) => (
+      {predefinedMessages.map((msg, index) => (
           <Button
             key={index}
             onClick={() =>
