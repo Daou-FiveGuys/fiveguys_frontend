@@ -307,7 +307,22 @@ export function PromptForm({
           display: "주제를 입력해주세요."
         }
       ])
-    }else if (mode === 'text') {
+    }else if (( currentMode === 'send-message-recipient' || currentMode === 'send-message-group') && subMode === 'text') {
+      setMessages(currentMessages => [
+  {
+    id: nanoid(),
+    display: <UserMessage>{message}</UserMessage>
+  },
+  {
+    id: nanoid(),
+    display: <BotCard>{response}</BotCard>
+  },
+          {
+    id: nanoid(),
+    display: "주제를 입력해주세요."
+  }
+])
+}else if (mode === 'text') {
       setMessages(currentMessages => [
   ...currentMessages,
   {
@@ -324,7 +339,7 @@ export function PromptForm({
   }
 ])
 //handleText()
-if(currentMode === 'send-message'){
+if(currentMode === 'send-message'||currentMode === 'send-message-recipient'||currentMode === 'send-message-group'){
   setSubMode('text');
 }
 else setCurrentMode('text')
@@ -1471,7 +1486,84 @@ else setCurrentMode('text')
             handleTextSave(value)
           else handleErrorTextAction(value)
         } else if (
-          currentMode === 'send-message' ||
+          currentMode === 'send-message'
+        ) {
+
+          if(subMode ==='normal'){
+          const hasEnoughTokens = await handleCheckTokens()
+          if (hasEnoughTokens) handleSendMessage(value)
+          else handleErrorSendingMessage(value)
+          }else if(subMode === 'text'){
+            console.log('문자생성');
+            const hasEnoughTokens = await handleCheckTokens()
+            if (hasEnoughTokens) handleText(value)
+              else handleErrorText(value)
+          }else if(subMode === 'text-create-action'){
+            if (value.toLowerCase() === '재생성') {
+              console.log('재생성');
+              const hasEnoughTokens = await handleCheckTokens()
+              if (hasEnoughTokens) handleRegenerateMessage()
+              else handleErrorRegenerateText(value)
+            } else if (value.toLowerCase() === '주제') {
+              console.log('주제');
+              handleReenterTopic()
+            } else if (value.toLowerCase() === '메시지 생성 완료') {
+              console.log('메생완');
+              handleStopGenerateText()
+            
+            } else {
+              handleErrorTextCreateAction(value)
+            }
+          } else if (subMode === 'text-action') {
+            if (value.toLowerCase() === '이미지 생성') {
+              const result = await showExistingImages()
+              console.log(result)
+              if (true) {//되나볼려고
+                const hasEnoughTokens = await handleCheckTokens()
+                if (hasEnoughTokens) {
+                  handleImageGeneration()
+                } else {
+                  handleErrorGenerateImage(value)
+                }
+              } else handleErrorGenerateImageApi(value)
+            } else if (value.toLowerCase() === '이미지 불러오기') {
+              handleImageEdit(value)
+            }
+              else if (value.toLowerCase() === '메시지 저장')
+              handleTextSave(value)
+            else handleErrorTextAction(value)
+          } 
+          
+          else if (subMode === 'image-select') {
+            if (['1', '2', '3', '4'].includes(value)) {
+              //const selectImage = returnSelectedImage(value)
+              const selectImage ='1';
+              setSelectedImage(selectImage)
+              setCurrentImageUrl(selectImage)
+              setSelectedSeed(value)
+              handleSelectedImageSave(value)
+              handleImageAction(value)
+              
+            } else handleErrorImageSelected(value)
+          }
+          else if (subMode === 'image-action') {
+            if (value === '편집') {
+              handleImageEdit(value)
+            } 
+            else if (value.toLowerCase() === '재생성'){
+              const hasEnoughTokens = await handleCheckTokens()
+              if (hasEnoughTokens) {
+                handleImageRegeneration(value)
+              }
+              else {
+                handleErrorGenerateImage(value)
+              }
+            }
+            else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
+            else handleErrorImageAction(value)
+          }
+
+        }else if (
           currentMode === 'send-message-recipient' ||
           currentMode === 'send-message-group'
         ) {
