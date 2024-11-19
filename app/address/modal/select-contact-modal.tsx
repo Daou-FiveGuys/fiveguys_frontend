@@ -6,6 +6,22 @@ import { Button } from '@/components/ui/button'
 import AddressBook from '../address-book'
 import { Contact2 } from '../entity'
 
+export type Target = {
+  to: string,
+  changeWord: ChangeWord,
+  name: string
+}
+
+export type ChangeWord = {
+  var1: string,
+  var2: string,
+  var3: string,
+  var4: string,
+  var5: string,
+  var6: string,
+  var7: string
+}
+
 export default function AddressBookModal() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedContacts, setSelectedContacts] = useState<Contact2[]>([])
@@ -74,8 +90,21 @@ export default function AddressBookModal() {
           <div className="mt-4 flex justify-end">
             <Button 
               onClick={() => {
-                console.log('Sending:', selectedContacts)
-                handleClose()
+                const targets: Target[] = selectedContacts.map(contact => ({
+                  to: contact.telNum,
+                  changeWord: {
+                    var1: contact.var1 || '',
+                    var2: contact.var2 || '',
+                    var3: contact.var3 || '',
+                    var4: contact.var4 || '',
+                    var5: contact.var5 || '',
+                    var6: contact.var6 || '',
+                    var7: contact.var7 || ''
+                  },
+                  name: contact.name
+                }));
+                console.log('Sending:', targets);
+                handleClose();
               }}
               className="bg-blue-500 hover:bg-blue-600 text-white"
             >
@@ -86,4 +115,4 @@ export default function AddressBookModal() {
       </Dialog>
     </div>
   )
-};
+}
