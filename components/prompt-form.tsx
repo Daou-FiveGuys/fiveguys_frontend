@@ -124,6 +124,7 @@ export function PromptForm({
     | 'send-message-select'
     | 'send-message'
     | 'return'
+    | 'faq'
   >('normal')
   const [selectedImage, setSelectedImage] = React.useState('')
   const [phoneData, setPhoneData] = React.useState<PhoneNumberData>({
@@ -312,6 +313,7 @@ export function PromptForm({
       | 'send-message-select'
       | 'send-message'
       | 'return'
+      | 'faq'
   ) => {
     if (mode === 'tokenInquiry') {
       addMessageToChatSlice('사용자', <UserMessage>{message}</UserMessage>)
@@ -365,19 +367,10 @@ export function PromptForm({
       addMessageToChatSlice('사용자', <UserMessage>{message}</UserMessage>)
       addMessageToChatSlice('챗봇', <BotCard>{response}</BotCard>)
       setCurrentMode(mode)
-    } else if (mode == 'faq') {
-      setCurrentMode('faq')
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{message}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: '무엇이 궁금하신가요?'
-        }
-      ])
+    } else if (mode === 'faq') {
+      setCurrentMode(mode)
+      addMessageToChatSlice('사용자', <UserMessage>{message}</UserMessage>)
+      addMessageToChatSlice('챗봇', <BotCard>무엇이 궁금하신가요?</BotCard>)
     }
   }
   //버튼 누르면 고정답변 해주고 모드 변경.
@@ -1124,13 +1117,7 @@ export function PromptForm({
         } else if (currentMode === 'phone-group-input') {
           handleGroupName(value)
         } else if (currentMode === 'phone-group-noninput') {
-          setMessages(currentMessages => [
-            ...currentMessages,
-            {
-              id: nanoid(),
-              display: <UserMessage>{value}</UserMessage>
-            }
-          ])
+          addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
           if (value == '예') {
             const newPhoneData = { ...phoneData, groupName: 'default' }
             const result = await comparePhoneNumber({ phoneData: newPhoneData })
@@ -1374,7 +1361,7 @@ export function PromptForm({
                 {msg.message}
               </Button>
             ))
-          : predefinedSendMessages.map((msg, index) => (
+          : predefinedMessages.map((msg, index) => (
               <Button
                 key={index}
                 onClick={() =>
