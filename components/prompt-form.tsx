@@ -351,6 +351,7 @@ export function PromptForm({
   }
   else setCurrentMode('text')
 } else if(mode=='faq'){
+  setCurrentMode('faq');
   setMessages(currentMessages => [
     ...currentMessages,
     {
@@ -361,7 +362,7 @@ export function PromptForm({
       id: nanoid(),
       display: "무엇이 궁금하신가요?"
     }
-  ])
+  ]);
 } else {
       setMessages(currentMessages => [
         ...currentMessages,
@@ -1470,16 +1471,16 @@ export function PromptForm({
           handleGroupNameResponse(value)
         } else if (currentMode === 'phone-group-input') {
           handleGroupName(value)
-        } else if (currentMode ==='faq'){
-          let response = await api.faqChatbotAsk(value);
-          console.log(response)
-          setMessages(currentMessages => [
-            ...currentMessages,
-            {
-              id: nanoid(),
-              display: `${response?.data}`
-            }
-          ])
+        } else if (currentMode ==='faq') {
+          await api.faqChatbotAsk(value, (response:any)=>{
+            setMessages(currentMessages => [
+              ...currentMessages,
+              {
+               id: nanoid(),
+               display: `${response?.data}`
+              }
+            ])
+          });
           setCurrentMode('faq')
         } else if (currentMode === 'phone-group-noninput') {
           setMessages(currentMessages => [
