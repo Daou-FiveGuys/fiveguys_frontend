@@ -18,6 +18,18 @@ export const api = {
       }
     },
 
+    readFolder: async () : Promise<Folder2[]|undefined> => {
+      try {
+        const response = await apiClient.get<CommonResponse<Folder2[]>>(`/folder2/user`)
+
+        const folder2List = response.data.data;
+        if(response.data.code == 200) return folder2List
+        return undefined
+      } catch(error) {
+        return undefined
+      }
+    },
+
     updateFolder: async (
       folder2:Folder2,
     ): Promise<Folder2 | undefined> => {
@@ -165,7 +177,7 @@ export const api = {
         return false
       }
     }
-}
+};
 
 export type { Contact2 };
   

@@ -2,9 +2,9 @@ import apiClient from "@/services/apiClient";
 import { Folder2, Group2, Contact2, CommonResponse } from "./entity";
 
 // 폴더 데이터를 가져오는 함수
-export const getFolder2Data = async (userId: Number): Promise<Folder2[]> => {
+export const getFolder2Data = async (): Promise<Folder2[]> => {
     try {
-        const response = await apiClient.get<CommonResponse<Folder2[]>>(`/folder2/user/${userId}`);
+        const response = await apiClient.get<CommonResponse<Folder2[]>>(`/folder2/user`);
         return Array.isArray(response.data.data) ? response.data.data : [];
     } catch (error) {
         console.error("폴더 데이터 로드 오류:", error);

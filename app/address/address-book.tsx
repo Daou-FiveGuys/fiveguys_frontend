@@ -278,6 +278,24 @@ export default function AddressBook() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
+  useEffect(() => {
+    const fetchFolders = async () => {
+      setIsLoading(true);
+      try {
+        const userData = await api.readFolder(); // 비동기 호출
+        if (userData) {
+          setTopFolder2s(userData); // API 데이터로 상태 업데이트
+        }
+      } catch (error) {
+        console.error('Failed to fetch folders:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFolders();
+  }, []); // 컴포넌트가 마운트될 때 실행
+
   /**
    * Contact2를 기반으로 검색을 주관하는 핸들러이다.
    * 
