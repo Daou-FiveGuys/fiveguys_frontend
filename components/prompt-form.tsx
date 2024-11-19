@@ -1125,8 +1125,24 @@ export function PromptForm({
           handleGroupName(value)
         } else if (currentMode === 'faq') {
           addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
-          let id = addMessageToChatSlice('챗봇', <BotCard>생각중...</BotCard>)
+          let display = (
+            <BotCard>
+              <span style={{ color: 'gray' }}>생각중</span>
+            </BotCard>
+          )
+          let id = addMessageToChatSlice('챗봇', display)
+          let dots = 0
+          const interval = setInterval(() => {
+            dots = (dots + 1) % 4 // Cycle through 0, 1, 2, 3
+            const text = (
+              <BotCard>
+                <span style={{ color: 'gray' }}>생각중{'. '.repeat(dots)}</span>
+              </BotCard>
+            )
+            dispatch(editMessage([id, reactNodeToString(text)]))
+          }, 500)
           await api.faqChatbotAsk(value, (response: any) => {
+            clearInterval(interval)
             dispatch(
               editMessage([
                 id,
