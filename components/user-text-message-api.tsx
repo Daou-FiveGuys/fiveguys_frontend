@@ -1,33 +1,41 @@
-'use client'
+import axios, { AxiosError } from 'axios';
 
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+export const UserTextMessageApi = async (message: string) => {
+  const url = 'http://localhost:8080/api/v1/ai/gpt/generate-text';
+  const data = {
+    text: message // 사용자 메시지를 사용합니다
+  };
+  const headers = {
+    'accept': 'application/json',
+    'Authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJhdXRoIjpbeyJhdXRob3JpdHkiOiJST0xFX1VTRVIifV0sInN1YiI6ImZpdmVndXlzXzZ1a2VlbUBnbWFpbC5jb20iLCJpYXQiOjE3MzE0MjE4MTMsImV4cCI6MzUzMTQyMTgxM30.Q225YzlXdWMr6-h0fVT1DAfDQDseJq76UgEPGBd1xQc6kUy_GpWpF1tqDg07gZWlKjeVOh5pROUoBTS3EShC4g',
+    'Content-Type': 'application/json'
+  };
 
-interface UserTextMessageApiProps {
-  message: string
-  onResult: (result: string | null, error: string | null) => void
-}
+  let isValid = 0;
 
-export function UserTextMessageApi({ message, onResult }: UserTextMessageApiProps) {
-  const [isLoading, setIsLoading] = useState(false)
-
-  useEffect(() => {
-    const fetchCreatedMessage = async () => {
-      setIsLoading(true)
-      try {
-        const response = await axios.get('https://jsonplaceholder.typicode.com/posts')
-        const createdMessage = response.data[0].body
-        onResult(createdMessage, null)
-      } catch (err) {
-        console.error('Error fetching created message:', err)
-        onResult(null, '메시지 생성에 실패했습니다. 다시 시도해 주세요.')
-      } finally {
-        setIsLoading(false)
-      }
+  try {
+    const response = await axios.post(url, data, { headers });
+    console.log('Response:', response.data);
+    return {
+      isValid: isValid === 0,
+      text: response.data.text
+    };
+  } catch (error) {
+    isValid++;
+    if (axios.isAxiosError(error)) {
+      console.error('Error:', error.response?.data || error.message);
+      return {
+        isValid: isValid === 0,
+        error: typeof error.response?.data === 'string' 
+          ? error.response.data 
+          : error.message || 'An error occurred'
+      };
+    } else {
+      console.error('Unexpected error:', error);
+      return {
+        isValid: isValid === 0,
+        error: 'An unexpected error occurred'
+      };
     }
-
-    fetchCreatedMessage()
-  }, [message, onResult])
-
-  return null // This component doesn't render anything
-}
+  }
+};

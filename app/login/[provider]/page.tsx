@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react'
 import { NextResponse } from 'next/server'
 import apiClient from '@/services/apiClient'
 import { setCookie } from 'cookies-next'
+import axios from 'axios'
 
 interface CallBackProps {
   params: { provider: string }
@@ -41,7 +42,9 @@ export default function CallBack({ params, searchParams }: CallBackProps) {
 
     const getAccessToken = async () => {
       await apiClient
-        .get(`/oauth/${provider}?${query}`, { withCredentials: true })
+        .get(`/oauth/${provider}?${query}`, {
+          withCredentials: true
+        })
         .then(res => {
           const access_token = res.data.data.accessToken
           if (res.data.code === 200) {
