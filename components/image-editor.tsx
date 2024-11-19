@@ -1,5 +1,5 @@
 'use client'
-import toast, { Toaster } from 'react-hot-toast'
+
 import { useEffect, useRef, useState } from 'react'
 import { Rect, Object as FabricObject } from 'fabric'
 import * as fabric from 'fabric'
@@ -19,9 +19,7 @@ import {
   ChevronDown,
   HammerIcon,
   Wand2Icon,
-  SparklesIcon,
-  ImagePlusIcon,
-  FrameIcon
+  SparklesIcon
 } from 'lucide-react'
 import {
   Popover,
@@ -44,10 +42,6 @@ import SaveEditedImage from './image-save'
 import ImageNotAvailableModal from './image-not-available-modal'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
-import { Input } from './ui/input'
-import { ChangeEvent } from 'react'
-import { isVisible } from 'handsontable/helpers/dom'
-import FrameSizeAdjuster from './image-editor-frame-button'
 
 const thicknesses = [1, 2, 3, 5, 8, 13, 21, 34, 40]
 
@@ -58,28 +52,17 @@ interface MaskInfo {
   height: number
 }
 //마스킹 정보 인터페이스.
+
 class CustomPencilBrush extends fabric.PencilBrush {
   globalCompositeOperation: GlobalCompositeOperation
 
   constructor(canvas: fabric.Canvas) {
     super(canvas)
-    this.globalCompositeOperation = 'destination-out'
+    this.globalCompositeOperation = 'destination-out' // 원하는 블렌딩 모드 설정
   }
 
-  onMouseUp({ e }: fabric.TEvent<fabric.TPointerEvent>): boolean {
-    // 부모 메서드 호출
-    const shouldContinue = super.onMouseUp({ e })
-
-    // 추가적으로 globalCompositeOperation 적용
-    const ctx = this.canvas.getContext() as CanvasRenderingContext2D
-    if (ctx) {
-      const originalCompositeOperation = ctx.globalCompositeOperation
-      ctx.globalCompositeOperation = this.globalCompositeOperation
-      ctx.restore()
-      ctx.globalCompositeOperation = originalCompositeOperation
-    }
-
-    return shouldContinue
+  applyCompositeOperation(ctx: CanvasRenderingContext2D) {
+    ctx.globalCompositeOperation = this.globalCompositeOperation
   }
 }
 
@@ -96,19 +79,9 @@ interface ShapeOptions {
 
 export default function ImageEditor() {
   const imageUrl = useSelector((state: RootState) => state.image)
-  const [originalBackgroundImgObject, setOriginalBackgroundImgObject] =
-    useState<fabric.FabricImage<
-      Partial<fabric.ImageProps>,
-      fabric.SerializedImageProps,
-      fabric.ObjectEvents
-    > | null>(null)
-  const [originImgObject, setOriginImgObject] = useState<fabric.FabricImage<
-    Partial<fabric.ImageProps>,
-    fabric.SerializedImageProps,
-    fabric.ObjectEvents
-  > | null>(null)
   const canvasElementRef = useRef<HTMLCanvasElement | null>(null)
   const [canvas, setCanvas] = useState<fabric.Canvas | null>(null)
+  // const [canvas, setCanvas] = useState<Canvas | null>(null)
   const [activeShape, setActiveShape] = useState<string | null>(null)
   const [currentColor, setCurrentColor] = useState('#000000')
   const [currentThickness, setCurrentThickness] = useState(5)
@@ -118,25 +91,21 @@ export default function ImageEditor() {
   const [maskInfo, setMaskInfo] = useState<MaskInfo | null>(null)
   const [isPen, setIsPen] = useState(false)
   const [canvasDimensions, setCanvasDimensions] = useState({
-    width: 1024,
-    height: 682
-  })
-  const [originalImgDimensions, setOriginalImgDimension] = useState({
-    width: 0,
-    height: 0
-  })
+    width: 800,
+    height: 533
+  }) // 초기값
 
   useEffect(() => {
     if (canvasElementRef.current) {
       const initializeCanvas = () => {
         const parent = canvasElementRef.current!.parentElement
-        const maxWidth = parent?.offsetWidth || 1024 // 최대 너비
-        const maxHeight = maxWidth * 0.6666 // 최대 높이 비율 설정 (2:3 비율)
+        const width = parent?.offsetWidth || 800 // 초기 너비
+        const height = width * 0.6666 // 초기 높이 비율 설정 (2:3 비율)
 
         const options = {
-          width: maxWidth,
-          height: maxHeight,
-          backgroundColor: '#FFFFFF'
+          width,
+          height,
+          backgroundColor: '#f0f0f0'
         }
 
         const fabricCanvas = new fabric.Canvas(
@@ -144,118 +113,70 @@ export default function ImageEditor() {
           options
         )
         fabricCanvas.isDrawingMode = false // 초기 드로잉 모드 비활성화
-        fabricCanvas.enableRetinaScaling = true
-
         setCanvas(fabricCanvas)
+
         return fabricCanvas
       }
 
       const fabricCanvas = initializeCanvas()
 
+      /**
+       *
+       *
+       * imageUrl => null 처리
+       */
       fabric.FabricImage.fromURL(
+        // imageUrl.url,
         'https://fal.media/files/lion/P6e0ncdN6pP_35_yX6_ez_0c0ad928a6a34b8383c3b3bdb2ba1ecc.jpg',
         { crossOrigin: 'anonymous' }
       ).then(img => {
         if (
           !canvasElementRef.current ||
           !fabricCanvas ||
-          !fabricCanvas.lowerCanvasEl ||
-          !fabricCanvas
+          !fabricCanvas.lowerCanvasEl
         )
           return
-        const parent = canvasElementRef.current.parentElement
-        const parentWidth = parent?.offsetWidth || 1024
 
-        // 최대 캔버스 크기 제한 설정
-        const maxWidth = parentWidth
-        const maxHeight = maxWidth * 0.6666
+        const parent = canvasElementRef.current.parentElement
+        const canvasWidth = parent?.offsetWidth || 800
 
         // 이미지 크기 가져오기
-        const imgWidth = img.width || 1024
+        const imgWidth = img.width || 800
         const imgHeight = img.height || 600
 
-        // 이미지 비율 유지하며 최대 크기 제한 적용
-        let scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight)
-        const canvasWidth = imgWidth * scale
+        // 이미지 비율 유지하며 캔버스 크기 설정
+        const scale = canvasWidth / imgWidth
         const canvasHeight = imgHeight * scale
-
         setCanvasDimensions({ width: canvasWidth, height: canvasHeight })
-        setOriginalImgDimension({ width: canvasWidth, height: canvasHeight })
+
         fabricCanvas.setDimensions({
           width: canvasWidth,
           height: canvasHeight
         })
 
-        console.log(canvasWidth * scale, canvasHeight * scale)
+        // 이미지 배경 설정
+        img.scaleToWidth(canvasWidth) // 이미지 폭에 맞게 스케일 조정
+        fabricCanvas.backgroundImage = img
+        fabricCanvas.renderAll.bind(fabricCanvas)
 
-        // 이미지 배경 설정 (캔버스 중앙에 배치)
-        img.set({
-          left: (canvasWidth - img.width * scale) / 2,
-          top: (canvasHeight - img.height * scale) / 2
-        })
-        img
-          .clone()
-          .then((clonedImg: fabric.FabricImage) => {
-            // 비동기 처리 (Promise 사용)
-            clonedImg.visible = false
-            clonedImg.set({
-              left: (canvasWidth - img.width * scale) / 2,
-              top: (canvasHeight - img.height * scale) / 2
-            })
-            clonedImg.scale(scale)
-            fabricCanvas.backgroundImage = clonedImg
-            setOriginalBackgroundImgObject(clonedImg)
-            fabricCanvas.renderAll()
-          })
-          .catch(error => {
-            console.error('Error cloning image:', error)
-          })
-        img.scale(scale)
-        setOriginImgObject(img)
-        fabricCanvas.sendObjectToBack(img)
-        fabricCanvas.add(img)
-        fabricCanvas.renderAll()
-      })
-
-      fabricCanvas.on('object:moving', function (e) {
-        var obj = e.target
-
-        // 캔버스 크기
-        var canvasWidth = fabricCanvas.getWidth()
-        var canvasHeight = fabricCanvas.getHeight()
-
-        // 객체의 크기
-        var objWidth = obj.getScaledWidth()
-        var objHeight = obj.getScaledHeight()
-
-        // 객체가 캔버스 밖으로 나가지 않도록 제한
-        if (obj.left < 0) {
-          obj.left = 0
-        }
-        if (obj.top < 0) {
-          obj.top = 0
-        }
-        if (obj.left + objWidth > canvasWidth) {
-          obj.left = canvasWidth - objWidth
-        }
-        if (obj.top + objHeight > canvasHeight) {
-          obj.top = canvasHeight - objHeight
-        }
-
-        // 객체 위치 업데이트
-        obj.setCoords()
+        // 캔버스에 이미지 적용
+        img.canvas = fabricCanvas
       })
 
       const handleResize = () => {
-        // 크기 설정 후에는 이 이벤트가 동작하지 않도록 합니다.
-        return
+        const parent = canvasElementRef.current?.parentElement
+        const width = parent?.offsetWidth || 800
+
+        const img = fabricCanvas.backgroundImage
+        if (img) {
+          const scale = width / (img.width || 800)
+          const height = (img.height || 600) * scale
+
+          fabricCanvas.setDimensions({ width, height })
+          img.scaleToWidth(width) // 리사이즈된 캔버스 폭에 맞게 이미지 스케일 조정
+          fabricCanvas.renderAll()
+        }
       }
-      fabricCanvas.on('object:added', () => {
-        fabricCanvas.sendObjectToBack(originImgObject!)
-      })
-      fabricCanvas.on('object:modified', () => {
-        fabricCanvas.sendObjectToBack(originImgObject!)
-      })
 
       window.addEventListener('resize', handleResize)
 
@@ -264,7 +185,7 @@ export default function ImageEditor() {
         window.removeEventListener('resize', handleResize)
       }
     }
-  }, []) // 빈 배열로 한 번만 실행되도록 설정
+  }, [])
 
   const enableDrawing = () => {
     if (!canvas) return
@@ -272,27 +193,18 @@ export default function ImageEditor() {
     canvas.isDrawingMode = true
     if (!canvas.freeDrawingBrush) {
       const customBrush = new CustomPencilBrush(canvas)
-      customBrush.globalCompositeOperation = 'source-atop'
+      customBrush.globalCompositeOperation = 'source-atop' // 겹치는 부분을 투명하게 처리
       canvas.freeDrawingBrush = customBrush
-
-      // 객체 추가 이벤트로 배경색 유지
       canvas.on('before:path:created', () => {
         const ctx = canvas.getContext() as CanvasRenderingContext2D
         if (ctx) {
-          ctx.save()
-          ctx.globalCompositeOperation = 'source-over'
-          ctx.fillStyle = '#FFFFFF'
-          ctx.fillRect(0, 0, canvas.width!, canvas.height!)
-          ctx.restore()
+          customBrush.applyCompositeOperation(ctx)
         }
       })
+      // canvas.freeDrawingBrush = new PencilBrush(canvas)
     }
     canvas.freeDrawingBrush.width = currentThickness
     canvas.freeDrawingBrush.color = currentColor
-
-    // 명시적 배경 렌더링
-    canvas.backgroundColor = '#FFFFFF'
-    canvas.renderAll()
     setActiveShape('pen')
   }
   //펜 기능
@@ -456,6 +368,17 @@ export default function ImageEditor() {
     }
   }
 
+  const handleImageEdit = () => {
+    if (canvas) {
+      canvas.forEachObject(obj => {
+        if (obj !== maskRect) {
+          obj.opacity = 1
+        }
+      })
+      canvas.renderAll()
+    }
+  }
+
   useEffect(() => {
     if (!canvas) return
 
@@ -613,12 +536,11 @@ export default function ImageEditor() {
 
   const addTextByButton = (value: string) => {
     if (!canvas) return
-
     const text = getIText(value)
-    text.left = textRef.current == null ? 0 : textRef.current.left
+    text.left = textRef.current == null ? 100 : textRef.current.left
     text.top =
       textRef.current == null
-        ? 40
+        ? 100
         : textRef.current.top + text.fontSize + textRef.current.fontSize
 
     // 캔버스 경계를 벗어나지 않도록 위치 조정
@@ -627,60 +549,18 @@ export default function ImageEditor() {
 
     // 텍스트가 캔버스 너비를 넘어가면 왼쪽으로 위치를 초기화
     if (text.left + text.width > canvasWidth) {
-      text.left = 0
+      text.left = 100
     }
 
     // 텍스트가 캔버스 높이를 넘어가면 맨 위로 초기화
     if (text.top + text.fontSize > canvasHeight) {
-      text.top = 40
+      text.top = 100
     }
-
-    // 객체가 화면을 벗어나면 사이즈를 줄이고 toast 메시지를 표시
-    if (
-      text.left + text.width > canvasWidth ||
-      text.top + text.fontSize > canvasHeight
-    ) {
-      const scaleFactor = Math.min(
-        canvasWidth / text.width,
-        canvasHeight / text.fontSize
-      )
-      text.set({ scaleX: scaleFactor, scaleY: scaleFactor })
-
-      // toast 메시지 출력
-      toast(
-        t => (
-          <div
-            style={{
-              padding: '8px 12px',
-              display: 'flex',
-              alignItems: 'center',
-              whiteSpace: 'nowrap', // 텍스트가 한 줄로 표시되도록 설정
-              borderRadius: '8px',
-              backgroundColor: 'black',
-              color: 'white',
-              fontSize: '16px',
-              fontWeight: 500
-            }}
-          >
-            텍스트가 화면을 벗어났습니다. 텍스트 크기가 자동으로 줄어들었습니다.
-          </div>
-        ),
-        {
-          duration: 3000,
-          position: 'bottom-center',
-          style: {
-            background: 'transparent',
-            boxShadow: 'none'
-          }
-        }
-      )
-    }
-
     textRef.current = text
     canvas.add(text)
     canvas.setActiveObject(text)
-    canvas.renderAll()
   }
+
   useEffect(() => {
     if (!canvas) return
 
@@ -781,7 +661,6 @@ export default function ImageEditor() {
 
   const disableAll = () => {
     setSelectedShape(null)
-    setFramePopoverOpen(false)
     disableMasking()
     disableDrawing()
     disableErasing()
@@ -856,36 +735,40 @@ export default function ImageEditor() {
 
   const setMasking = () => {
     if (!canvas) return
-
-    // 현재 캔버스 객체를 상태에 저장
-    canvas
-      .getObjects()
-      .forEach(obj => setNormalObject(prevState => [...prevState, obj]))
-
+    let canvasObjects = canvas.getObjects()
+    canvasObjects.map(obj =>
+      setNormalObject(noneMaskObject => [...noneMaskObject, obj])
+    )
     canvas.isDrawingMode = true
     setIsMaskingMode(true)
     setIsEraseMode(false)
-
     if (!canvas.freeDrawingBrush) {
-      // CustomPencilBrush 인스턴스 생성
       const customBrush = new CustomPencilBrush(canvas)
-      customBrush.globalCompositeOperation = 'source-atop' // 겹치는 부분 투명 처리
+      customBrush.globalCompositeOperation = 'source-atop' // 겹치는 부분을 투명하게 처리
       canvas.freeDrawingBrush = customBrush
+      canvas.on('before:path:created', () => {
+        const ctx = canvas.getContext() as CanvasRenderingContext2D
+        if (ctx) {
+          customBrush.applyCompositeOperation(ctx)
+        }
+      })
+      // canvas.freeDrawingBrush = new PencilBrush(canvas)
     }
-
-    // 브러시 속성 설정
     canvas.freeDrawingBrush.color = '#CC99FF80'
     canvas.freeDrawingBrush.width = maskingPenThickness
-
-    // 변경 사항 즉시 반영
-    canvas.renderAll()
+    canvas.renderAll
   }
-
   const startMasking = () => {
     if (!canvas) return
     setIsMaskingMode(true)
     setIsEraseMode(false)
 
+    /** TODO
+     *
+     * 이미지 수정 모드가 종료되었을 때도 수행할것
+     *
+     *
+     * */
     canvas.off('mouse:down')
     canvas.isDrawingMode = true
 
@@ -997,7 +880,7 @@ export default function ImageEditor() {
    * 마스킹 객체, 원본 객체 토글 수행
    */
   useEffect(() => {
-    if (!canvas || !canvas.backgroundImage || !originImgObject) return
+    if (!canvas) return
     if (isMasking) {
       normalObjects.forEach(obj => {
         obj.set({
@@ -1005,9 +888,6 @@ export default function ImageEditor() {
           selectable: false
         })
       })
-      canvas.backgroundImage.visible = true
-      canvas.setDimensions(originalImgDimensions)
-      originImgObject.visible = false
     } else {
       let maskObjects = canvas
         ?.getObjects()
@@ -1019,9 +899,6 @@ export default function ImageEditor() {
           selectable: true
         })
       })
-      canvas.backgroundImage.visible = false
-      canvas.setDimensions(canvasDimensions)
-      originImgObject.visible = true
     }
     canvas.renderAll() // 화면 업데이트
   }, [isMasking])
@@ -1060,8 +937,6 @@ export default function ImageEditor() {
       case 'addSticker':
         triggerFileInput()
         break
-      case 'frameSize':
-        setFramePopoverOpen(true)
       default:
         console.warn(`Unknown tool: ${tool}`)
     }
@@ -1150,20 +1025,12 @@ export default function ImageEditor() {
       const target = canvas.findTarget(
         event as unknown as fabric.TPointerEvent
       ) as fabric.Object
-
-      // 객체가 선택되었고, 그것이 도형 객체라면 선택만 수행
-      if (
-        target &&
-        (target.type === 'circle' ||
-          target.type === 'triangle' ||
-          target.type === 'rect')
-      ) {
+      if (target) {
         canvas.setActiveObject(target)
         canvas.renderAll()
         return
       }
 
-      // 새로운 도형을 그릴 준비
       isDrawing = true
       isDragged = false // 드래그 여부 초기화
       const pointer = canvas.getPointer(event.e)
@@ -1330,55 +1197,10 @@ export default function ImageEditor() {
     }
   }, [currentShapeColor])
 
-  const [framePopoverOpen, setFramePopoverOpen] = useState(false) // 팝오버 열림 상태
-  useEffect(() => {
-    if (!canvas) return
-    canvas.setWidth(canvasDimensions.width)
-    canvas.setHeight(canvasDimensions.height)
-    canvas.renderAll()
-  }, [canvasDimensions.width, canvasDimensions.height])
-
-  useEffect(() => {
-    if (!originImgObject || !canvas) return
-    if (originImgObject.left + originImgObject.width > canvas.width) {
-      originImgObject.left = 0
-    }
-
-    // 텍스트가 캔버스 높이를 넘어가면 맨 위로 초기화
-    if (originImgObject.top + originImgObject.height > canvas.height) {
-      originImgObject.top = 0
-    }
-  }, [originImgObject, canvas])
-
-  const handleFrameSize = (e: ChangeEvent<HTMLInputElement>, loc: string) => {
-    switch (loc) {
-      case 'width':
-        setCanvasDimensions({
-          width: parseInt(e.target.value),
-          height: canvasDimensions.height
-        })
-        break
-      case 'height':
-        setCanvasDimensions({
-          width: canvasDimensions.width,
-          height: parseInt(e.target.value)
-        })
-        break
-    }
-  }
-
-  const applyCanvasSize = (width: number, height: number) => {
-    if (!canvas) return
-    setCanvasDimensions({ width: width, height: height })
-    canvas.width = width
-    canvas.height = height
-    canvas.renderAll()
-  }
-
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardContent className="p-6">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-2 mb-4">
           <Button
             onClick={() => {
               handleToolSwitch('move')
@@ -1784,8 +1606,7 @@ export default function ImageEditor() {
                 }}
                 variant="outline"
               >
-                <ImagePlusIcon className="mr-2 h-4 w-4" />
-                스티커
+                <span>이미지 추가</span>
               </Button>
               <input
                 id="fileInput"
@@ -1993,11 +1814,6 @@ export default function ImageEditor() {
               </PopoverContent>
             )}
           </Popover>
-          <FrameSizeAdjuster
-            onApply={applyCanvasSize}
-            initialHeight={canvasDimensions.height}
-            initialWidth={canvasDimensions.height}
-          />
         </div>
         {showConfirmationModal && (
           <Modal
@@ -2007,25 +1823,16 @@ export default function ImageEditor() {
           />
         )}
         <div
-          className="flex items-center justify-center bg-black" // Flexbox 설정
+          className="relative w-full bg-gray-200"
           style={{
-            width: '100%', // 부모 div 너비를 화면 전체로 설정
-            position: 'relative' // 화면 중앙 정렬을 위한 position 설정
+            height: `${(canvasDimensions.height / canvasDimensions.width) * 100}%` // 비율 유지
           }}
         >
-          <div
-            style={{
-              width: `${canvasDimensions.width}px`,
-              height: `${canvasDimensions.height}px`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <canvas ref={canvasElementRef} />
-          </div>
+          <canvas
+            ref={canvasElementRef}
+            className="absolute top-0 left-0 w-full h-full"
+          />
         </div>
-
         <Separator className="p-2" />
         {isMasking && (
           <>
@@ -2090,8 +1897,6 @@ export default function ImageEditor() {
             setIsProcessing={setIsProcessing}
             option={option}
             mode={mode}
-            originImgObject={originImgObject}
-            setOriginImgObject={setOriginImgObject}
           />
         ))}
         {isDone && (

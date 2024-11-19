@@ -6,7 +6,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { setImageData } from '@/redux/slices/imageSlice'
 import { RootState } from '@/redux/store'
 import apiClient from '@/services/apiClient'
-import { isVisible } from 'handsontable/helpers/dom'
 
 interface YourComponentProps {
   canvas: fabric.Canvas | null
@@ -14,18 +13,6 @@ interface YourComponentProps {
   setIsProcessing: React.Dispatch<React.SetStateAction<boolean>>
   mode: string
   option: string | null
-  originImgObject: fabric.FabricImage<
-    Partial<fabric.ImageProps>,
-    fabric.SerializedImageProps,
-    fabric.ObjectEvents
-  > | null
-  setOriginImgObject: React.Dispatch<
-    React.SetStateAction<fabric.FabricImage<
-      Partial<fabric.ImageProps>,
-      fabric.SerializedImageProps,
-      fabric.ObjectEvents
-    > | null>
-  >
 }
 
 const ImageAIEdit: React.FC<YourComponentProps> = ({
@@ -33,8 +20,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
   isProcessing,
   setIsProcessing,
   mode,
-  option,
-  originImgObject
+  option
 }) => {
   const dispatch = useDispatch()
   const image = useSelector((state: RootState) => state.image)
@@ -91,7 +77,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
       fabric.FabricImage.fromURL(newImageUrl, {
         crossOrigin: 'anonymous'
       }).then(img => {
-        if (!canvas || !originImgObject) return
+        if (!canvas) return
 
         // 기존 캔버스 크기 가져오기
         const canvasWidth = canvas.getWidth()
@@ -105,10 +91,8 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
         img.top = 0
 
         canvas.backgroundImage = img
-        originImgObject.setSrc(newImageUrl, { crossOrigin: 'anonymous' })
         canvas.renderAll.bind(canvas)
         img.canvas = canvas
-        canvas.renderAll()
       })
     }
     dispatch(setImageData({ requestId: newRequestId, url: newImageUrl }))
@@ -222,11 +206,6 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
       enableRetinaScaling: false
     })
 
-    const link = document.createElement('a')
-    link.href = imageData
-    link.download = 'canvas_image.png' // 다운로드할 파일 이름 설정
-    link.click() // 링크 클릭하여 다운로드 시작
-
     // 배경 이미지와 색상, 객체의 원래 색상 복원
     canvas.backgroundImage = originalBackgroundImage
     canvas.backgroundColor = originalBackgroundColor
@@ -267,22 +246,20 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
 
     try {
       // axios를 사용하여 서버로 데이터 전송
-      console.log('여기')
-      // const response = await apiClient.post('/inpaint', formData)
+      const response = await apiClient.post('/inpaint', formData, {
+        headers: {
+          Authorization: `Bearer `, // 실제 인증 토큰으로 변경
+          'Content-Type': 'multipart/form-data'
+        }
+      })
 
-      setNewRequestId('98424df3-fbbe-459c-ab7a-4ae1dfa962d6')
-      setNewImageUrl(
-        'https://fal.media/files/koala/rTQRcen5ROWIcH3xRQbUW_9aff709a71fe48bbb53121b11f434649.jpg'
-      )
-      setIsModalOpen(true) // 모달 열기
-
-      // if (response.data.code === 200) {
-      //   setNewRequestId(response.data.data.requestId)
-      //   setNewImageUrl(response.data.data.url) // 서버에서 받은 이미지 URL 설정
-      //   setIsModalOpen(true) // 모달 열기
-      // } else {
-      //   console.error('Error uploading image:', response.data.message)
-      // }
+      if (response.data.code === 200) {
+        setNewRequestId(response.data.data.requestId)
+        setNewImageUrl(response.data.data.url) // 서버에서 받은 이미지 URL 설정
+        setIsModalOpen(true) // 모달 열기
+      } else {
+        console.error('Error uploading image:', response.data.message)
+      }
     } catch (error) {
       console.error('Error uploading image:', error)
     } finally {
