@@ -1,40 +1,45 @@
 "use client"
 
-import Link from "next/dist/client/link";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function TopNav() {
-    const pathname = usePathname(); // 현재 경로를 가져옴
+    const pathname = usePathname();
+
+    const navItems = [
+        { href: "/address", label: "그룹 관리" },
+        { href: "/address/excel", label: "주소록" },
+    ];
 
     return (
-        <nav className="flex flex-row justify-start items-center max-w-7xl mx-auto pl-0">
-            {/* 그룹 관리 링크 */}
-            <div className="p-2">
-                <Link 
-                    href="http://localhost:3000/address" 
-                    className={`${
-                        pathname === "/address" 
-                            ? "bg-blue-500 hover:bg-blue-600" 
-                            : "bg-blue-300 hover:bg-blue-400"
-                    } text-white rounded-lg p-2 shadow-sm transition-colors duration-300`}
-                >
-                    그룹 관리
-                </Link>
-            </div>
-
-            {/* 주소록 링크 */}
-            <div className="p-2">
-                <Link 
-                    href="http://localhost:3000/address/excel" 
-                    className={`${
-                        pathname === "/address/excel" 
-                            ? "bg-blue-500 hover:bg-blue-600" 
-                            : "bg-blue-300 hover:bg-blue-400"
-                    } text-white rounded-lg p-2 shadow-sm transition-colors duration-300`}
-                >
-                    주소록
-                </Link>
-            </div>
+        <nav className="w-full mb-6 border-b container">
+            <ul className="flex space-x-4 pl-4">
+                {navItems.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                        <li key={item.href}>
+                            <Link href={item.href} passHref>
+                                <Button 
+                                    variant="ghost"
+                                    className={cn(
+                                        "relative py-6 text-base font-medium transition-colors hover:text-black/80",
+                                        isActive 
+                                            ? "text-black" 
+                                            : "text-black/60"
+                                    )}
+                                >
+                                    {item.label}
+                                    {isActive && (
+                                        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-black" />
+                                    )}
+                                </Button>
+                            </Link>
+                        </li>
+                    );
+                })}
+            </ul>
         </nav>
     );
 }
