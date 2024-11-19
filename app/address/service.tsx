@@ -7,7 +7,7 @@ export const api = {
       folder2Name: String
     ): Promise<Folder2|undefined> => {
       try {
-        const response = await apiClient.post<CommonResponse<Folder2>>(`/folder2/`, {name: folder2Name})
+        const response = await apiClient.post<CommonResponse<Folder2>>(`/folder2/${folder2Name}`, {})
         
         const newFolder2 = response.data.data;
         if(response.data.code == 200) return newFolder2
