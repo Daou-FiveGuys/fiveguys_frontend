@@ -46,6 +46,7 @@ import { deductTokens } from './token-dedution'
 import { useNumberManager } from './number-manager'
 import { useNumberLoad } from './number-load'
 import { ButtonCommand } from '@/components/button-command'
+import { api } from '@/app/faq_chatbot/faq_service'
 
 interface PhoneNumberData {
   name: string
@@ -69,16 +70,11 @@ export function PromptForm({
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
 
-  const [currentMode, setCurrentMode] = React.useState<'phone-group-noninput' | 'image-reselect' | 'text-create-action'
-  |'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' 
-  | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'bulk-save'
-  |'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'| 'history-action' 
-  | 'normal'| 'send-message-text'|'send-message-promft'|'send-message-generate'|'send-message-select'| 'send-message'
-  |'return'>('normal')
+  const [currentMode, setCurrentMode] = React.useState<'phone-group-noninput' | 'image-reselect' | 'text-create-action'|'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'| 'history-action' | 'faq'>('normal')
   const [selectedImage, setSelectedImage] = React.useState('');
   const [phoneData, setPhoneData] = React.useState<PhoneNumberData>({ name: '', phoneNumber: '', groupName: 'default' })
 
-  const [subMode, setSubMode] = React.useState<'text-create-action'|'normal' | 'text' | 'image-select' | 'image-reselect' | 'image-action' |'text-action'>('normal');
+  const [subMode, setSubMode] = React.useState<'text-create-action'|'normal' | 'text' | 'image-select' | 'image-reselect' | 'image-action' |'text-action' | 'faq'>('normal');
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   type Action =
@@ -172,34 +168,11 @@ export function PromptForm({
       message: '메시지 전송',
       response: '한명 혹은 단체로 전달하신건가요?',
       mode: 'send-message'
-    }
-  ]
-  const predefinedSendMessages = [
-    
-    {
-      message: '돌아가기',
-      response: '메시지 전송 모드를 종료합니다.',
-      mode: 'return'
     },
     {
-      message: '문자 생성',
-      response: '문자를 입력해 주세요.',
-      mode: 'send-message-text'
-    },
-    {
-      message: '이미지 프롬프트',
-      response: '어떤 내용의 문자를 생성할까요?',
-      mode: 'text'
-    },
-    {
-      message: '이미지 생성',
-      response: '히스토리를 조회합니다.',
-      mode: 'history'
-    },
-    {
-      message: '이미지 선택',
-      response: '토큰 정보를 조회합니다.',
-      mode: 'tokenInquiry'
+      message: 'FaQ',
+      response: '무엇이 궁금하신가요?',
+      mode: 'faq'
     }
   ]
 
@@ -272,8 +245,6 @@ export function PromptForm({
   };
   //전화번호 저장 파일 업로드 기능.
 
-  const [subMessage , setSubMessage] = useUIState<typeof AI>();
-
   const handlePredefinedMessage = async (
     message: string,
     response: string,
@@ -284,8 +255,7 @@ export function PromptForm({
       | 'history'
       | 'tokenInquiry'
       | 'send-message'
-      | 'normal'| 'send-message-text'|'send-message-promft'|'send-message-generate'|'send-message-select'| 'send-message'
-      |'return'
+      | 'faq'
   ) => {
     if (mode === 'tokenInquiry') {
       setMessages(currentMessages => [
@@ -329,60 +299,71 @@ export function PromptForm({
         }
       ])
       setCurrentMode('history-action')
-    } 
-    else if (mode === 'text') {
+    } else if (mode === 'send-message' && subMode === 'text') {
+            setMessages(currentMessages => [
+        {
+          id: nanoid(),
+          display: <UserMessage>{message}</UserMessage>
+        },
+        {
+          id: nanoid(),
+          display: <BotCard>{response}</BotCard>
+        },
+                {
+          id: nanoid(),
+          display: "주제를 입력해주세요."
+        }
+      ])
+    }else if (( currentMode === 'send-message-recipient' || currentMode === 'send-message-group') && subMode === 'text') {
       setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{message}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: <BotCard>{response}</BotCard>
-      },
-      {
-       id: nanoid(),
-        display: "주제를 입력해주세요."
-      }
-    ])
-      if((currentMode === 'send-message'||currentMode === 'send-message-recipient'||currentMode === 'send-message-group')  && subMode === 'text'){
-        setSubMode('normal');
-        setCurrentMode('text');
-      }else if(currentMode === 'send-message'||currentMode === 'send-message-recipient'||currentMode === 'send-message-group'){
-        setSubMode('text');
-      }
-      else setCurrentMode('text');
-    } 
-    else if (mode === 'send-message-text'){
-        setSubMessage(subMessage => [
-          ...subMessage,
+  {
+    id: nanoid(),
+    display: <UserMessage>{message}</UserMessage>
+  },
+  {
+    id: nanoid(),
+    display: <BotCard>{response}</BotCard>
+  },
           {
-            id: nanoid(),
-            display: <UserMessage>{message}</UserMessage>
-          },
-          {
-            id: nanoid(),
-            display: "메시지 전송을 잠시 중단합니다. 주제를 입력해 주세요."
-          }
-        ])
-        setSubMode('text');
+    id: nanoid(),
+    display: "주제를 입력해주세요."
+  }
+])
+}else if (mode === 'text') {
+  setMessages(currentMessages => [
+    ...currentMessages,
+    {
+      id: nanoid(),
+      display: <UserMessage>{message}</UserMessage>
+    },
+    {
+      id: nanoid(),
+      display: <BotCard>{response}</BotCard>
+    },
+    {
+      id: nanoid(),
+      display: "주제를 입력해주세요."
     }
-    else if (mode === 'send-message-promft'){
-
+  ])
+  //handleText()
+  if(currentMode === 'send-message'||currentMode === 'send-message-recipient'||currentMode === 'send-message-group'){
+    setSubMode('text');
+  }
+  else setCurrentMode('text')
+} else if(mode=='faq'){
+  setCurrentMode('faq');
+  setMessages(currentMessages => [
+    ...currentMessages,
+    {
+      id: nanoid(),
+      display: <UserMessage>{message}</UserMessage>
+    },
+    {
+      id: nanoid(),
+      display: "무엇이 궁금하신가요?"
     }
-    else if (mode === 'send-message-generate'){
-
-    }
-    else if (mode === 'send-message-select'){
-
-    }
-    else if (mode === 'return'){
-      setCurrentMode('normal')
-      setSubMode('normal')
-    }
-    
-    else {
+  ]);
+} else {
       setMessages(currentMessages => [
         ...currentMessages,
         {
@@ -1490,6 +1471,17 @@ export function PromptForm({
           handleGroupNameResponse(value)
         } else if (currentMode === 'phone-group-input') {
           handleGroupName(value)
+        } else if (currentMode ==='faq') {
+          await api.faqChatbotAsk(value, (response:any)=>{
+            setMessages(currentMessages => [
+              ...currentMessages,
+              {
+               id: nanoid(),
+               display: `${response?.data}`
+              }
+            ])
+          });
+          setCurrentMode('faq')
         } else if (currentMode === 'phone-group-noninput') {
           setMessages(currentMessages => [
             ...currentMessages,
@@ -1756,9 +1748,7 @@ export function PromptForm({
       }}
     >
       <div className="flex justify-center space-x-2 mt-2 mb-8">
-      {
-      currentMode !== 'send-message'? 
-      predefinedMessages.map((msg, index) => (
+      {predefinedMessages.map((msg, index) => (
           <Button
             key={index}
             onClick={() =>
@@ -1772,6 +1762,7 @@ export function PromptForm({
                   | 'history'
                   | 'tokenInquiry'
                   | 'send-message'
+                  | 'faq'
               )
             }
             variant="outline"
@@ -1779,26 +1770,7 @@ export function PromptForm({
           >
             {msg.message}
           </Button>
-        ))
-        :
-        predefinedSendMessages.map((msg, index) => (
-          <Button
-            key={index}
-            onClick={() =>
-              handlePredefinedMessage(
-                msg.message,
-                msg.response,
-                msg.mode as
-                  | 'normal'| 'send-message-text'|'send-message-promft'|'send-message-generate'|'send-message-select'| 'return'
-              )
-            }
-            variant="outline"
-            size="sm"
-          >
-            {msg.message}
-          </Button>
-        ))
-      }
+        ))}
       </div>
       <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12">
         <Tooltip>
