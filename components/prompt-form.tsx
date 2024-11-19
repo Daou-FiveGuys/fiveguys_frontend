@@ -46,7 +46,6 @@ import { deductTokens } from './token-dedution'
 import { useNumberManager } from './number-manager'
 import { useNumberLoad } from './number-load'
 import { ButtonCommand } from '@/components/button-command'
-import { api } from '@/app/faq_chatbot/faq_service'
 
 interface PhoneNumberData {
   name: string
@@ -70,11 +69,11 @@ export function PromptForm({
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
 
-  const [currentMode, setCurrentMode] = React.useState<'phone-group-noninput' | 'image-reselect' | 'text-create-action'|'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'| 'history-action' | 'faq'>('normal')
+  const [currentMode, setCurrentMode] = React.useState<'phone-group-noninput' | 'image-reselect' | 'text-create-action'|'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'| 'history-action' >('normal')
   const [selectedImage, setSelectedImage] = React.useState('');
   const [phoneData, setPhoneData] = React.useState<PhoneNumberData>({ name: '', phoneNumber: '', groupName: 'default' })
 
-  const [subMode, setSubMode] = React.useState<'text-create-action'|'normal' | 'text' | 'image-select' | 'image-reselect' | 'image-action' |'text-action' | 'faq'>('normal');
+  const [subMode, setSubMode] = React.useState<'text-create-action'|'normal' | 'text' | 'image-select' | 'image-reselect' | 'image-action' |'text-action'>('normal');
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   type Action =
@@ -168,11 +167,6 @@ export function PromptForm({
       message: '메시지 전송',
       response: '한명 혹은 단체로 전달하신건가요?',
       mode: 'send-message'
-    },
-    {
-      message: 'FaQ',
-      response: '무엇이 궁금하신가요?',
-      mode: 'faq'
     }
   ]
 
@@ -255,7 +249,6 @@ export function PromptForm({
       | 'history'
       | 'tokenInquiry'
       | 'send-message'
-      | 'faq'
   ) => {
     if (mode === 'tokenInquiry') {
       setMessages(currentMessages => [
@@ -330,38 +323,26 @@ export function PromptForm({
   }
 ])
 }else if (mode === 'text') {
-  setMessages(currentMessages => [
-    ...currentMessages,
-    {
-      id: nanoid(),
-      display: <UserMessage>{message}</UserMessage>
-    },
-    {
-      id: nanoid(),
-      display: <BotCard>{response}</BotCard>
-    },
-    {
-      id: nanoid(),
-      display: "주제를 입력해주세요."
-    }
-  ])
-  //handleText()
-  if(currentMode === 'send-message'||currentMode === 'send-message-recipient'||currentMode === 'send-message-group'){
-    setSubMode('text');
+      setMessages(currentMessages => [
+  ...currentMessages,
+  {
+    id: nanoid(),
+    display: <UserMessage>{message}</UserMessage>
+  },
+  {
+    id: nanoid(),
+    display: <BotCard>{response}</BotCard>
+  },
+          {
+    id: nanoid(),
+    display: "주제를 입력해주세요."
   }
-  else setCurrentMode('text')
-} else if(mode=='faq'){
-  setMessages(currentMessages => [
-    ...currentMessages,
-    {
-      id: nanoid(),
-      display: <UserMessage>{message}</UserMessage>
-    },
-    {
-      id: nanoid(),
-      display: "무엇이 궁금하신가요?"
-    }
-  ])
+])
+//handleText()
+if(currentMode === 'send-message'||currentMode === 'send-message-recipient'||currentMode === 'send-message-group'){
+  setSubMode('text');
+}
+else setCurrentMode('text')
 } else {
       setMessages(currentMessages => [
         ...currentMessages,
@@ -1470,17 +1451,6 @@ export function PromptForm({
           handleGroupNameResponse(value)
         } else if (currentMode === 'phone-group-input') {
           handleGroupName(value)
-        } else if (currentMode ==='faq'){
-          let response = await api.faqChatbotAsk(value);
-          console.log(response)
-          setMessages(currentMessages => [
-            ...currentMessages,
-            {
-              id: nanoid(),
-              display: `${response?.data}`
-            }
-          ])
-          setCurrentMode('faq')
         } else if (currentMode === 'phone-group-noninput') {
           setMessages(currentMessages => [
             ...currentMessages,
@@ -1761,7 +1731,6 @@ export function PromptForm({
                   | 'history'
                   | 'tokenInquiry'
                   | 'send-message'
-                  | 'faq'
               )
             }
             variant="outline"
