@@ -1,13 +1,11 @@
-import AddressBook from '../address-book'
 import Excel from './excel'
-import AddressBookModal from '../select-contact-modal'
+import TopNav from '../top-nav'
 
 export default function Home() {
     return (
         <main className="container mx-auto p-4">
-            <AddressBook />
+            <TopNav/>
             <Excel />
-            <AddressBookModal/>
         </main>
     )
 }

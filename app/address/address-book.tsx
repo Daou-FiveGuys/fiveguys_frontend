@@ -26,7 +26,7 @@ import {
 import { FolderTree } from '@/components/ui/folder'
 import { Contact2, SearchResult, Group2, Folder2 } from './entity'
 import {api} from './service' 
-import AddressListView from './address-list-view';
+import AddressListView from './address-list-view'
 
 // Sample data
 const sampleData: Folder2[] = [

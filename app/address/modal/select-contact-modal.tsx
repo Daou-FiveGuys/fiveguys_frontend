@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import AddressBook from './address-book'
+import AddressBook from '../address-book'
 
 export default function AddressBookModal() {
   const [isModalOpen, setIsModalOpen] = useState(false)
