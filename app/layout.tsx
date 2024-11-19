@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { TailwindIndicator } from '@/components/tailwind-indicator'
 import { Providers } from '@/components/providers'
 import { Header } from '@/components/header'
-import { Toaster } from '@/components/ui/sonner'
+import { Toaster } from 'react-hot-toast'
 import { TooltipProvider } from '@radix-ui/react-tooltip' // TooltipProvider 추가
 
 export const metadata = {
@@ -65,6 +65,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             <TailwindIndicator />
           </TooltipProvider>
         </Providers>
+        <Toaster />
       </body>
     </html>
   )
