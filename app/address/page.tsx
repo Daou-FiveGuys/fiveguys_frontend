@@ -1,3 +1,5 @@
+'use client'
+
 import AddressBook from './address-book'
 import { Contact2 } from './entity'
 import TopNav from './top-nav'
