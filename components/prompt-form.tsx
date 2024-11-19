@@ -69,7 +69,12 @@ export function PromptForm({
   const { submitUserMessage } = useActions()
   const [_, setMessages] = useUIState<typeof AI>()
 
-  const [currentMode, setCurrentMode] = React.useState<'phone-group-noninput' | 'image-reselect' | 'text-create-action'|'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'| 'history-action' >('normal')
+  const [currentMode, setCurrentMode] = React.useState<'phone-group-noninput' | 'image-reselect' | 'text-create-action'
+  |'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' 
+  | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'bulk-save'
+  |'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'| 'history-action' 
+  | 'normal'| 'send-message-text'|'send-message-promft'|'send-message-generate'|'send-message-select'| 'send-message'
+  |'return'>('normal')
   const [selectedImage, setSelectedImage] = React.useState('');
   const [phoneData, setPhoneData] = React.useState<PhoneNumberData>({ name: '', phoneNumber: '', groupName: 'default' })
 
@@ -169,6 +174,34 @@ export function PromptForm({
       mode: 'send-message'
     }
   ]
+  const predefinedSendMessages = [
+    
+    {
+      message: '돌아가기',
+      response: '메시지 전송 모드를 종료합니다.',
+      mode: 'return'
+    },
+    {
+      message: '문자 생성',
+      response: '문자를 입력해 주세요.',
+      mode: 'send-message-text'
+    },
+    {
+      message: '이미지 프롬프트',
+      response: '어떤 내용의 문자를 생성할까요?',
+      mode: 'text'
+    },
+    {
+      message: '이미지 생성',
+      response: '히스토리를 조회합니다.',
+      mode: 'history'
+    },
+    {
+      message: '이미지 선택',
+      response: '토큰 정보를 조회합니다.',
+      mode: 'tokenInquiry'
+    }
+  ]
 
   const validatePhoneNumber = (value: string) => {
     return /^\d{11}$/.test(value)
@@ -239,6 +272,8 @@ export function PromptForm({
   };
   //전화번호 저장 파일 업로드 기능.
 
+  const [subMessage , setSubMessage] = useUIState<typeof AI>();
+
   const handlePredefinedMessage = async (
     message: string,
     response: string,
@@ -249,6 +284,8 @@ export function PromptForm({
       | 'history'
       | 'tokenInquiry'
       | 'send-message'
+      | 'normal'| 'send-message-text'|'send-message-promft'|'send-message-generate'|'send-message-select'| 'send-message'
+      |'return'
   ) => {
     if (mode === 'tokenInquiry') {
       setMessages(currentMessages => [
@@ -292,58 +329,60 @@ export function PromptForm({
         }
       ])
       setCurrentMode('history-action')
-    } else if (mode === 'send-message' && subMode === 'text') {
-            setMessages(currentMessages => [
-        {
-          id: nanoid(),
-          display: <UserMessage>{message}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: <BotCard>{response}</BotCard>
-        },
-                {
-          id: nanoid(),
-          display: "주제를 입력해주세요."
-        }
-      ])
-    }else if (( currentMode === 'send-message-recipient' || currentMode === 'send-message-group') && subMode === 'text') {
+    } 
+    else if (mode === 'text') {
       setMessages(currentMessages => [
-  {
-    id: nanoid(),
-    display: <UserMessage>{message}</UserMessage>
-  },
-  {
-    id: nanoid(),
-    display: <BotCard>{response}</BotCard>
-  },
+      ...currentMessages,
+      {
+        id: nanoid(),
+        display: <UserMessage>{message}</UserMessage>
+      },
+      {
+        id: nanoid(),
+        display: <BotCard>{response}</BotCard>
+      },
+      {
+       id: nanoid(),
+        display: "주제를 입력해주세요."
+      }
+    ])
+      if((currentMode === 'send-message'||currentMode === 'send-message-recipient'||currentMode === 'send-message-group')  && subMode === 'text'){
+        setSubMode('normal');
+        setCurrentMode('text');
+      }else if(currentMode === 'send-message'||currentMode === 'send-message-recipient'||currentMode === 'send-message-group'){
+        setSubMode('text');
+      }
+      else setCurrentMode('text');
+    } 
+    else if (mode === 'send-message-text'){
+        setSubMessage(subMessage => [
+          ...subMessage,
           {
-    id: nanoid(),
-    display: "주제를 입력해주세요."
-  }
-])
-}else if (mode === 'text') {
-      setMessages(currentMessages => [
-  ...currentMessages,
-  {
-    id: nanoid(),
-    display: <UserMessage>{message}</UserMessage>
-  },
-  {
-    id: nanoid(),
-    display: <BotCard>{response}</BotCard>
-  },
+            id: nanoid(),
+            display: <UserMessage>{message}</UserMessage>
+          },
           {
-    id: nanoid(),
-    display: "주제를 입력해주세요."
-  }
-])
-//handleText()
-if(currentMode === 'send-message'||currentMode === 'send-message-recipient'||currentMode === 'send-message-group'){
-  setSubMode('text');
-}
-else setCurrentMode('text')
-} else {
+            id: nanoid(),
+            display: "메시지 전송을 잠시 중단합니다. 주제를 입력해 주세요."
+          }
+        ])
+        setSubMode('text');
+    }
+    else if (mode === 'send-message-promft'){
+
+    }
+    else if (mode === 'send-message-generate'){
+
+    }
+    else if (mode === 'send-message-select'){
+
+    }
+    else if (mode === 'return'){
+      setCurrentMode('normal')
+      setSubMode('normal')
+    }
+    
+    else {
       setMessages(currentMessages => [
         ...currentMessages,
         {
@@ -1686,7 +1725,9 @@ else setCurrentMode('text')
       }}
     >
       <div className="flex justify-center space-x-2 mt-2 mb-8">
-      {predefinedMessages.map((msg, index) => (
+      {
+      currentMode !== 'send-message'? 
+      predefinedMessages.map((msg, index) => (
           <Button
             key={index}
             onClick={() =>
@@ -1707,7 +1748,26 @@ else setCurrentMode('text')
           >
             {msg.message}
           </Button>
-        ))}
+        ))
+        :
+        predefinedSendMessages.map((msg, index) => (
+          <Button
+            key={index}
+            onClick={() =>
+              handlePredefinedMessage(
+                msg.message,
+                msg.response,
+                msg.mode as
+                  | 'normal'| 'send-message-text'|'send-message-promft'|'send-message-generate'|'send-message-select'| 'return'
+              )
+            }
+            variant="outline"
+            size="sm"
+          >
+            {msg.message}
+          </Button>
+        ))
+      }
       </div>
       <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12">
         <Tooltip>
