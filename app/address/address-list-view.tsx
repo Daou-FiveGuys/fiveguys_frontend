@@ -98,6 +98,7 @@ export default function AddressListView({
           id="select-all"
           checked={selectedAddresses.length === paginatedAddresses.length}
           onCheckedChange={toggleSelectAll}
+          className="border-gray-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
         />
         <Label htmlFor="select-all" className="font-bold flex-grow-0 w-1/3">이름</Label>
         <span className="font-bold w-1/3">휴대폰</span>
@@ -128,6 +129,7 @@ export default function AddressListView({
               id={`select-${address.contactId}`}
               checked={selectedAddresses.includes(address.contactId)}
               onCheckedChange={() => toggleSelect(address)}
+              className="border-gray-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
             />
             <Label htmlFor={`select-${address.contactId}`} className="flex-grow-0 w-1/3">{address.name}</Label>
             <span className="w-1/3">{address.telNum}</span>
