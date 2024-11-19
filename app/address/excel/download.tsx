@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import Handsontable from 'handsontable';
 import * as XLSX from 'xlsx';
 
@@ -26,8 +27,12 @@ export default function ExcelDownload({ tableRef }: ExcelDownloadButtonProps) {
     };
 
     return (
-        <button onClick={handleXlsxDownload}>
-            엑셀 파일 다운로드
-        </button>
+        <Button 
+            onClick={handleXlsxDownload} 
+            variant="outline" 
+            className="bg-transparent text-black hover:bg-gray-100"
+        >
+            다운로드
+        </Button>
     );
 }

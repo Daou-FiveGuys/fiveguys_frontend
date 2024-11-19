@@ -47,6 +47,7 @@ import { deductTokens } from './token-dedution'
 import { useNumberManager } from './number-manager'
 import { useNumberLoad } from './number-load'
 import { ButtonCommand } from '@/components/button-command'
+import { api } from '@/app/faq_chatbot/faq_service'
 import { RootState } from '@/redux/store'
 import { useActions } from 'ai/rsc'
 import ReactDOMServer from 'react-dom/server'
@@ -139,6 +140,7 @@ export function PromptForm({
     | 'image-reselect'
     | 'image-action'
     | 'text-action'
+    | 'faq'
   >('normal')
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
@@ -232,33 +234,11 @@ export function PromptForm({
       message: '메시지 전송',
       response: '한명 혹은 단체로 전달하신건가요?',
       mode: 'send-message'
-    }
-  ]
-  const predefinedSendMessages = [
-    {
-      message: '돌아가기',
-      response: '메시지 전송 모드를 종료합니다.',
-      mode: 'return'
     },
     {
-      message: '문자 생성',
-      response: '문자를 입력해 주세요.',
-      mode: 'send-message-text'
-    },
-    {
-      message: '이미지 프롬프트',
-      response: '어떤 내용의 문자를 생성할까요?',
-      mode: 'text'
-    },
-    {
-      message: '이미지 생성',
-      response: '히스토리를 조회합니다.',
-      mode: 'history'
-    },
-    {
-      message: '이미지 선택',
-      response: '토큰 정보를 조회합니다.',
-      mode: 'tokenInquiry'
+      message: 'FaQ',
+      response: '무엇이 궁금하신가요?',
+      mode: 'faq'
     }
   ]
 
@@ -324,6 +304,7 @@ export function PromptForm({
       | 'history'
       | 'tokenInquiry'
       | 'send-message'
+      | 'faq'
       | 'normal'
       | 'send-message-text'
       | 'send-message-promft'
@@ -380,10 +361,23 @@ export function PromptForm({
       dispatch(clearMessages())
       setCurrentMode('normal')
       setSubMode('normal')
-    } else {
+    } else if (mode === 'normal') {
       addMessageToChatSlice('사용자', <UserMessage>{message}</UserMessage>)
       addMessageToChatSlice('챗봇', <BotCard>{response}</BotCard>)
       setCurrentMode(mode)
+    } else if (mode == 'faq') {
+      setCurrentMode('faq')
+      setMessages(currentMessages => [
+        ...currentMessages,
+        {
+          id: nanoid(),
+          display: <UserMessage>{message}</UserMessage>
+        },
+        {
+          id: nanoid(),
+          display: '무엇이 궁금하신가요?'
+        }
+      ])
     }
   }
   //버튼 누르면 고정답변 해주고 모드 변경.
@@ -1130,12 +1124,16 @@ export function PromptForm({
         } else if (currentMode === 'phone-group-input') {
           handleGroupName(value)
         } else if (currentMode === 'phone-group-noninput') {
-          addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+          setMessages(currentMessages => [
+            ...currentMessages,
+            {
+              id: nanoid(),
+              display: <UserMessage>{value}</UserMessage>
+            }
+          ])
           if (value == '예') {
             const newPhoneData = { ...phoneData, groupName: 'default' }
-            const result = await comparePhoneNumber({
-              phoneData: newPhoneData
-            })
+            const result = await comparePhoneNumber({ phoneData: newPhoneData })
             console.log(result.errors)
             if (result.isValid) {
               handleGroupNonName()

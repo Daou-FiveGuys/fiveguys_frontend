@@ -12,6 +12,8 @@ import { getFolder2Data, getContact2Data, patchGroup2Data } from "./service";
 import { transformContactsToExcelData } from "./transformExcel";
 import { FolderSelect } from "./folderSelect";
 import { GroupSelect } from "./groupSelect";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Excel() {
     const initialData: string[][] = Array.from({ length: 50 }, () => Array(10).fill(""));
@@ -32,14 +34,16 @@ export default function Excel() {
                 data: data,
                 rowHeaders: true,
                 colHeaders: ["이름", "전화번호", "[*1*]", "[*2*]", "[*3*]", "[*4*]", "[*5*]", "[*6*]", "[*7*]", "[*8*]"],
-                height: "300",
-                rowHeights: 20,
-                className: "htCenter htMiddle",
-                autoWrapRow: true,
-                autoWrapCol: true,
-                width: "auto",
-                colWidths: 110,
+                height: "calc(18 * 23px + 30px)", // 18 rows * 23px (default row height) + 30px for the header
+                width: "100%",
+                colWidths: [100, 120, 80, 80, 80, 80, 80, 80, 80, 80], // 각 열의 너비를 조정
                 licenseKey: "non-commercial-and-evaluation",
+                stretchH: 'all',
+                autoColumnSize: true,
+                autoRowSize: true,
+                contextMenu: true,
+                manualColumnResize: true,
+                manualRowResize: true,
             });
         }
 
@@ -102,18 +106,16 @@ export default function Excel() {
         setData(jsonData);
     };
 
-    // 데이터 저장 함수
     const handleSaveData = async () => {
         if (!selectedGroupId) {
             alert("그룹을 먼저 선택하세요.");
             return;
         }
     
-        // 데이터 배열을 Contact2 객체 리스트로 변환
         const contactList: Contact2[] = data
-            .filter((row) => row[0].trim() !== "") // 이름이 있는 행만 변환
+            .filter((row) => row[0].trim() !== "")
             .map((row) => ({
-                contactId: 0, // 새로운 데이터는 ID를 0으로 설정 (서버에서 생성)
+                contactId: 0,
                 name: row[0],
                 telNum: row[1],
                 one: row[2],
@@ -149,27 +151,32 @@ export default function Excel() {
     };    
 
     return (
-        <main>
-            <div className="flex space-x-4">
-                <FolderSelect
-                    folders={folder2Data}
-                    isLoading={isLoadingFolders}
-                    onSelect={handleFolder2Select}
-                />
-                <GroupSelect
-                    groups={group2Data}
-                    isLoading={isLoadingGroups}
-                    onSelect={(value) => handleGroup2Select(Number(value))}
-                />
-            </div>
-            <br />
-            <div id="hot-app" className="relative z-10" />
-            <br />
-            <ExcelUpload onFileUpload={handleFileData} />
-            <br />
-            <ExcelDownload tableRef={contactTableRef} />
-            <br />
-            <button onClick={handleSaveData}> 저장하기 </button>
-        </main>
+        <Card className="w-full mx-auto">
+            <CardHeader>
+                <CardTitle>엑셀 데이터 관리</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="flex space-x-4 mb-4 z-20">
+                    <FolderSelect
+                        folders={folder2Data}
+                        isLoading={isLoadingFolders}
+                        onSelect={handleFolder2Select}
+                    />
+                    <GroupSelect
+                        groups={group2Data}
+                        isLoading={isLoadingGroups}
+                        onSelect={(value) => handleGroup2Select(Number(value))}
+                    />
+                </div>
+                <div id="hot-app" className="mb-4 overflow-hidden z-10" />
+                <div className="flex flex-wrap gap-4 justify-between items-center">
+                    <ExcelUpload onFileUpload={handleFileData} />
+                    <div className="flex gap-2">
+                        <ExcelDownload tableRef={contactTableRef} />
+                        <Button onClick={handleSaveData}>저장하기</Button>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
     );
 }

@@ -7,7 +7,7 @@ export const api = {
       folder2Name: String
     ): Promise<Folder2|undefined> => {
       try {
-        const response = await apiClient.post<CommonResponse<Folder2>>(`/folder2/`, {name: folder2Name})
+        const response = await apiClient.post<CommonResponse<Folder2>>(`/folder2/${folder2Name}`, {})
         
         const newFolder2 = response.data.data;
         if(response.data.code == 200) return newFolder2
@@ -166,15 +166,15 @@ export const api = {
       }
     },
 
-    deleteAddress: async (contact2Id: number): Promise<boolean> => {
+    deleteAddress: async (contact2Id: number): Promise<Contact2|undefined> => {
       try{
         const response = await apiClient.delete<CommonResponse<Contact2>>(`/contact2/${contact2Id}`)
 
         const removedContact2 = response.data.data;
-        if(response.data.code == 200) return true
-        return false
+        if(response.data.code == 200) return removedContact2
+        return undefined
       } catch(error) {
-        return false
+        return undefined
       }
     }
 };
