@@ -5,21 +5,20 @@ import { useEffect, useRef } from 'react'
 import { NextResponse } from 'next/server'
 import apiClient from '@/services/apiClient'
 import { setCookie } from 'cookies-next'
+import axios from 'axios'
 
 interface CallBackProps {
-  params: Promise<{ provider: string }>
-  searchParams: Promise<{
+  params: { provider: string }
+  searchParams: {
     code?: string
     state?: string
-  }>
+  }
 }
 
-export default async function CallBack({ params, searchParams }: CallBackProps) {
-  const p = await params;
-  const p2 = await searchParams;
-  const provider = p.provider
-  const code = p2.code
-  const state = p2.state
+export default function CallBack({ params, searchParams }: CallBackProps) {
+  const provider = params.provider
+  const code = searchParams.code
+  const state = searchParams.state
   const router = useRouter()
   const isCalled = useRef(false) // useRef to track if the call has been made
 
@@ -43,7 +42,9 @@ export default async function CallBack({ params, searchParams }: CallBackProps) 
 
     const getAccessToken = async () => {
       await apiClient
-        .get(`/oauth/${provider}?${query}`, { withCredentials: true })
+        .get(`/oauth/${provider}?${query}`, {
+          withCredentials: true
+        })
         .then(res => {
           const access_token = res.data.data.accessToken
           if (res.data.code === 200) {
