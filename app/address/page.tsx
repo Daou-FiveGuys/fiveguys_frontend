@@ -1,5 +1,4 @@
-import AddressBook from '@/components/address-book'
-import Excel from './excel/excel'
+import AddressBook from './address-book'
 
 export default function Home() {
     return (

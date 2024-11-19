@@ -62,7 +62,7 @@ export default function Excel() {
     const fetchFolder2Data = async (userId: number) => {
         setIsLoadingFolders(true);
         try {
-            const folders = await getFolder2Data(userId);
+            const folders = await getFolder2Data();
             setFolder2Data(folders);
         } catch (error) {
             console.error("폴더 데이터 로드 오류:", error);
