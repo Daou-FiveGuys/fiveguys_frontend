@@ -1,35 +1,56 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Contact2 } from './entity';
 import { CustomSelect } from './address-book';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Edit2, Eye, Trash2 } from 'lucide-react';
+
+// AddressListView 컴포넌트의 props 타입 정의
+interface AddressListViewProps {
+  addresses: Contact2[];
+  updateAddress: (address: Contact2) => Promise<void>;
+  deleteAddress: (id: number) => Promise<void>;
+  isLoading: boolean;
+  onSelectContacts: (type: number, contact2: Contact2) => void;
+}
 
 export default function AddressListView({
   addresses = [],
   updateAddress,
   deleteAddress,
   isLoading,
-}: any) {
+  onSelectContacts
+}: AddressListViewProps) {
   const [sortOrder, setSortOrder] = useState<'name' | 'phone'>('name');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedAddresses, setSelectedAddresses] = useState<string[]>([]);
+  const [selectedAddresses, setSelectedAddresses] = useState<number[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<Contact2 | null>(null);
   const itemsPerPage = 10;
 
+  // 선택된 연락처가 변경될 때마다 부모 컴포넌트에 알림
+  useEffect(() => {
+    // const selectedContacts = addresses.filter(address => selectedAddresses.includes(address.contactId));
+    // onSelectContacts(selectedContacts);
+  }, [selectedAddresses, addresses, onSelectContacts]);
+
+  // 주소 정렬
   const sortedAddresses = [...addresses].sort((a, b) => {
     if (sortOrder === 'name') {
       return a.name.localeCompare(b.name);
     } else {
-      return a.telNum.localeCompare(b.phoneNumber);
+      return a.telNum.localeCompare(b.telNum);
     }
   });
 
+  // 페이지네이션
   const paginatedAddresses = sortedAddresses.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
@@ -37,34 +58,48 @@ export default function AddressListView({
 
   const totalPages = Math.ceil(addresses.length / itemsPerPage);
 
-  const toggleSelectAll = () => {
-    if (selectedAddresses.length === paginatedAddresses.length) {
-      setSelectedAddresses([]);
+  //onSelectContacts가 undefined일 경우를 대비한 안전장치
+  const safeOnSelectContacts = (type: number, contact2: Contact2) => {
+    if (typeof onSelectContacts === 'function') {
+      onSelectContacts(type, contact2);
     } else {
-      setSelectedAddresses(paginatedAddresses.map((a) => a.contactId));
+      console.error('onSelectContacts is not a function');
     }
   };
 
-  const toggleSelect = (id: string) => {
-    if (selectedAddresses.includes(id)) {
-      setSelectedAddresses(selectedAddresses.filter((a) => a !== id));
+
+  // 전체 선택/해제 토글
+  const toggleSelectAll = () => {
+    if (selectedAddresses.length === paginatedAddresses.length) {
+      setSelectedAddresses([]);
+      safeOnSelectContacts(4, { contactId: 0, name: "", telNum: "", var1: "", var2: "", var3: "", var4: "", var5: "", var6: "", var7: "", var8: "" });
     } else {
-      setSelectedAddresses([...selectedAddresses, id]);
+      setSelectedAddresses(paginatedAddresses.map((a) => a.contactId));
+      paginatedAddresses.forEach(contact => safeOnSelectContacts(1, contact));
+    }
+  };
+
+  // 개별 주소 선택/해제 토글
+  const toggleSelect = (contact2: Contact2) => {
+    if (selectedAddresses.includes(contact2.contactId)) {
+      setSelectedAddresses(selectedAddresses.filter((a) => a !== contact2.contactId));
+      safeOnSelectContacts(3, contact2);
+    } else {
+      setSelectedAddresses([...selectedAddresses, contact2.contactId]);
+      safeOnSelectContacts(1, contact2);
     }
   };
 
   return (
-    <div>
-      <div className="flex items-center space-x-4 mb-4 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
-        <div className="w-8 h-8 flex items-center justify-center">
-          <input
-            type="checkbox"
-            checked={selectedAddresses.length === paginatedAddresses.length}
-            onChange={toggleSelectAll}
-            className="rounded text-blue-500 focus:ring-blue-500"
-          />
-        </div>
-        <span className="font-bold flex-grow-0 w-1/3">이름</span>
+    <div className="space-y-4">
+      {/* 헤더 */}
+      <div className="flex items-center space-x-4 mb-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+        <Checkbox
+          id="select-all"
+          checked={selectedAddresses.length === paginatedAddresses.length}
+          onCheckedChange={toggleSelectAll}
+        />
+        <Label htmlFor="select-all" className="font-bold flex-grow-0 w-1/3">이름</Label>
         <span className="font-bold w-1/3">휴대폰</span>
         <CustomSelect
           value={sortOrder}
@@ -77,6 +112,8 @@ export default function AddressListView({
         />
         <span className="w-24"></span>
       </div>
+
+      {/* 주소 목록 */}
       <AnimatePresence>
         {paginatedAddresses.map((address) => (
           <motion.div
@@ -87,51 +124,51 @@ export default function AddressListView({
             transition={{ duration: 0.2 }}
             className="flex items-center space-x-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
           >
-            <div className="w-8 h-8 flex items-center justify-center">
-              <input
-                type="checkbox"
-                checked={selectedAddresses.includes(address.contactId)}
-                onChange={() => toggleSelect(address.contactId)}
-                className="rounded text-blue-500 focus:ring-blue-500"
-              />
-            </div>
-            <span className="flex-grow-0 w-1/3">{address.name}</span>
+            <Checkbox
+              id={`select-${address.contactId}`}
+              checked={selectedAddresses.includes(address.contactId)}
+              onCheckedChange={() => toggleSelect(address)}
+            />
+            <Label htmlFor={`select-${address.contactId}`} className="flex-grow-0 w-1/3">{address.name}</Label>
             <span className="w-1/3">{address.telNum}</span>
             <div className="w-24 flex space-x-2">
               <Button
                 variant="ghost"
-                size="sm"
-                className="text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg"
+                size="icon"
+                className="text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-full"
                 onClick={() => {
                   setSelectedAddress(address);
                   setIsEditDialogOpen(true);
                 }}
               >
-                수정
+                <Edit2 className="h-4 w-4" />
+                <span className="sr-only">수정</span>
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
-                className="text-green-500 hover:bg-green-100 dark:hover:bg-green-900 rounded-lg"
+                size="icon"
+                className="text-green-500 hover:bg-green-100 dark:hover:bg-green-900 rounded-full"
                 onClick={() => {
                   setSelectedAddress(address);
                   setIsViewDialogOpen(true);
                 }}
               >
-                상세보기
+                <Eye className="h-4 w-4" />
+                <span className="sr-only">상세보기</span>
               </Button>
             </div>
           </motion.div>
         ))}
       </AnimatePresence>
 
+      {/* 페이지네이션 */}
       <div className="flex justify-center space-x-2 mt-6">
         {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
           <Button
             key={page}
             variant={currentPage === page ? 'default' : 'outline'}
             onClick={() => setCurrentPage(page)}
-            className={`rounded-lg w-10 h-10 ${
+            className={`rounded-full w-10 h-10 ${
               currentPage === page ? 'bg-blue-500 text-white' : 'text-blue-500'
             }`}
           >
@@ -139,100 +176,95 @@ export default function AddressListView({
           </Button>
         ))}
       </div>
+
+      {/* 수정 다이얼로그 */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>주소 수정</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              placeholder="이름"
-              value={selectedAddress?.name || ''}
-              onChange={(e) =>
-                setSelectedAddress((prev) =>
-                  prev ? { ...prev, name: e.target.value } : null,
-                )
-              }
-            />
-            <Input
-              placeholder="전화번호"
-              value={selectedAddress?.telNum || ''}
-              onChange={(e) =>
-                setSelectedAddress((prev) =>
-                  prev ? { ...prev, phoneNumber: e.target.value } : null,
-                )
-              }
-            />
-            <Input
-              placeholder="변수 1"
-              value={selectedAddress?.var1 || ''}
-              onChange={(e) =>
-                setSelectedAddress((prev) =>
-                  prev ? { ...prev, var1: e.target.value } : null,
-                )
-              }
-            />
-            <Input
-              placeholder="변수 2"
-              value={selectedAddress?.var2 || ''}
-              onChange={(e) =>
-                setSelectedAddress((prev) =>
-                  prev ? { ...prev, var2: e.target.value } : null,
-                )
-              }
-            />
-            <Input
-              placeholder="변수 3"
-              value={selectedAddress?.var3 || ''}
-              onChange={(e) =>
-                setSelectedAddress((prev) =>
-                  prev ? { ...prev, var3: e.target.value } : null,
-                )
-              }
-            />
-            <Input
-              placeholder="변수 4"
-              value={selectedAddress?.var4 || ''}
-              onChange={(e) =>
-                setSelectedAddress((prev) =>
-                  prev ? { ...prev, var4: e.target.value } : null,
-                )
-              }
-            />
-            <Button
-              onClick={() => selectedAddress && updateAddress(selectedAddress)}
-              disabled={isLoading}
-            >
-              {isLoading ? '저장 중...' : '저장'}
-            </Button>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                이름
+              </Label>
+              <Input
+                id="name"
+                value={selectedAddress?.name || ''}
+                onChange={(e) =>
+                  setSelectedAddress((prev) =>
+                    prev ? { ...prev, name: e.target.value } : null
+                  )
+                }
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="telNum" className="text-right">
+                전화번호
+              </Label>
+              <Input
+                id="telNum"
+                value={selectedAddress?.telNum || ''}
+                onChange={(e) =>
+                  setSelectedAddress((prev) =>
+                    prev ? { ...prev, telNum: e.target.value } : null
+                  )
+                }
+                className="col-span-3"
+              />
+            </div>
+            {['var1', 'var2', 'var3', 'var4'].map((varName) => (
+              <div key={varName} className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor={varName} className="text-right">
+                  {`변수 ${varName.slice(-1)}`}
+                </Label>
+                <Input
+                  id={varName}
+                  value={selectedAddress?.[varName as keyof Contact2] || ''}
+                  onChange={(e) =>
+                    setSelectedAddress((prev) =>
+                      prev ? { ...prev, [varName]: e.target.value } : null
+                    )
+                  }
+                  className="col-span-3"
+                />
+              </div>
+            ))}
           </div>
+          <Button
+            onClick={() => {
+              if (selectedAddress) {
+                updateAddress(selectedAddress);
+                setIsEditDialogOpen(false);
+              }
+            }}
+            disabled={isLoading}
+          >
+            {isLoading ? '저장 중...' : '저장'}
+          </Button>
         </DialogContent>
       </Dialog>
 
+      {/* 상세 보기 다이얼로그 */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>주소 상세 정보</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2">
-            <p>
-              <strong>이름:</strong> {selectedAddress?.name}
-            </p>
-            <p>
-              <strong>전화번호:</strong> {selectedAddress?.telNum}
-            </p>
-            <p>
-              <strong>변수 1:</strong> {selectedAddress?.var1}
-            </p>
-            <p>
-              <strong>변수 2:</strong> {selectedAddress?.var2}
-            </p>
-            <p>
-              <strong>변수 3:</strong> {selectedAddress?.var3}
-            </p>
-            <p>
-              <strong>변수 4:</strong> {selectedAddress?.var4}
-            </p>
+          <div className="grid gap-4 py-4">
+            {['name', 'telNum', 'var1', 'var2', 'var3', 'var4'].map((field) => (
+              <div key={field} className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right font-bold">
+                  {field === 'name' ? '이름' : 
+                   field === 'telNum' ? '전화번호' : 
+                   `변수 ${field.slice(-1)}`}:
+                </Label>
+                <span className="col-span-3">
+                  {selectedAddress?.[field as keyof Contact2]}
+                </span>
+              </div>
+            ))}
           </div>
           <Button
             onClick={() => {
@@ -242,8 +274,9 @@ export default function AddressListView({
               }
             }}
             disabled={isLoading}
-            className="mt-4 bg-red-500 hover:bg-red-600 text-white"
+            className="bg-red-500 hover:bg-red-600 text-white"
           >
+            <Trash2 className="mr-2 h-4 w-4" />
             {isLoading ? '삭제 중...' : '삭제'}
           </Button>
         </DialogContent>

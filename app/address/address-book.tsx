@@ -252,6 +252,11 @@ export const CustomSelect = ({
   )
 }
 
+// AddressListView 컴포넌트의 props 타입 정의
+interface AddressBookProps {
+  onSelectContacts: (type: number, contact2: Contact2) => void;
+}
+
 /**
  * 주소록 창을 보여주는 함수이다.
  * searchTerm 검색어
@@ -265,7 +270,9 @@ export const CustomSelect = ({
  * 
  * @returns 
  */
-export default function AddressBook() {
+export default function AddressBook({
+  onSelectContacts
+}: AddressBookProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [searchFilter, setSearchFilter] = useState<'name' | 'phone' | 'both'>(
     'both'
@@ -538,6 +545,8 @@ const updateGroup = (
           ct2.contactId === contact2.contactId ? contact2 : ct2
         )
       }))
+
+      onSelectContacts(2, contact2)
     } catch (error) {
       console.error('Failed to update address:', error)
     } finally {
@@ -549,8 +558,8 @@ const updateGroup = (
     // 현재 동작을 수행중임을 명시
     setIsLoading(true)
     try {
-      const state = await api.deleteAddress(contact2Id)
-      if(!state) return
+      const contact2 = await api.deleteAddress(contact2Id)
+      if(contact2 == undefined) return
 
       const updatedFolders = updateFolderRecursively(
         topFolder2s,
@@ -569,6 +578,7 @@ const updateGroup = (
         ...prev,
         contact2s: prev.contact2s.filter(ct2 => ct2.contactId !== contact2Id)
       }))
+      onSelectContacts(3, contact2)
     } catch (error) {
       console.error('Failed to delete address:', error)
     } finally {
@@ -706,22 +716,18 @@ const updateGroup = (
           {searchResults.length > 0 ? (
             <SearchResultsView
               searchResults={searchResults}
-              setFolders={setTopFolder2s}
-              folders={topFolder2s}
-              setCurrentFolder={setCurrentGroup2}
               updateAddress={updateAddress}
               deleteAddress={deleteAddress}
               isLoading={isLoading}
+              onSelectContacts={onSelectContacts}
             />
           ) : (
             <AddressListView
               addresses={currentGroup2.contact2s}
-              setFolders={setTopFolder2s}
-              folders={topFolder2s}
-              currentFolder={currentGroup2}
               updateAddress={updateAddress}
               deleteAddress={deleteAddress}
               isLoading={isLoading}
+              onSelectContacts={onSelectContacts}
             />
           )}
         </div>
@@ -808,12 +814,10 @@ const updateGroup = (
 
 function SearchResultsView({
   searchResults,
-  setFolders,
-  folders,
-  setCurrentFolder,
   updateAddress,
   deleteAddress,
   isLoading,
+  onSelectContacts
 }: any) {
   if (!searchResults || searchResults.length === 0) {
     return <p>검색 결과가 없습니다.</p>;
@@ -828,13 +832,10 @@ function SearchResultsView({
           </h3>
           <AddressListView
             addresses={result.contact2s || []} // contact2s가 없으면 빈 배열로 설정
-            setFolders={setFolders}
-            folders={folders}
-            currentFolder={result.folder || {}}
-            setCurrentFolder={setCurrentFolder}
             updateAddress={updateAddress}
             deleteAddress={deleteAddress}
             isLoading={isLoading}
+            onSelectContacts={onSelectContacts}
           />
         </div>
       ))}
