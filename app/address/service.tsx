@@ -9,8 +9,11 @@ export const api = {
       try {
         const response = await apiClient.post<CommonResponse<Folder2>>(`/folder2/${folder2Name}`, {})
         
-        const newFolder2 = response.data.data;
-        if(response.data.code == 200) return newFolder2
+        let newFolder2 = response.data.data;
+        if(response.data.code == 200) {
+          newFolder2.group2s = []
+          return newFolder2
+        }
 
         return undefined;
       } catch(error) {
