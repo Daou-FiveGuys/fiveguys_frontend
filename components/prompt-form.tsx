@@ -5,7 +5,13 @@ import { Dispatch, KeyboardEvent, SetStateAction } from 'react'
 import Textarea from 'react-textarea-autosize'
 import { flushSync } from 'react-dom'
 
-import { useActions, useUIState } from 'ai/rsc'
+import { useDispatch, useSelector } from 'react-redux'
+import {
+  addMessage,
+  clearMessages,
+  editMessage,
+  UserType
+} from '@/redux/slices/chatSlice'
 
 import { BotCard, UserMessage } from './stocks/message'
 import { type AI } from '@/lib/chat/actions'
@@ -47,11 +53,19 @@ import { useNumberManager } from './number-manager'
 import { useNumberLoad } from './number-load'
 import { ButtonCommand } from '@/components/button-command'
 import { api } from '@/app/faq_chatbot/faq_service'
+import { RootState } from '@/redux/store'
+import { useActions } from 'ai/rsc'
+import ReactDOMServer from 'react-dom/server'
+import { ChatMessage } from './chat-message'
 
 interface PhoneNumberData {
   name: string
   phoneNumber: string
   groupName: string
+}
+
+export const reactNodeToString = (node: React.ReactNode): string => {
+  return ReactDOMServer.renderToString(node)
 }
 
 export function PromptForm({
@@ -62,19 +76,80 @@ export function PromptForm({
   input: string
   setInput: Dispatch<SetStateAction<string>>
   scrollToBottom?: () => void
-}) {
+}): JSX.Element {
+  const dispatch = useDispatch()
+  const messages = useSelector((state: RootState) => state.chat)
+  const handleMS = (result: boolean) => setMessagSuccess(result)
+  const [messageSuccess, setMessagSuccess] = React.useState(false)
+  const { submitUserMessage } = useActions()
+
+  const addMessageToChatSlice = (
+    userType: UserType,
+    display: React.ReactNode
+  ) => {
+    const content = reactNodeToString(display)
+    const id = nanoid()
+    dispatch(
+      addMessage({
+        id: id,
+        display: content,
+        userType: userType
+      })
+    )
+    return id
+  }
+
   const router = useRouter()
 
   const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
-  const { submitUserMessage } = useActions()
-  const [_, setMessages] = useUIState<typeof AI>()
 
-  const [currentMode, setCurrentMode] = React.useState<'phone-group-noninput' | 'image-reselect' | 'text-create-action'|'normal' | 'phone' | 'phone-name' | 'phone-group' | 'text' | 'history' | 'tokenInquiry' | 'send-message' | 'image-select' | 'image-action' | 'bulk-save'|'phone-group-input'|'send-message-recipient'| 'send-message-group'|'text-action'| 'history-action' | 'faq'>('normal')
-  const [selectedImage, setSelectedImage] = React.useState('');
-  const [phoneData, setPhoneData] = React.useState<PhoneNumberData>({ name: '', phoneNumber: '', groupName: 'default' })
+  const [currentMode, setCurrentMode] = React.useState<
+    | 'phone-group-noninput'
+    | 'image-reselect'
+    | 'text-create-action'
+    | 'normal'
+    | 'phone'
+    | 'phone-name'
+    | 'phone-group'
+    | 'text'
+    | 'history'
+    | 'tokenInquiry'
+    | 'send-message'
+    | 'image-select'
+    | 'image-action'
+    | 'bulk-save'
+    | 'phone-group-input'
+    | 'send-message-recipient'
+    | 'send-message-group'
+    | 'text-action'
+    | 'history-action'
+    | 'normal'
+    | 'send-message-text'
+    | 'send-message-promft'
+    | 'send-message-generate'
+    | 'send-message-select'
+    | 'send-message'
+    | 'return'
+    | 'faq'
+  >('normal')
+  const [selectedImage, setSelectedImage] = React.useState('')
+  const [phoneData, setPhoneData] = React.useState<PhoneNumberData>({
+    name: '',
+    phoneNumber: '',
+    groupName: 'default'
+  })
 
-  const [subMode, setSubMode] = React.useState<'text-create-action'|'normal' | 'text' | 'image-select' | 'image-reselect' | 'image-action' |'text-action' | 'faq'>('normal');
+  const [subMode, setSubMode] = React.useState<
+    | 'text-create-action'
+    | 'normal'
+    | 'text'
+    | 'image-select'
+    | 'image-reselect'
+    | 'image-action'
+    | 'text-action'
+    | 'faq'
+  >('normal')
 
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   type Action =
@@ -84,9 +159,8 @@ export function PromptForm({
     | 'send-message'
     | 'image-edit'
     | 'image-save'
-  const [message, setMessage] = React.useState('')
   const { getNextNumber } = useNumberManager()
-  const [selectedSeed, setSelectedSeed] = React.useState('');
+  const [selectedSeed, setSelectedSeed] = React.useState('')
   const handleGetNumber = () => {
     const newNumber = getNextNumber()
     setSaveNum(newNumber)
@@ -188,61 +262,44 @@ export function PromptForm({
     return ['예', '아니오'].includes(value)
   }
   // 전화번호 검사3
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0]
     if (file) {
-
       try {
         const content = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const result = e.target?.result as string;
-            resolve(result);
-          };
+          const reader = new FileReader()
+          reader.onload = e => {
+            const result = e.target?.result as string
+            resolve(result)
+          }
           reader.onerror = () => {
-            reject(new Error("파일을 읽는 중 오류가 발생했습니다."));
-          };
-          reader.readAsText(file);
-        });
-  
-        const result = await validatePhoneNumberFile(content); // Promise를 기다림
-  
-        if (result.isValid) {
-          setMessages((currentMessages) => [
-            ...currentMessages,
-            {
-              id: nanoid(),
-              display: <SendPhoneNumberData content={content} />,
-            },
-          ]);
-        } else {
-          setMessages((currentMessages) => [
+            reject(new Error('파일을 읽는 중 오류가 발생했습니다.'))
+          }
+          reader.readAsText(file)
+        })
 
-            ...currentMessages,
-            ...result.errors.map(error => ({
-              id: nanoid(),
-
-              display: error,
-            }))
-          ]);
-        }
+        const result = await validatePhoneNumberFile(content) // Promise를 기다림
+        addMessageToChatSlice(
+          '챗봇',
+          result.isValid ? (
+            <SendPhoneNumberData content={content} />
+          ) : (
+            <div>{result.errors.join(', ')}</div> // 오류 메시지를 문자열로 변환
+          )
+        )
       } catch (error) {
-        setMessages((currentMessages) => [
-          ...currentMessages,
-          {
-            id: nanoid(),
-            display: "파일을 처리하는 중 오류가 발생했습니다.",
-          },
-        ]);
+        addMessageToChatSlice('챗봇', '파일을 처리하는 중 오류가 발생했습니다.')
       } finally {
-        setCurrentMode("normal");
+        setCurrentMode('normal')
       }
     }
-  
+
     if (event.target) {
-      event.target.value = ""; // 파일 입력 필드 초기화
+      event.target.value = '' // 파일 입력 필드 초기화
     }
-  };
+  }
   //전화번호 저장 파일 업로드 기능.
 
   const handlePredefinedMessage = async (
@@ -256,126 +313,71 @@ export function PromptForm({
       | 'tokenInquiry'
       | 'send-message'
       | 'faq'
+      | 'normal'
+      | 'send-message-text'
+      | 'send-message-promft'
+      | 'send-message-generate'
+      | 'send-message-select'
+      | 'send-message'
+      | 'return'
+      | 'faq'
   ) => {
     if (mode === 'tokenInquiry') {
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{message}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: <BotCard>response</BotCard>
-        },
-        {
-          id: nanoid(),
-          display: (
-            <div>
-              <TokenInquiry />
-            </div>
-          )
-        }
-      ])
+      addMessageToChatSlice('사용자', <UserMessage>{message}</UserMessage>)
+      addMessageToChatSlice('챗봇', <BotCard>response</BotCard>)
+      addMessageToChatSlice('챗봇', <TokenInquiry />)
+
       setCurrentMode('normal')
     } else if (mode === 'history') {
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{message}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: <BotCard>{response}</BotCard>
-        },
-        {
-          id: nanoid(),
-          display: <MessageImageHistory id={-1} /> // -1을 사용하여 모든 데이터를 표시
-        },
-        {
-          id: nanoid(),
-          display: <BotCard>조회할 고유번호를 입력하세요.</BotCard>
-        }
-      ])
+      addMessageToChatSlice('사용자', <UserMessage>{message}</UserMessage>)
+      addMessageToChatSlice('챗봇', <BotCard>{response}</BotCard>)
+      addMessageToChatSlice('챗봇', <MessageImageHistory id={-1} />)
+      addMessageToChatSlice(
+        '챗봇',
+        <BotCard>조회할 고유번호를 입력하세요.</BotCard>
+      )
       setCurrentMode('history-action')
-    } else if (mode === 'send-message' && subMode === 'text') {
-            setMessages(currentMessages => [
-        {
-          id: nanoid(),
-          display: <UserMessage>{message}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: <BotCard>{response}</BotCard>
-        },
-                {
-          id: nanoid(),
-          display: "주제를 입력해주세요."
-        }
-      ])
-    }else if (( currentMode === 'send-message-recipient' || currentMode === 'send-message-group') && subMode === 'text') {
-      setMessages(currentMessages => [
-  {
-    id: nanoid(),
-    display: <UserMessage>{message}</UserMessage>
-  },
-  {
-    id: nanoid(),
-    display: <BotCard>{response}</BotCard>
-  },
-          {
-    id: nanoid(),
-    display: "주제를 입력해주세요."
-  }
-])
-}else if (mode === 'text') {
-  setMessages(currentMessages => [
-    ...currentMessages,
-    {
-      id: nanoid(),
-      display: <UserMessage>{message}</UserMessage>
-    },
-    {
-      id: nanoid(),
-      display: <BotCard>{response}</BotCard>
-    },
-    {
-      id: nanoid(),
-      display: "주제를 입력해주세요."
-    }
-  ])
-  //handleText()
-  if(currentMode === 'send-message'||currentMode === 'send-message-recipient'||currentMode === 'send-message-group'){
-    setSubMode('text');
-  }
-  else setCurrentMode('text')
-} else if(mode=='faq'){
-  setCurrentMode('faq');
-  setMessages(currentMessages => [
-    ...currentMessages,
-    {
-      id: nanoid(),
-      display: <UserMessage>{message}</UserMessage>
-    },
-    {
-      id: nanoid(),
-      display: "무엇이 궁금하신가요?"
-    }
-  ]);
-} else {
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{message}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: <BotCard>{response}</BotCard>
-        }
-      ])
+    } else if (mode === 'text') {
+      addMessageToChatSlice('사용자', <UserMessage>{message}</UserMessage>)
+      addMessageToChatSlice('챗봇', <BotCard>{response}</BotCard>)
+      addMessageToChatSlice('챗봇', <BotCard>주제를 입력해주세요.</BotCard>)
+      if (
+        (currentMode === 'send-message' ||
+          currentMode === 'send-message-recipient' ||
+          currentMode === 'send-message-group') &&
+        subMode === 'text'
+      ) {
+        setSubMode('normal')
+        setCurrentMode('text')
+      } else if (
+        currentMode === 'send-message' ||
+        currentMode === 'send-message-recipient' ||
+        currentMode === 'send-message-group'
+      ) {
+        setSubMode('text')
+      } else setCurrentMode('text')
+    } else if (mode === 'send-message-text') {
+      addMessageToChatSlice('사용자', <UserMessage>{message}</UserMessage>)
+      addMessageToChatSlice(
+        '챗봇',
+        <BotCard>메시지 전송을 잠시 중단합니다. 주제를 입력해 주세요.</BotCard>
+      )
+      setSubMode('text')
+    } else if (mode === 'send-message-promft') {
+    } else if (mode === 'send-message-generate') {
+    } else if (mode === 'send-message-select') {
+    } else if (mode === 'return') {
+      dispatch(clearMessages())
+      setCurrentMode('normal')
+      setSubMode('normal')
+    } else if (mode === 'normal') {
+      addMessageToChatSlice('사용자', <UserMessage>{message}</UserMessage>)
+      addMessageToChatSlice('챗봇', <BotCard>{response}</BotCard>)
       setCurrentMode(mode)
+    } else if (mode === 'faq') {
+      setCurrentMode(mode)
+      addMessageToChatSlice('사용자', <UserMessage>{message}</UserMessage>)
+      addMessageToChatSlice('챗봇', <BotCard>무엇이 궁금하신가요?</BotCard>)
     }
   }
   //버튼 누르면 고정답변 해주고 모드 변경.
@@ -387,113 +389,87 @@ export function PromptForm({
   const handleSendMessage = (input: string) => {
     if (currentMode === 'send-message') {
       if (input.toLowerCase() === '한명' || input.toLowerCase() === '단체') {
-        setMessages(currentMessages => [
-          ...currentMessages,
-          {
-            id: nanoid(),
-            display: <UserMessage>{input}</UserMessage>
-          },
-          {
-            id: nanoid(),
-            display:
-              input.toLowerCase() === '한명' ? (
-                <BotCard>
-                  <ButtonCommand
-                    setInput={setInput}
-                    command={'전화번호'}
-                    ref={inputRef}
-                  />{' '}
-                  혹은
-                  <ButtonCommand
-                    setInput={setInput}
-                    command={'이름'}
-                    ref={inputRef}
-                  />{' '}
-                  을 입력해 주세요.
-                </BotCard>
-              ) : (
-                <BotCard>
-                  <ButtonCommand
-                    setInput={setInput}
-                    command={'그룹명'}
-                    ref={inputRef}
-                  />{' '}
-                  을 입력해 주세요.
-                </BotCard>
-              )
-          }
-        ])
+        addMessageToChatSlice('사용자', <UserMessage>{input}</UserMessage>)
+        addMessageToChatSlice(
+          '챗봇',
+          input.toLowerCase() === '한명' ? (
+            <BotCard>
+              <ButtonCommand
+                setInput={setInput}
+                command={'전화번호'}
+                ref={inputRef}
+              />{' '}
+              혹은
+              <ButtonCommand
+                setInput={setInput}
+                command={'이름'}
+                ref={inputRef}
+              />{' '}
+              을 입력해 주세요.
+            </BotCard>
+          ) : (
+            <BotCard>
+              <ButtonCommand
+                setInput={setInput}
+                command={'그룹명'}
+                ref={inputRef}
+              />{' '}
+              을 입력해 주세요.
+            </BotCard>
+          )
+        )
+
         setCurrentMode(
           input.toLowerCase() === '한명'
             ? 'send-message-recipient'
             : 'send-message-group'
         )
       } else {
-        setMessages(currentMessages => [
-          ...currentMessages,
-          {
-            id: nanoid(),
-            display: <UserMessage>{input}</UserMessage>
-          },
-          {
-            id: nanoid(),
-            display: (
-              <BotCard>
-                <ButtonCommand
-                  setInput={setInput}
-                  command={'한명'}
-                  ref={inputRef}
-                />{' '}
-                혹은{' '}
-                <ButtonCommand
-                  setInput={setInput}
-                  command={'단체'}
-                  ref={inputRef}
-                />
-                로 입력해 주세요.
-              </BotCard>
-            )
-          }
-        ])
+        addMessageToChatSlice('사용자', <UserMessage>{input}</UserMessage>)
+        addMessageToChatSlice(
+          '사용자',
+          <BotCard>
+            <ButtonCommand
+              setInput={setInput}
+              command={'한명'}
+              ref={inputRef}
+            />{' '}
+            혹은{' '}
+            <ButtonCommand
+              setInput={setInput}
+              command={'단체'}
+              ref={inputRef}
+            />
+            로 입력해 주세요.
+          </BotCard>
+        )
       }
     } else if (
       currentMode === 'send-message-recipient' ||
       currentMode === 'send-message-group'
     ) {
       setMessageRecipient(input)
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{input}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: (
-            <SendingMessage
-              recipient={input}
-              isGroup={currentMode === 'send-message-group'}
-              lastCreatedMessage={lastCreatedMessage}
-              currentImageUrl={currentImageUrl}
-              onAddPhoneNumber={phoneNumber => {
-                setMessages(currentMessages => [
-                  ...currentMessages,
-                  {
-                    id: nanoid(),
-                    display: (
-                      <BotCard>
-                        새로운 전화번호를 추가합니다. 전화번호를 입력해주세요.
-                      </BotCard>
-                    )
-                  }
-                ])
-                setMessageRecipient(phoneNumber)
-                setCurrentMode('phone')
-              }}
-            />
-          )
-        }
-      ])
+
+      addMessageToChatSlice('사용자', <UserMessage>{input}</UserMessage>)
+      addMessageToChatSlice(
+        '챗봇',
+        <SendingMessage
+          recipient={input}
+          isGroup={currentMode === 'send-message-group'}
+          lastCreatedMessage={lastCreatedMessage}
+          currentImageUrl={currentImageUrl}
+          onAddPhoneNumber={phoneNumber => {
+            addMessageToChatSlice(
+              '챗봇',
+              <BotCard>
+                새로운 전화번호를 추가합니다. 전화번호를 입력해주세요.
+              </BotCard>
+            )
+            setMessageRecipient(phoneNumber)
+            setCurrentMode('phone')
+          }}
+        />
+      )
       setCurrentMode('normal')
     }
   }
@@ -501,17 +477,8 @@ export function PromptForm({
 
   const handlePhone = (value: string) => {
     if (value === '단체저장') {
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{value}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: <BotCard>파일을 첨부해주세요.</BotCard>
-        }
-      ])
+      addMessageToChatSlice('사용자', <UserMessage>{input}</UserMessage>)
+      addMessageToChatSlice('사용자', <BotCard>파일을 첨부해주세요.</BotCard>)
       setCurrentMode('bulk-save')
       if (fileInputRef.current) {
         fileInputRef.current.click()
@@ -519,21 +486,13 @@ export function PromptForm({
     } else {
       // 기존의 전화번호 처리 로직
       if (!validatePhoneNumber(value)) {
-        setMessages(currentMessages => [
-          ...currentMessages,
-          {
-            id: nanoid(),
-            display: <UserMessage>{value}</UserMessage>
-          },
-          {
-            id: nanoid(),
-            display: (
-              <BotCard>
-                올바른 이름 형식이 아닙니다. 11자리 숫자를 입력하세요.
-              </BotCard>
-            )
-          }
-        ])
+        addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+        addMessageToChatSlice(
+          '챗봇',
+          <BotCard>
+            올바른 이름 형식이 아닙니다. 11자리 숫자를 입력하세요.
+          </BotCard>
+        )
         return
       } else {
         handlePhoneNumber(input)
@@ -543,60 +502,44 @@ export function PromptForm({
   //전화번호 추가 기능 1: 전화번호 파일 추가(파일 업로드까지) + 전화번호 추가 기능(전번 입력까지).
 
   const handlePhoneNumber = (number: string) => {
-
     //const existingNumber = samplePhoneNumbers.find(item => item.phoneNumber === number)
     //if (existingNumber) {
-      // setMessages(currentMessages => [
-      //   ...currentMessages,
-      //   {
-      //     id: nanoid(),
-      //     display: <UserMessage>{number}</UserMessage>
-      //   },
-      //   {
-      //     id: nanoid(),
-      //     display: <SavePhoneNumber phoneData={existingNumber} />
-      //   },
-      //   {
-      //     id: nanoid(),
-      //     display: "이미 존재하는 전화번호입니다."
-      //   }
-      // ])
-      // setCurrentMode('normal')
+    // setMessages(currentMessages => [
+    //   ...currentMessages,
+    //   {
+    //     id: nanoid(),
+    //     display: <UserMessage>{number}</UserMessage>
+    //   },
+    //   {
+    //     id: nanoid(),
+    //     display: <SavePhoneNumber phoneData={existingNumber} />
+    //   },
+    //   {
+    //     id: nanoid(),
+    //     display: "이미 존재하는 전화번호입니다."
+    //   }
+    // ])
+    // setCurrentMode('normal')
     //} else {
-      setPhoneData(prev => ({ ...prev, phoneNumber: number }))
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{number}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: <BotCard>이름을 입력해주세요.</BotCard>
-        }
-      ])
-      setCurrentMode('phone-name')
+    setPhoneData(prev => ({ ...prev, phoneNumber: number }))
+    addMessageToChatSlice('사용자', <UserMessage>{number}</UserMessage>)
+    addMessageToChatSlice('챗봇', <BotCard>이름을 입력해주세요.</BotCard>)
+
+    setCurrentMode('phone-name')
     //}
   }
   //전화번호 추가 기능 2: 전화번호 존재 여부 확인.
 
   const handlePhoneName = (value: string) => {
     if (!validateName(value)) {
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{value}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: (
-            <BotCard>
-              올바른 이름 형식이 아닙니다. 영어나 한글로 입력해주세요.
-            </BotCard>
-          )
-        }
-      ])
+      addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+      addMessageToChatSlice(
+        '챗봇',
+        <BotCard>
+          올바른 이름 형식이 아닙니다. 영어나 한글로 입력해주세요.
+        </BotCard>
+      )
+
       return
     }
     handleName(value)
@@ -605,90 +548,55 @@ export function PromptForm({
 
   const handleName = (name: string) => {
     setPhoneData(prev => ({ ...prev, name }))
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{name}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            그룹명을 추가하시겠습니까? (
-            <ButtonCommand setInput={setInput} command={'예'} ref={inputRef} />/
-            <ButtonCommand
-              setInput={setInput}
-              command={'아니오'}
-              ref={inputRef}
-            />
-            )
-          </BotCard>
-        )
-      }
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{name}</UserMessage>)
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>
+        그룹명을 추가하시겠습니까? (
+        <ButtonCommand setInput={setInput} command={'예'} ref={inputRef} />/
+        <ButtonCommand setInput={setInput} command={'아니오'} ref={inputRef} />)
+      </BotCard>
+    )
+
     setCurrentMode('phone-group')
   }
   //전화번호 저장 기능 4: 문자입력 후 그룹명 지정 여부 확인
 
   const handleGroupNameResponse = (value: string) => {
     if (value.toLowerCase() === '예') {
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{value}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: <BotCard>그룹명을 입력해주세요.</BotCard>
-        }
-      ])
+      addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+      addMessageToChatSlice('챗봇', <BotCard>그룹명을 입력해주세요.</BotCard>)
       setCurrentMode('phone-group-input')
     } else if (value.toLowerCase() === '아니오') {
       // const newPhoneData = { ...phoneData, groupName: 'default' }
       // setSamplePhoneNumbers(prev => [...prev, newPhoneData])
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{value}</UserMessage>
-        },
-        {
-          id: nanoid(),
 
-          display: "그룹명을 정말로 미입력하시겠습니까?."
-        }
-      ])
+      addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+      addMessageToChatSlice(
+        '챗봇',
+        <BotCard>그룹명을 정말로 미입력하시겠습니까?.</BotCard>
+      )
       setCurrentMode('phone-group-noninput')
     } else {
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{value}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: (
-            <BotCard>
-              잘못된 입력입니다.
-              <ButtonCommand
-                setInput={setInput}
-                command={'예'}
-                ref={inputRef}
-              />{' '}
-              또는
-              <ButtonCommand
-                setInput={setInput}
-                command={'아니오'}
-                ref={inputRef}
-              />
-              로 답해주세요.
-            </BotCard>
-          )
-        }
-      ])
+      addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+      addMessageToChatSlice(
+        '챗봇',
+        <BotCard>
+          잘못된 입력입니다.
+          <ButtonCommand
+            setInput={setInput}
+            command={'예'}
+            ref={inputRef}
+          />{' '}
+          또는
+          <ButtonCommand
+            setInput={setInput}
+            command={'아니오'}
+            ref={inputRef}
+          />
+          로 답해주세요.
+        </BotCard>
+      )
     }
   }
   //전화번호 저장 기능 5: 예 -> 추가 입력, 아니오-> default 그룹으로 저장 후 동작 종료
@@ -696,76 +604,47 @@ export function PromptForm({
   const handleGroupName = (groupName: string) => {
     const newPhoneData = { ...phoneData, groupName }
     setSamplePhoneNumbers(prev => [...prev, newPhoneData])
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{groupName}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: <SavePhoneNumber phoneData={newPhoneData} />
-      }
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{groupName}</UserMessage>)
+    addMessageToChatSlice('챗봇', <SavePhoneNumber phoneData={newPhoneData} />)
     setCurrentMode('normal')
   }
   //전화번호 추가 기능 6: 파일로 전화 번호 저장.
-  const handleGroupNonName = () =>{
-    const newPhoneData = { ...phoneData, groupName:'default' }
+  const handleGroupNonName = () => {
+    const newPhoneData = { ...phoneData, groupName: 'default' }
     setSamplePhoneNumbers(prev => [...prev, newPhoneData])
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
 
-        display: <SavePhoneNumber phoneData={newPhoneData} />
-
-      }
-    ])
+    addMessageToChatSlice('챗봇', <SavePhoneNumber phoneData={newPhoneData} />)
     setCurrentMode('normal')
   }
 
   const handleRegenerateMessage = () => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: (
-          <UserTextMessage
-            message={lastTextInput}
-            onCreatedMessage={setLastCreatedMessage}
-            onCommunicationStatus={handleMS}
-          />
-        )
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            <ButtonCommand
-              setInput={setInput}
-              command={'주제'}
-              ref={inputRef}
-            />
-            ,
-            <ButtonCommand
-              setInput={setInput}
-              command={'재요청'}
-              ref={inputRef}
-            />
-            혹은
-            <ButtonCommand
-              setInput={setInput}
-              command={'메시지 생성 완료'}
-              ref={inputRef}
-            />
-            를 입력해주세요.
-          </BotCard>
-        )
-      }
-    ])
-    if(subMode === 'text-create-action'){setSubMode('text-create-action')}
-      else setCurrentMode('text-create-action')
+    addMessageToChatSlice(
+      '사용자',
+      <UserTextMessage
+        message={lastTextInput}
+        onCreatedMessage={setLastCreatedMessage}
+        onCommunicationStatus={handleMS}
+      />
+    )
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>
+        <ButtonCommand setInput={setInput} command={'주제'} ref={inputRef} />
+        ,
+        <ButtonCommand setInput={setInput} command={'재요청'} ref={inputRef} />
+        혹은
+        <ButtonCommand
+          setInput={setInput}
+          command={'메시지 생성 완료'}
+          ref={inputRef}
+        />
+        를 입력해주세요.
+      </BotCard>
+    )
+
+    if (subMode === 'text-create-action') {
+      setSubMode('text-create-action')
+    } else setCurrentMode('text-create-action')
   }
   //문자 생성 기능 4: 문자 저장 후 이미지 생성 여부 확인
 
@@ -774,161 +653,123 @@ export function PromptForm({
   const [lastCreatedMessage, setLastCreatedMessage] = React.useState('')
   const [currentImageUrl, setCurrentImageUrl] = React.useState('')
 
-  const [imgSuccess, setImgSuccess] = React.useState(false);
-  const handleIS = (result:boolean) => setImgSuccess(result);
+  const [imgSuccess, setImgSuccess] = React.useState(false)
+  const handleIS = (result: boolean) => setImgSuccess(result)
   const handleImageGeneration = () => {
-    if(subMode === 'text-action' || subMode === 'image-action')setSubMode('image-select')
+    if (subMode === 'text-action' || subMode === 'image-action')
+      setSubMode('image-select')
     else setCurrentMode('image-select')
-
-    setMessages(currentMessages => [
-      ...currentMessages,
-      //추가
-      {
-        id: nanoid(),
-        display: <ImageGenerator createdMessage={lastCreatedMessage} onSuccess={handleIS} seed={selectedSeed}/>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            1, 2, 3, 4번 중 하나를 선택해주세요.
-          </BotCard>
-        )
-      }
-    ])
-
+    addMessageToChatSlice(
+      '챗봇',
+      <ImageGenerator
+        createdMessage={lastCreatedMessage}
+        onSuccess={handleIS}
+        seed={selectedSeed}
+      />
+    )
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>1, 2, 3, 4번 중 하나를 선택해주세요.</BotCard>
+    )
   }
   //이미지 생성 기능 1: 이미지 4장 생성 기능.
 
-  const handleImageReSeed = (seed:string) =>{
-    console.log(selectedSeed);
-    setMessages(currentMessages => [
-      ...currentMessages,
-      //추가
-      {
-        id: nanoid(),
-        display: <ImageGenerator createdMessage={lastCreatedMessage} seed={seed} onSuccess={handleIS}/>
-      },
-      {
-        id: nanoid(),
-        display: "1, 2, 3, 4번 중 하나를 선택해주세요."
-      }
-    ])
+  const handleImageReSeed = (seed: string) => {
+    console.log(selectedSeed)
+    addMessageToChatSlice(
+      '챗봇',
+      <ImageGenerator
+        createdMessage={lastCreatedMessage}
+        seed={seed}
+        onSuccess={handleIS}
+      />
+    )
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>1, 2, 3, 4번 중 하나를 선택해주세요.</BotCard>
+    )
     setCurrentMode('image-select')
   }
 
-  const handleImageAction = (value:string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
+  const handleImageAction = (value: string) => {
+    dispatch(
+      addMessage({
         id: nanoid(),
-
-        display: "재생성, 편집, 종료 중에 하나를 입력하세요."
-
-      }
-    ])
-    if(subMode === 'image-select')setSubMode('image-action')
+        userType: '챗봇',
+        display: '재생성, 편집, 종료 중에 하나를 입력하세요.'
+      })
+    )
+    if (subMode === 'image-select') setSubMode('image-action')
     else setCurrentMode('image-action')
   }
   //이미지 생성 기능 2: 이미지 선택 후 이미지 편집, 보강, 종료 선택 기능.
 
   const handleImageEdit = (value: string) => {
     //handleDeductTokens()
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: <BotCard>이미지 편집 페이지로 이동합니다.</BotCard>
-      }
-      //추가 2번
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>이미지 편집 페이지로 이동합니다.</BotCard>
+    )
     router.push(`/edit`)
   }
   //이미지 생성 기능 4: 이미지 편집 기능
-
   const handleSaveMessageAndImage = () => {
-    setMessages(currentMessages => [
-      ...currentMessages,
+    addMessageToChatSlice(
+      '챗봇',
+      <MessageSaver
+        message={{
+          userInput: lastTextInput,
+          createdMessage: lastCreatedMessage
+        }}
+        saveNum={saveNum}
+      />
+    )
+    addMessageToChatSlice(
+      '챗봇',
+      <ImageSaver imageUrl={currentImageUrl} saveNum={saveNum} />
+    )
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>
+        `메시지와 이미지가 저장되었습니다 (저장 번호: ${saveNum}). 새로운 대화를
+        시작하려면 아무 메시지나 입력해주세요.`
+      </BotCard>
+    )
 
-      {
-        id: nanoid(),
-        display: (
-          <MessageSaver
-            message={{
-              userInput: lastTextInput,
-              createdMessage: lastCreatedMessage
-            }}
-            saveNum={saveNum}
-          />
-        )
-      },
-      {
-        id: nanoid(),
-        display: <ImageSaver imageUrl={currentImageUrl} saveNum={saveNum} />
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            `메시지와 이미지가 저장되었습니다 (저장 번호: ${saveNum}). 새로운
-            대화를 시작하려면 아무 메시지나 입력해주세요.`
-          </BotCard>
-        )
-      }
-    ])
     setSaveNum(prevSaveNum => prevSaveNum + 1)
-    if(subMode !== 'normal') {
-      setMessages(currentMessages => [
-        ...currentMessages,
-  
-        {
-          id: nanoid(),
-          display: "이미지 생성이 완료되었습니다. 메시지 전송으로 돌아갑니다."
-        }
-      ])
+    if (subMode !== 'normal') {
+      addMessageToChatSlice(
+        '챗봇',
+        <BotCard>
+          이미지 생성이 완료되었습니다. 메시지 전송으로 돌아갑니다.
+        </BotCard>
+      )
       setSubMode('normal')
-    }
-    else setCurrentMode('normal')
+    } else setCurrentMode('normal')
   }
   // 이미지 생성 기능 5: 이미지 생성 종료 후 이미지와 문자 저장.
   //`MessageSaver` 컴포넌트를 사용해 `lastTextInput`과 `lastCreatedMessage`를 저장합니다.
   //`ImageSaver` 컴포넌트를 사용해 `currentImageUrl`을 저장합니다.
 
   const handleCheckTokens = async () => {
-
     // const result = await deductTokens()
     const result = true
-    return result;
-
+    return result
   }
 
   const handleSelectedImageSave = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: <ImageGenerator selectedImage={value} onSuccess={handleIS}/>
-      }
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice(
+      '챗봇',
+      <ImageGenerator selectedImage={value} onSuccess={handleIS} />
+    )
 
     if (error == '') {
-      {
-        setMessages(currentMessages => [
-          ...currentMessages,
-          {
-            id: nanoid(),
-            display: <BotCard>오류가 발생하여 종료합니다.</BotCard>
-          }
-        ])
-      }
+      addMessageToChatSlice(
+        '챗봇',
+        <BotCard>오류가 발생하여 종료합니다.</BotCard>
+      )
     }
   }
   const stopImageCreate = (value: string) => {
@@ -937,54 +778,26 @@ export function PromptForm({
     // const selectImage = returnSeletedImage(value)
     // setSelectedImage(selectImage)
     // setCurrentImageUrl(selectImage)
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      }
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
   }
   const handleImageRegeneration = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: <BotCard>이미지를 재생성합니다.</BotCard>
-      }
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice('챗봇', <BotCard>이미지를 재생성합니다.</BotCard>)
+
     handleImageGeneration()
   }
   const errorMessageAutoSave = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: <BotCard>토큰이 부족합니다.</BotCard>
-      }
-    ])
-    handleTextSave(value)
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice('챗봇', <BotCard>토큰이 부족합니다.</BotCard>)
+
+    // handleTextSave(value)
   }
   const handleHistory = () => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <MessageImageHistory id={-1} /> // -1을 사용하여 모든 데이터를 표시
-      },
-      {
-        id: nanoid(),
-        display: <BotCard>"조회할 고유번호를 입력하세요."</BotCard>
-      }
-    ])
+    addMessageToChatSlice('사용자', <MessageImageHistory id={-1} />)
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>"조회할 고유번호를 입력하세요."</BotCard>
+    )
     setCurrentMode('history-action')
   }
   // 채팅 내역 조회 1: 내역 보여준 후 고유번호 입력 받음.
@@ -996,142 +809,93 @@ export function PromptForm({
       const histroyImg = getHistoryImage(historyItem)
       setLastCreatedMessage(historyMsg)
       setCurrentImageUrl(histroyImg)
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{value}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: <ImageSaver imageUrl={histroyImg} saveNum={saveNum} />
-        },
-        {
-          id: nanoid(),
-          display: (
-            <MessageSaver
-              message={{ userInput: '', createdMessage: historyMsg }}
-              saveNum={saveNum}
-            />
-          )
-        },
-        // <MessageImageHistory id={historyId} />
 
-        {
-          id: nanoid(),
-          display: <BotCard>이미지와 문자를 불러왔습니다.</BotCard>
-        }
-      ])
-      //sssss
+      addMessageToChatSlice('사용자', <MessageImageHistory id={-1} />)
+      addMessageToChatSlice(
+        '챗봇',
+        <ImageSaver imageUrl={histroyImg} saveNum={saveNum} />
+      )
+      addMessageToChatSlice(
+        '챗봇',
+        <MessageSaver
+          message={{ userInput: '', createdMessage: historyMsg }}
+          saveNum={saveNum}
+        />
+      )
+      addMessageToChatSlice(
+        '챗봇',
+        <BotCard>이미지와 문자를 불러왔습니다.</BotCard>
+      )
+
       setSaveNum(prevSaveNum => prevSaveNum + 1)
       setCurrentMode('normal')
     } else {
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: <UserMessage>{value}</UserMessage>
-        },
-        {
-          id: nanoid(),
-          display: <BotCard>해당 고유번호의 데이터를 찾을 수 없습니다.</BotCard>
-        }
-      ])
+      addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+      addMessageToChatSlice(
+        '사용자',
+        <BotCard>해당 고유번호의 데이터를 찾을 수 없습니다.</BotCard>
+      )
     }
   }
   // 채팅 내역 조회 2: 고유번호 입력 받아 그 데이터를 currentUrl과 lastMessage에 저장.
   const handleTextSave = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <MessageSaver
-            message={{
-              userInput: lastTextInput,
-              createdMessage: lastCreatedMessage
-            }}
-            saveNum={saveNum}
-          />
-        )
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>`메시지가 저장되었습니다 (저장 번호: ${saveNum}).`</BotCard>
-        )
-      }
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice(
+      '챗봇',
+      <MessageSaver
+        message={{
+          userInput: lastTextInput,
+          createdMessage: lastCreatedMessage
+        }}
+        saveNum={saveNum}
+      />
+    )
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>`메시지가 저장되었습니다 (저장 번호: ${saveNum}).`</BotCard>
+    )
     setSaveNum(prevSaveNum => prevSaveNum + 1)
 
-    if(subMode ==='text-action'){
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: "메시지가 생성되었습니다. 메시지 전송으로 돌아갑니다."
-        }
-      ])
+    if (subMode === 'text-action') {
+      addMessageToChatSlice(
+        '챗봇',
+        '메시지가 생성되었습니다. 메시지 전송으로 돌아갑니다.'
+      )
       setSubMode('normal')
-    }
-    else setCurrentMode('normal')
+    } else setCurrentMode('normal')
   }
-  const [messageSuccess, setMessagSuccess] = React.useState(false);
-  const handleMS = (result:boolean) => setMessagSuccess(result)
 
   const handleText = (value: string) => {
     setLastTextInput(value)
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <UserTextMessage
-            message={value}
-            onCreatedMessage={setLastCreatedMessage}
-            onCommunicationStatus={handleMS}
-          />
-        )
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            텍스트 주제 재입력을 원하면
-            <ButtonCommand
-              setInput={setInput}
-              command={'주제'}
-              ref={inputRef}
-            />
-            , 텍스트 재생성을 원하면
-            <ButtonCommand
-              setInput={setInput}
-              command={'재생성'}
-              ref={inputRef}
-            />
-            을 입력해주세요. 혹은
-            <ButtonCommand
-              setInput={setInput}
-              command={'메시지 생성 완료'}
-              ref={inputRef}
-            />
-            를 입력해 주세요.
-          </BotCard>
-        )
-      }
-    ])
-    if(subMode === 'text'){
+
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice(
+      '사용자',
+      <UserTextMessage
+        message={value}
+        onCreatedMessage={setLastCreatedMessage}
+        onCommunicationStatus={handleMS}
+      />
+    )
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>
+        텍스트 주제 재입력을 원하면
+        <ButtonCommand setInput={setInput} command={'주제'} ref={inputRef} />
+        , 텍스트 재생성을 원하면
+        <ButtonCommand setInput={setInput} command={'재생성'} ref={inputRef} />
+        을 입력해주세요. 혹은
+        <ButtonCommand
+          setInput={setInput}
+          command={'메시지 생성 완료'}
+          ref={inputRef}
+        />
+        를 입력해 주세요.
+      </BotCard>
+    )
+    if (subMode === 'text') {
       setSubMode('text-create-action')
-    }
-    else setCurrentMode('text-create-action')
+    } else setCurrentMode('text-create-action')
   }
   const [awaitingReselection, setAwaitingReselection] = React.useState(false)
   const requestReselection = () => {
@@ -1139,69 +903,53 @@ export function PromptForm({
   }
   React.useEffect(() => {
     if (awaitingReselection) {
-      setMessages(currentMessages => [
-        ...currentMessages,
-        {
-          id: nanoid(),
-          display: (
-            <BotCard>
-              <ButtonCommand setInput={setInput} command={'1'} ref={inputRef} />
-              ,
-              <ButtonCommand setInput={setInput} command={'2'} ref={inputRef} />
-              ,
-              <ButtonCommand setInput={setInput} command={'3'} ref={inputRef} />
-              ,
-              <ButtonCommand setInput={setInput} command={'4'} ref={inputRef} />
-              , 중 하나를 선택해주세요.
-            </BotCard>
-          )
-        }
-      ])
+      addMessageToChatSlice(
+        '챗봇',
+        <BotCard>
+          <ButtonCommand setInput={setInput} command={'1'} ref={inputRef} />
+          ,
+          <ButtonCommand setInput={setInput} command={'2'} ref={inputRef} />
+          ,
+          <ButtonCommand setInput={setInput} command={'3'} ref={inputRef} />
+          ,
+          <ButtonCommand setInput={setInput} command={'4'} ref={inputRef} />, 중
+          하나를 선택해주세요.
+        </BotCard>
+      )
     }
   }, [awaitingReselection])
 
   const handleReenterTopic = () => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <BotCard>주제를 다시 입력해 주세요.</BotCard>
-      }
-    ])
-    if(subMode === 'text-create-action')setSubMode('text')
+    addMessageToChatSlice('챗봇', <BotCard>주제를 다시 입력해 주세요.</BotCard>)
+    if (subMode === 'text-create-action') setSubMode('text')
     else setCurrentMode('text')
   }
   //문자 재생성 기능
   const handleStopGenerateText = () => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            <ButtonCommand
-              setInput={setInput}
-              command={'이미지 생성'}
-              ref={inputRef}
-            />
-            ,
-            <ButtonCommand
-              setInput={setInput}
-              command={'이미지 불러오기'}
-              ref={inputRef}
-            />
-            ,
-            <ButtonCommand
-              setInput={setInput}
-              command={'메시지 저장'}
-              ref={inputRef}
-            />
-            을 할 수 있습니다.
-          </BotCard>
-        )
-      }
-    ])
-    if(subMode === 'text-create-action') setSubMode('text-action');
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>
+        <ButtonCommand
+          setInput={setInput}
+          command={'이미지 생성'}
+          ref={inputRef}
+        />
+        ,
+        <ButtonCommand
+          setInput={setInput}
+          command={'이미지 불러오기'}
+          ref={inputRef}
+        />
+        ,
+        <ButtonCommand
+          setInput={setInput}
+          command={'메시지 저장'}
+          ref={inputRef}
+        />
+        을 할 수 있습니다.
+      </BotCard>
+    )
+    if (subMode === 'text-create-action') setSubMode('text-action')
     else setCurrentMode('text-action')
   }
   //문자 생성을 멈추고 이미지 생성, 메시지 저장 선택 단계로 넘어감.
@@ -1209,255 +957,159 @@ export function PromptForm({
   //
   //아래부터 예외 관련 함수
   const handleErrorText = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: <BotCard>토큰이 부족합니다.</BotCard>
-      }
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice('챗봇', <BotCard>토큰이 부족합니다.</BotCard>)
     handleErrorTextSave(value)
   }
   const handleErrorTextSave = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: (
-          <MessageSaver
-            message={{
-              userInput: lastTextInput,
-              createdMessage: lastCreatedMessage
-            }}
-            saveNum={saveNum}
-          />
-        )
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>메시지가 저장되었습니다 (저장 번호: ${saveNum}).</BotCard>
-        )
-      }
-    ])
+    addMessageToChatSlice(
+      '사용자',
+      <MessageSaver
+        message={{
+          userInput: lastTextInput,
+          createdMessage: lastCreatedMessage
+        }}
+        saveNum={saveNum}
+      />
+    )
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>메시지가 저장되었습니다 (저장 번호: ${saveNum}).</BotCard>
+    )
     setSaveNum(prevSaveNum => prevSaveNum + 1)
-    if(subMode !=='normal'){setSubMode('normal')}
-    else setCurrentMode('normal')
+    if (subMode !== 'normal') {
+      setSubMode('normal')
+    } else setCurrentMode('normal')
   }
   const handleErrorRegenerateText = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: <BotCard>재생성할 토큰이 부족합니다.</BotCard>
-      }
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>재생성할 토큰이 부족합니다.</BotCard>
+    )
     handleErrorTextSave(value)
   }
   const handleErrorTextCreateAction = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            잘못된 입력입니다.
-            <ButtonCommand
-              setInput={setInput}
-              command={'재생성'}
-              ref={inputRef}
-            />
-            ,
-            <ButtonCommand
-              setInput={setInput}
-              command={'주제'}
-              ref={inputRef}
-            />{' '}
-            혹은
-            <ButtonCommand
-              setInput={setInput}
-              command={'메시지 생성 완료'}
-              ref={inputRef}
-            />
-            를 입력해주세요.
-          </BotCard>
-        )
-      }
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>
+        잘못된 입력입니다.
+        <ButtonCommand setInput={setInput} command={'재생성'} ref={inputRef} />
+        ,
+        <ButtonCommand
+          setInput={setInput}
+          command={'주제'}
+          ref={inputRef}
+        />{' '}
+        혹은
+        <ButtonCommand
+          setInput={setInput}
+          command={'메시지 생성 완료'}
+          ref={inputRef}
+        />
+        를 입력해주세요.
+      </BotCard>
+    )
   }
   const handleErrorGenerateImage = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: <BotCard>토큰이 부족합니다.</BotCard>
-      }
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice('챗봇', <BotCard>토큰이 부족합니다.</BotCard>)
     handleErrorTextSave(value)
   }
   const handleErrorTextAction = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            잘못된 입력입니다.
-            <ButtonCommand
-              setInput={setInput}
-              command={'이미지 생성'}
-              ref={inputRef}
-            />{' '}
-            또는
-            <ButtonCommand
-              setInput={setInput}
-              command={'이미지 불러오기'}
-              ref={inputRef}
-            />{' '}
-            또는
-            <ButtonCommand
-              setInput={setInput}
-              command={'메시지 저장'}
-              ref={inputRef}
-            />{' '}
-            를 입력해주세요.
-          </BotCard>
-        )
-      }
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>
+        잘못된 입력입니다.
+        <ButtonCommand
+          setInput={setInput}
+          command={'이미지 생성'}
+          ref={inputRef}
+        />{' '}
+        또는
+        <ButtonCommand
+          setInput={setInput}
+          command={'이미지 불러오기'}
+          ref={inputRef}
+        />{' '}
+        또는
+        <ButtonCommand
+          setInput={setInput}
+          command={'메시지 저장'}
+          ref={inputRef}
+        />{' '}
+        를 입력해주세요.
+      </BotCard>
+    )
   }
   const handleErrorSendingMessage = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: <BotCard>토큰이 부족합니다.</BotCard>
-      }
-    ])
-    setCurrentMode('normal')
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice('챗봇', <BotCard>토큰이 부족합니다.</BotCard>)
   }
   const handleErrorImageSelected = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            잘못된 선택입니다.
-            <ButtonCommand setInput={setInput} command={'1'} ref={inputRef} />,
-            <ButtonCommand setInput={setInput} command={'2'} ref={inputRef} />,
-            <ButtonCommand setInput={setInput} command={'3'} ref={inputRef} />,
-            <ButtonCommand setInput={setInput} command={'4'} ref={inputRef} />,
-            중 하나를 선택해주세요.
-          </BotCard>
-        )
-      }
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>
+        잘못된 선택입니다.
+        <ButtonCommand setInput={setInput} command={'1'} ref={inputRef} />,
+        <ButtonCommand setInput={setInput} command={'2'} ref={inputRef} />,
+        <ButtonCommand setInput={setInput} command={'3'} ref={inputRef} />,
+        <ButtonCommand setInput={setInput} command={'4'} ref={inputRef} />, 중
+        하나를 선택해주세요.
+      </BotCard>
+    )
   }
   const handleErrorImageAction = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-        display: (
-          <BotCard>
-            잘못된 입력입니다.
-            <ButtonCommand
-              setInput={setInput}
-              command={'편집'}
-              ref={inputRef}
-            />
-            ,
-            <ButtonCommand
-              setInput={setInput}
-              command={'재생성'}
-              ref={inputRef}
-            />
-            ,
-            <ButtonCommand
-              setInput={setInput}
-              command={'종료'}
-              ref={inputRef}
-            />{' '}
-            중에 하나를 입력하세요.
-          </BotCard>
-        )
-      }
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>
+        잘못된 입력입니다.
+        <ButtonCommand setInput={setInput} command={'편집'} ref={inputRef} />
+        ,
+        <ButtonCommand setInput={setInput} command={'재생성'} ref={inputRef} />
+        ,
+        <ButtonCommand
+          setInput={setInput}
+          command={'종료'}
+          ref={inputRef}
+        />{' '}
+        중에 하나를 입력하세요.
+      </BotCard>
+    )
   }
   const handleErrorGenerateImageApi = (value: string) => {
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      {
-        id: nanoid(),
-
-        display: "이미지 생성하는 중에 오류가 발생했습니다."
-      }
-    ])
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice('챗봇', '이미지 생성하는 중에 오류가 발생했습니다.')
     handleErrorTextSave(value)
   }
-  const handleErrorPhoneNumberCompare = (value:string, errors:string[]) =>{
-    setMessages(currentMessages => [
-      ...currentMessages,
-      {
-        id: nanoid(),
-        display: <UserMessage>{value}</UserMessage>
-      },
-      ...errors.map(error => ({
-        id: nanoid(),
-        display: error,
-      }))
-    ])
+  const handleErrorPhoneNumberCompare = (value: string, errors: string[]) => {
+    addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+    addMessageToChatSlice(
+      '챗봇',
+      <BotCard>
+        {Array.isArray(errors) ? (
+          errors.map((err, index) => <div key={index}>{err}</div>)
+        ) : (
+          <div>{errors}</div> // errors가 문자열이라면 그대로 렌더링
+        )}
+      </BotCard>
+    )
     setCurrentMode('normal')
   }
 
   return (
+    <form
+      ref={formRef}
+      onSubmit={async (e: any) => {
+        e.preventDefault()
 
-      <form
-          ref={formRef}
-          onSubmit={async (e: any) => {
-            e.preventDefault()
-
-            if (window.innerWidth < 600) {
-              e.target['message']?.blur()
-            }
-
+        if (window.innerWidth < 600) {
+          e.target['message']?.blur()
+        }
 
         const value = input.trim()
         setInput('')
@@ -1471,46 +1123,52 @@ export function PromptForm({
           handleGroupNameResponse(value)
         } else if (currentMode === 'phone-group-input') {
           handleGroupName(value)
-        } else if (currentMode ==='faq') {
-          await api.faqChatbotAsk(value, (response:any)=>{
-            setMessages(currentMessages => [
-              ...currentMessages,
-              {
-               id: nanoid(),
-               display: `${response?.data}`
-              }
-            ])
-          });
+        } else if (currentMode === 'faq') {
+          addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+          let display = (
+            <BotCard>
+              <span style={{ color: 'gray' }}>생각중</span>
+            </BotCard>
+          )
+          let id = addMessageToChatSlice('챗봇', display)
+          let dots = 0
+          const interval = setInterval(() => {
+            dots = (dots + 1) % 4 // Cycle through 0, 1, 2, 3
+            const text = (
+              <BotCard>
+                <span style={{ color: 'gray' }}>생각중{'. '.repeat(dots)}</span>
+              </BotCard>
+            )
+            dispatch(editMessage([id, reactNodeToString(text)]))
+          }, 500)
+          await api.faqChatbotAsk(value, (response: any) => {
+            clearInterval(interval)
+            dispatch(
+              editMessage([
+                id,
+                reactNodeToString(<BotCard>{response?.data}</BotCard>)
+              ])
+            )
+          })
           setCurrentMode('faq')
         } else if (currentMode === 'phone-group-noninput') {
-          setMessages(currentMessages => [
-            ...currentMessages,
-            {
-              id: nanoid(),
-              display: <UserMessage>{value}</UserMessage>
-            }
-          ])
-          if(value =="예"){
-            const newPhoneData = { ...phoneData, groupName:'default' }
+          addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+          if (value == '예') {
+            const newPhoneData = { ...phoneData, groupName: 'default' }
             const result = await comparePhoneNumber({ phoneData: newPhoneData })
             console.log(result.errors)
-            if(result.isValid){
-             handleGroupNonName()
-            }
-            else{
+            if (result.isValid) {
+              handleGroupNonName()
+            } else {
               handleErrorPhoneNumberCompare(value, result.errors)
             }
-          }else if(value =="아니오"){
-            setMessages(currentMessages => [
-              ...currentMessages,
-              {
-                id: nanoid(),
-                display: "그룹명을 추가하시겠습니까? (예/아니오)"
-              }
-            ])
+          } else if (value == '아니오') {
+            addMessageToChatSlice(
+              '챗봇',
+              '그룹명을 추가하시겠습니까? (예/아니오)'
+            )
             setCurrentMode('phone-group')
-          }
-          else{
+          } else {
             //나중에...
           }
         } else if (currentMode === 'text') {
@@ -1531,7 +1189,6 @@ export function PromptForm({
           }
         } else if (currentMode === 'text-action') {
           if (value.toLowerCase() === '이미지 생성') {
-            
             const result = await showExistingImages()
             console.log(result)
             if (true) {
@@ -1542,37 +1199,32 @@ export function PromptForm({
                 handleErrorGenerateImage(value)
               }
             } else handleErrorGenerateImageApi(value)
-          } else if (value.toLowerCase() === '이미지 불러오기') 
+          } else if (value.toLowerCase() === '이미지 불러오기')
             handleImageEdit(value)
-            else if (value.toLowerCase() === '메시지 저장')
-            handleTextSave(value)
+          else if (value.toLowerCase() === '메시지 저장') handleTextSave(value)
           else handleErrorTextAction(value)
-        } else if (
-          currentMode === 'send-message'
-        ) {
-
-          if(subMode ==='normal'){
-          const hasEnoughTokens = await handleCheckTokens()
-          if (hasEnoughTokens) handleSendMessage(value)
-          else handleErrorSendingMessage(value)
-          }else if(subMode === 'text'){
-            console.log('문자생성');
+        } else if (currentMode === 'send-message') {
+          if (subMode === 'normal') {
+            const hasEnoughTokens = await handleCheckTokens()
+            if (hasEnoughTokens) handleSendMessage(value)
+            else handleErrorSendingMessage(value)
+          } else if (subMode === 'text') {
+            console.log('문자생성')
             const hasEnoughTokens = await handleCheckTokens()
             if (hasEnoughTokens) handleText(value)
-              else handleErrorText(value)
-          }else if(subMode === 'text-create-action'){
+            else handleErrorText(value)
+          } else if (subMode === 'text-create-action') {
             if (value.toLowerCase() === '재생성') {
-              console.log('재생성');
+              console.log('재생성')
               const hasEnoughTokens = await handleCheckTokens()
               if (hasEnoughTokens) handleRegenerateMessage()
               else handleErrorRegenerateText(value)
             } else if (value.toLowerCase() === '주제') {
-              console.log('주제');
+              console.log('주제')
               handleReenterTopic()
             } else if (value.toLowerCase() === '메시지 생성 완료') {
-              console.log('메생완');
+              console.log('메생완')
               handleStopGenerateText()
-            
             } else {
               handleErrorTextCreateAction(value)
             }
@@ -1580,7 +1232,8 @@ export function PromptForm({
             if (value.toLowerCase() === '이미지 생성') {
               const result = await showExistingImages()
               console.log(result)
-              if (true) {//되나볼려고
+              if (true) {
+                //되나볼려고
                 const hasEnoughTokens = await handleCheckTokens()
                 if (hasEnoughTokens) {
                   handleImageGeneration()
@@ -1590,68 +1243,58 @@ export function PromptForm({
               } else handleErrorGenerateImageApi(value)
             } else if (value.toLowerCase() === '이미지 불러오기') {
               handleImageEdit(value)
-            }
-              else if (value.toLowerCase() === '메시지 저장')
+            } else if (value.toLowerCase() === '메시지 저장')
               handleTextSave(value)
             else handleErrorTextAction(value)
-          } 
-          
-          else if (subMode === 'image-select') {
+          } else if (subMode === 'image-select') {
             if (['1', '2', '3', '4'].includes(value)) {
               //const selectImage = returnSelectedImage(value)
-              const selectImage ='1';
+              const selectImage = '1'
               setSelectedImage(selectImage)
               setCurrentImageUrl(selectImage)
               setSelectedSeed(value)
               handleSelectedImageSave(value)
               handleImageAction(value)
-              
             } else handleErrorImageSelected(value)
-          }
-          else if (subMode === 'image-action') {
+          } else if (subMode === 'image-action') {
             if (value === '편집') {
               handleImageEdit(value)
-            } 
-            else if (value.toLowerCase() === '재생성'){
+            } else if (value.toLowerCase() === '재생성') {
               const hasEnoughTokens = await handleCheckTokens()
               if (hasEnoughTokens) {
                 handleImageRegeneration(value)
-              }
-              else {
+              } else {
                 handleErrorGenerateImage(value)
               }
-            }
-            else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
+            } else if (value.toLowerCase() === '종료')
+              handleSaveMessageAndImage()
             else handleErrorImageAction(value)
           }
-
-        }else if (
+        } else if (
           currentMode === 'send-message-recipient' ||
           currentMode === 'send-message-group'
         ) {
-
-          if(subMode ==='normal'){
-          const hasEnoughTokens = await handleCheckTokens()
-          if (hasEnoughTokens) handleSendMessage(value)
-          else handleErrorSendingMessage(value)
-          }else if(subMode === 'text'){
-            console.log('문자생성');
+          if (subMode === 'normal') {
+            const hasEnoughTokens = await handleCheckTokens()
+            if (hasEnoughTokens) handleSendMessage(value)
+            else handleErrorSendingMessage(value)
+          } else if (subMode === 'text') {
+            console.log('문자생성')
             const hasEnoughTokens = await handleCheckTokens()
             if (hasEnoughTokens) handleText(value)
-              else handleErrorText(value)
-          }else if(subMode === 'text-create-action'){
+            else handleErrorText(value)
+          } else if (subMode === 'text-create-action') {
             if (value.toLowerCase() === '재생성') {
-              console.log('재생성');
+              console.log('재생성')
               const hasEnoughTokens = await handleCheckTokens()
               if (hasEnoughTokens) handleRegenerateMessage()
               else handleErrorRegenerateText(value)
             } else if (value.toLowerCase() === '주제') {
-              console.log('주제');
+              console.log('주제')
               handleReenterTopic()
             } else if (value.toLowerCase() === '메시지 생성 완료') {
-              console.log('메생완');
+              console.log('메생완')
               handleStopGenerateText()
-            
             } else {
               handleErrorTextCreateAction(value)
             }
@@ -1659,7 +1302,8 @@ export function PromptForm({
             if (value.toLowerCase() === '이미지 생성') {
               const result = await showExistingImages()
               console.log(result)
-              if (true) {//되나볼려고
+              if (true) {
+                //되나볼려고
                 const hasEnoughTokens = await handleCheckTokens()
                 if (hasEnoughTokens) {
                   handleImageGeneration()
@@ -1669,41 +1313,33 @@ export function PromptForm({
               } else handleErrorGenerateImageApi(value)
             } else if (value.toLowerCase() === '이미지 불러오기') {
               handleImageEdit(value)
-            }
-              else if (value.toLowerCase() === '메시지 저장')
+            } else if (value.toLowerCase() === '메시지 저장')
               handleTextSave(value)
             else handleErrorTextAction(value)
-          } 
-          
-          else if (subMode === 'image-select') {
+          } else if (subMode === 'image-select') {
             if (['1', '2', '3', '4'].includes(value)) {
               //const selectImage = returnSelectedImage(value)
-              const selectImage ='1';
+              const selectImage = '1'
               setSelectedImage(selectImage)
               setCurrentImageUrl(selectImage)
               setSelectedSeed(value)
               handleSelectedImageSave(value)
               handleImageAction(value)
-              
             } else handleErrorImageSelected(value)
-          }
-          else if (subMode === 'image-action') {
+          } else if (subMode === 'image-action') {
             if (value === '편집') {
               handleImageEdit(value)
-            } 
-            else if (value.toLowerCase() === '재생성'){
+            } else if (value.toLowerCase() === '재생성') {
               const hasEnoughTokens = await handleCheckTokens()
               if (hasEnoughTokens) {
                 handleImageRegeneration(value)
-              }
-              else {
+              } else {
                 handleErrorGenerateImage(value)
               }
-            }
-            else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
+            } else if (value.toLowerCase() === '종료')
+              handleSaveMessageAndImage()
             else handleErrorImageAction(value)
           }
-
         } else if (currentMode === 'image-select') {
           if (['1', '2', '3', '4'].includes(value)) {
             const selectImage = returnSelectedImage(value)
@@ -1712,65 +1348,76 @@ export function PromptForm({
             handleSelectedImageSave(value)
             setSelectedSeed(value)
             handleImageAction(value)
-
           } else handleErrorImageSelected(value)
-
-        }
-        else if (currentMode === 'image-action') {
+        } else if (currentMode === 'image-action') {
           if (value === '편집') {
             handleImageEdit(value)
-          } 
-          else if (value.toLowerCase() === '재생성'){
+          } else if (value.toLowerCase() === '재생성') {
             const selectImage = returnSelectedImage(value)
             setSelectedImage(selectImage)
             setCurrentImageUrl(selectImage)
             handleSelectedImageSave(value)
             handleImageAction(value)
-          }
-          else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
+          } else if (value.toLowerCase() === '종료') handleSaveMessageAndImage()
           else handleErrorImageAction(value)
         } else if (currentMode === 'history') {
           handleHistory()
         } else if (currentMode === 'history-action') {
           handleHistoryFind(value)
         } else {
-          setMessages(currentMessages => [
-            ...currentMessages,
-            {
-              id: nanoid(),
-              display: <UserMessage>{value}</UserMessage>
-            }
-          ])
+          addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
           const responseMessage = await submitUserMessage(value)
-          setMessages(currentMessages => [...currentMessages, responseMessage])
+          addMessageToChatSlice('챗봇', <BotCard>{responseMessage}</BotCard>)
         }
         scrollToBottom && scrollToBottom()
       }}
     >
       <div className="flex justify-center space-x-2 mt-2 mb-8">
-      {predefinedMessages.map((msg, index) => (
-          <Button
-            key={index}
-            onClick={() =>
-              handlePredefinedMessage(
-                msg.message,
-                msg.response,
-                msg.mode as
-                  | 'normal'
-                  | 'phone'
-                  | 'text'
-                  | 'history'
-                  | 'tokenInquiry'
-                  | 'send-message'
-                  | 'faq'
-              )
-            }
-            variant="outline"
-            size="sm"
-          >
-            {msg.message}
-          </Button>
-        ))}
+        {currentMode !== 'send-message'
+          ? predefinedMessages.map((msg, index) => (
+              <Button
+                key={index}
+                onClick={() =>
+                  handlePredefinedMessage(
+                    msg.message,
+                    msg.response,
+                    msg.mode as
+                      | 'normal'
+                      | 'phone'
+                      | 'text'
+                      | 'history'
+                      | 'tokenInquiry'
+                      | 'send-message'
+                  )
+                }
+                variant="outline"
+                size="sm"
+              >
+                {msg.message}
+              </Button>
+            ))
+          : predefinedMessages.map((msg, index) => (
+              <Button
+                key={index}
+                onClick={() =>
+                  handlePredefinedMessage(
+                    msg.message,
+                    msg.response,
+                    msg.mode as
+                      | 'normal'
+                      | 'send-message-text'
+                      | 'send-message-promft'
+                      | 'send-message-generate'
+                      | 'send-message-select'
+                      | 'return'
+                  )
+                }
+                variant="outline"
+                size="sm"
+              >
+                {msg.message}
+              </Button>
+            ))}
       </div>
       <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12">
         <Tooltip>
@@ -1821,7 +1468,7 @@ export function PromptForm({
         type="file"
         ref={fileInputRef}
         style={{ display: 'none' }}
-        onChange={ handleFileUpload}
+        onChange={handleFileUpload}
         accept=".txt"
         aria-label="Upload a text file"
       />
