@@ -444,12 +444,10 @@ const updateGroup = (
    * 주소를 추가하는 함수
    */
   const addContact2 = async () => {
-    // newAddress.name, newAddress.telNum이 추가되는 경우 실행되는 것으로 추정???
     if (newContact2.name && newContact2.telNum) {
-      // 현재 동작을 수행중임을 명시
-      setIsLoading(true)
+      setIsLoading(true);
       try {
-        const contact2 = await api.createAddress({ // 강제 주입 에러 유발 주의
+        const contact2 = await api.createAddress({
           contactId: -1,
           name: newContact2.name,
           telNum: newContact2.telNum,
@@ -461,37 +459,37 @@ const updateGroup = (
           var6: newContact2.var6 || "",
           var7: newContact2.var7 || "",
           var8: newContact2.var8 || "",
-        }, currentGroup2.groupsId)
+        }, currentGroup2.groupsId);
         
-        if(contact2 == undefined) return;
-
-        // 주소록을 추가한 새로운 폴더를 생성
-        // 주소록(Contact2)을 추가한 새로운 그룹을 생성
+        if (contact2 == undefined) return;
+  
+        // Update topFolder2s
         const updatedFolders = updateFolderRecursively(
           topFolder2s,
-          currentGroup2.groupsId, // 올바른 필드명 사용
+          currentGroup2.groupsId,
           group2 => ({
             ...group2,
-            contact2s: [...group2.contact2s, contact2] // 올바른 속성명 사용
+            contact2s: [...group2.contact2s, contact2]
           })
         );
-
-        setTopFolder2s(updatedFolders)
-
-        // Q. currentFolder2와 Folder2의 차이
+  
+        setTopFolder2s(updatedFolders);
+  
+        // Update currentGroup2
         setCurrentGroup2(prev => ({
           ...prev,
-          contact2: [...prev.contact2s, contact2]
-        }))
-        setNewContact2({}) // Q. 역할 무엇인지 모름
-        setIsAddingContact2(false)
+          contact2s: [...prev.contact2s, contact2]
+        }));
+  
+        setNewContact2({});
+        setIsAddingContact2(false);
       } catch (error) {
-        console.error('Failed to add address:', error)
+        console.error('Failed to add address:', error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
-  }
+  };
 
   /**
    * 주소록을 수정하는 함수
@@ -601,7 +599,7 @@ const updateGroup = (
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex space-x-4 mb-8"
+        className="flex space-x-4 mb-8 z-20"
       >
         <CustomSelect
           value={searchFilter}

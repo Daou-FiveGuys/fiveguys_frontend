@@ -156,7 +156,7 @@ export default function Excel() {
                 <CardTitle>엑셀 데이터 관리</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="flex space-x-4 mb-4">
+                <div className="flex space-x-4 mb-4 z-20">
                     <FolderSelect
                         folders={folder2Data}
                         isLoading={isLoadingFolders}
@@ -168,7 +168,7 @@ export default function Excel() {
                         onSelect={(value) => handleGroup2Select(Number(value))}
                     />
                 </div>
-                <div id="hot-app" className="mb-4 overflow-hidden" />
+                <div id="hot-app" className="mb-4 overflow-hidden z-10" />
                 <div className="flex flex-wrap gap-4 justify-between items-center">
                     <ExcelUpload onFileUpload={handleFileData} />
                     <div className="flex gap-2">
