@@ -6,7 +6,12 @@ import Textarea from 'react-textarea-autosize'
 import { flushSync } from 'react-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
-import { addMessage, clearMessages, UserType } from '@/redux/slices/chatSlice'
+import {
+  addMessage,
+  clearMessages,
+  editMessage,
+  UserType
+} from '@/redux/slices/chatSlice'
 
 import { BotCard, UserMessage } from './stocks/message'
 import { type AI } from '@/lib/chat/actions'
@@ -51,6 +56,7 @@ import { api } from '@/app/faq_chatbot/faq_service'
 import { RootState } from '@/redux/store'
 import { useActions } from 'ai/rsc'
 import ReactDOMServer from 'react-dom/server'
+import { ChatMessage } from './chat-message'
 
 interface PhoneNumberData {
   name: string
@@ -82,14 +88,15 @@ export function PromptForm({
     display: React.ReactNode
   ) => {
     const content = reactNodeToString(display)
-
+    const id = nanoid()
     dispatch(
       addMessage({
-        id: nanoid(),
+        id: id,
         display: content,
         userType: userType
       })
     )
+    return id
   }
 
   const router = useRouter()
@@ -1116,6 +1123,18 @@ export function PromptForm({
           handleGroupNameResponse(value)
         } else if (currentMode === 'phone-group-input') {
           handleGroupName(value)
+        } else if (currentMode === 'faq') {
+          addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
+          let id = addMessageToChatSlice('챗봇', <BotCard>생각중...</BotCard>)
+          await api.faqChatbotAsk(value, (response: any) => {
+            dispatch(
+              editMessage([
+                id,
+                reactNodeToString(<BotCard>{response?.data}</BotCard>)
+              ])
+            )
+          })
+          setCurrentMode('faq')
         } else if (currentMode === 'phone-group-noninput') {
           addMessageToChatSlice('사용자', <UserMessage>{value}</UserMessage>)
           if (value == '예') {

@@ -20,9 +20,17 @@ const chatSlice = createSlice({
     clearMessages: () => initialState,
     deleteMessage: (state, action: PayloadAction<string>) => {
       return state.filter(message => message.id !== action.payload)
+    },
+    editMessage: (state, action: PayloadAction<string[]>) => {
+      let chatMessage = state.filter(
+        message => message.id === action.payload[0]
+      )
+      if (chatMessage.length === 0) return
+      chatMessage[0].display = action.payload[1]
     }
   }
 })
 
-export const { addMessage, clearMessages, deleteMessage } = chatSlice.actions
+export const { addMessage, clearMessages, deleteMessage, editMessage } =
+  chatSlice.actions
 export default chatSlice.reducer
