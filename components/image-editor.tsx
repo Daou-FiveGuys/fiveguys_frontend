@@ -46,8 +46,17 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import { Input } from './ui/input'
 import { ChangeEvent } from 'react'
-import { isVisible } from 'handsontable/helpers/dom'
-import FrameSizeAdjuster from './image-editor-frame-button'
+
+type FrameOption = 'default' | '512x512' | 'landscape' | 'custom'
+
+const frameOptions: Record<
+  Exclude<FrameOption, 'custom'>,
+  { width: number; height: number }
+> = {
+  default: { width: 1024, height: 1024 },
+  '512x512': { width: 512, height: 512 },
+  landscape: { width: 1024, height: 768 }
+}
 
 const thicknesses = [1, 2, 3, 5, 8, 13, 21, 34, 40]
 
@@ -95,7 +104,7 @@ interface ShapeOptions {
 }
 
 export default function ImageEditor() {
-  const imageUrl = useSelector((state: RootState) => state.image)
+  const imageSlice = useSelector((state: RootState) => state.image)
   const [originalBackgroundImgObject, setOriginalBackgroundImgObject] =
     useState<fabric.FabricImage<
       Partial<fabric.ImageProps>,
@@ -152,70 +161,73 @@ export default function ImageEditor() {
 
       const fabricCanvas = initializeCanvas()
 
-      fabric.FabricImage.fromURL(
-        'https://fal.media/files/lion/P6e0ncdN6pP_35_yX6_ez_0c0ad928a6a34b8383c3b3bdb2ba1ecc.jpg',
-        { crossOrigin: 'anonymous' }
-      ).then(img => {
-        if (
-          !canvasElementRef.current ||
-          !fabricCanvas ||
-          !fabricCanvas.lowerCanvasEl ||
-          !fabricCanvas
-        )
-          return
-        const parent = canvasElementRef.current.parentElement
-        const parentWidth = parent?.offsetWidth || 1024
+      if (imageSlice.url) {
+        fabric.FabricImage.fromURL(imageSlice.url, {
+          crossOrigin: 'anonymous'
+        }).then(img => {
+          if (
+            !canvasElementRef.current ||
+            !fabricCanvas ||
+            !fabricCanvas.lowerCanvasEl ||
+            !fabricCanvas
+          )
+            return
+          const parent = canvasElementRef.current.parentElement
+          const parentWidth = parent?.offsetWidth || 1024
 
-        // 최대 캔버스 크기 제한 설정
-        const maxWidth = parentWidth
-        const maxHeight = maxWidth * 0.6666
+          // 최대 캔버스 크기 제한 설정
+          const maxWidth = parentWidth
+          const maxHeight = maxWidth * 0.6666
 
-        // 이미지 크기 가져오기
-        const imgWidth = img.width || 1024
-        const imgHeight = img.height || 600
+          // 이미지 크기 가져오기
+          const imgWidth = img.width || 1024
+          const imgHeight = img.height || 600
 
-        // 이미지 비율 유지하며 최대 크기 제한 적용
-        let scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight)
-        const canvasWidth = imgWidth * scale
-        const canvasHeight = imgHeight * scale
+          // 이미지 비율 유지하며 최대 크기 제한 적용
+          let scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight)
+          const canvasWidth = imgWidth * scale
+          const canvasHeight = imgHeight * scale
 
-        setCanvasDimensions({ width: canvasWidth, height: canvasHeight })
-        setOriginalImgDimension({ width: canvasWidth, height: canvasHeight })
-        fabricCanvas.setDimensions({
-          width: canvasWidth,
-          height: canvasHeight
-        })
+          setCanvasDimensions({ width: canvasWidth, height: canvasHeight })
+          setOriginalImgDimension({ width: canvasWidth, height: canvasHeight })
+          fabricCanvas.setDimensions({
+            width: canvasWidth,
+            height: canvasHeight
+          })
+          frameOptions.default.width = canvasWidth
+          frameOptions.default.height = canvasHeight
 
-        console.log(canvasWidth * scale, canvasHeight * scale)
+          console.log(canvasWidth * scale, canvasHeight * scale)
 
-        // 이미지 배경 설정 (캔버스 중앙에 배치)
-        img.set({
-          left: (canvasWidth - img.width * scale) / 2,
-          top: (canvasHeight - img.height * scale) / 2
-        })
-        img
-          .clone()
-          .then((clonedImg: fabric.FabricImage) => {
-            // 비동기 처리 (Promise 사용)
-            clonedImg.visible = false
-            clonedImg.set({
-              left: (canvasWidth - img.width * scale) / 2,
-              top: (canvasHeight - img.height * scale) / 2
+          // 이미지 배경 설정 (캔버스 중앙에 배치)
+          img.set({
+            left: (canvasWidth - img.width * scale) / 2,
+            top: (canvasHeight - img.height * scale) / 2
+          })
+          img
+            .clone()
+            .then((clonedImg: fabric.FabricImage) => {
+              // 비동기 처리 (Promise 사용)
+              clonedImg.visible = false
+              clonedImg.set({
+                left: (canvasWidth - img.width * scale) / 2,
+                top: (canvasHeight - img.height * scale) / 2
+              })
+              clonedImg.scale(scale)
+              fabricCanvas.backgroundImage = clonedImg
+              setOriginalBackgroundImgObject(clonedImg)
+              fabricCanvas.renderAll()
             })
-            clonedImg.scale(scale)
-            fabricCanvas.backgroundImage = clonedImg
-            setOriginalBackgroundImgObject(clonedImg)
-            fabricCanvas.renderAll()
-          })
-          .catch(error => {
-            console.error('Error cloning image:', error)
-          })
-        img.scale(scale)
-        setOriginImgObject(img)
-        fabricCanvas.sendObjectToBack(img)
-        fabricCanvas.add(img)
-        fabricCanvas.renderAll()
-      })
+            .catch(error => {
+              console.error('Error cloning image:', error)
+            })
+          img.scale(scale)
+          setOriginImgObject(img)
+          fabricCanvas.sendObjectToBack(img)
+          fabricCanvas.add(img)
+          fabricCanvas.renderAll()
+        })
+      }
 
       fabricCanvas.on('object:moving', function (e) {
         var obj = e.target
@@ -780,8 +792,8 @@ export default function ImageEditor() {
   }
 
   const disableAll = () => {
-    setSelectedShape(null)
     setFramePopoverOpen(false)
+    setSelectedShape(null)
     disableMasking()
     disableDrawing()
     disableErasing()
@@ -1006,6 +1018,7 @@ export default function ImageEditor() {
         })
       })
       canvas.backgroundImage.visible = true
+      console.log(originalImgDimensions)
       canvas.setDimensions(originalImgDimensions)
       originImgObject.visible = false
     } else {
@@ -1061,7 +1074,9 @@ export default function ImageEditor() {
         triggerFileInput()
         break
       case 'frameSize':
+        console.log('dd')
         setFramePopoverOpen(true)
+        break
       default:
         console.warn(`Unknown tool: ${tool}`)
     }
@@ -1329,12 +1344,13 @@ export default function ImageEditor() {
       })
     }
   }, [currentShapeColor])
-
-  const [framePopoverOpen, setFramePopoverOpen] = useState(false) // 팝오버 열림 상태
+  // 팝오버 열림 상태
   useEffect(() => {
     if (!canvas) return
     canvas.setWidth(canvasDimensions.width)
     canvas.setHeight(canvasDimensions.height)
+    setWidth(canvas.width)
+    setHeight(canvas.height)
     canvas.renderAll()
   }, [canvasDimensions.width, canvasDimensions.height])
 
@@ -1367,7 +1383,25 @@ export default function ImageEditor() {
     }
   }
 
-  const applyCanvasSize = (width: number, height: number) => {
+  const [framePopoverOpen, setFramePopoverOpen] = useState(false)
+
+  const [selectedOption, setSelectedOption] = useState<FrameOption>('default')
+  const [width, setWidth] = useState(canvasDimensions.width)
+  const [height, setHeight] = useState(canvasDimensions.height)
+
+  useEffect(() => {
+    if (selectedOption !== 'custom') {
+      const option = frameOptions[selectedOption]
+      setWidth(option.width)
+      setHeight(option.height)
+    }
+  }, [selectedOption])
+
+  const handleOptionChange = (value: FrameOption) => {
+    setSelectedOption(value)
+  }
+
+  const applyCanvasSize = () => {
     if (!canvas) return
     setCanvasDimensions({ width: width, height: height })
     canvas.width = width
@@ -1993,11 +2027,63 @@ export default function ImageEditor() {
               </PopoverContent>
             )}
           </Popover>
-          <FrameSizeAdjuster
-            onApply={applyCanvasSize}
-            initialHeight={canvasDimensions.height}
-            initialWidth={canvasDimensions.height}
-          />
+
+          <Popover open={framePopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant={framePopoverOpen ? 'default' : 'outline'}
+                onClick={() => {
+                  if (!framePopoverOpen) handleToolSwitch('frameSize')
+                }}
+              >
+                <FrameIcon className="mr-2 h-4 w-4" />
+                프레임
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+              <div className="space-y-4">
+                <Select
+                  onValueChange={handleOptionChange}
+                  value={selectedOption}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="프레임 크기 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Default</SelectItem>
+                    <SelectItem value="512x512">512x512</SelectItem>
+                    <SelectItem value="landscape">
+                      Landscape 4:3 (1024x768)
+                    </SelectItem>
+                    <SelectItem value="custom">Custom</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium">Width:</span>
+                    <Input
+                      type="number"
+                      value={Math.floor(width)}
+                      onChange={e => setWidth(Number(e.target.value))}
+                      disabled={selectedOption !== 'custom'}
+                    />
+                  </label>
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium">Height:</span>
+                    <Input
+                      type="number"
+                      value={Math.floor(height)}
+                      onChange={e => setHeight(Number(e.target.value))}
+                      disabled={selectedOption !== 'custom'}
+                    />
+                  </label>
+                </div>
+                <Button onClick={applyCanvasSize} className="w-full">
+                  적용
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
         {showConfirmationModal && (
           <Modal
@@ -2014,13 +2100,18 @@ export default function ImageEditor() {
           }}
         >
           <div
-            style={{
-              width: `${canvasDimensions.width}px`,
-              height: `${canvasDimensions.height}px`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
+            className="flex items-center justify-center"
+            style={
+              !isMasking
+                ? {
+                    width: `${canvasDimensions.width}px`,
+                    height: `${canvasDimensions.height}px`
+                  }
+                : {
+                    width: `${originalImgDimensions.width}px`,
+                    height: `${originalImgDimensions.height}px`
+                  }
+            }
           >
             <canvas ref={canvasElementRef} />
           </div>

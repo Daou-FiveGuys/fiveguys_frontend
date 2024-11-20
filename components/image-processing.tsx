@@ -222,10 +222,10 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
       enableRetinaScaling: false
     })
 
-    const link = document.createElement('a')
-    link.href = imageData
-    link.download = 'canvas_image.png' // 다운로드할 파일 이름 설정
-    link.click() // 링크 클릭하여 다운로드 시작
+    // const link = document.createElement('a')
+    // link.href = imageData
+    // link.download = 'canvas_image.png' // 다운로드할 파일 이름 설정
+    // link.click() // 링크 클릭하여 다운로드 시작
 
     // 배경 이미지와 색상, 객체의 원래 색상 복원
     canvas.backgroundImage = originalBackgroundImage
@@ -266,23 +266,15 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     )
 
     try {
-      // axios를 사용하여 서버로 데이터 전송
-      console.log('여기')
-      // const response = await apiClient.post('/inpaint', formData)
+      const response = await apiClient.post('/inpaint', formData)
 
-      setNewRequestId('98424df3-fbbe-459c-ab7a-4ae1dfa962d6')
-      setNewImageUrl(
-        'https://fal.media/files/koala/rTQRcen5ROWIcH3xRQbUW_9aff709a71fe48bbb53121b11f434649.jpg'
-      )
-      setIsModalOpen(true) // 모달 열기
-
-      // if (response.data.code === 200) {
-      //   setNewRequestId(response.data.data.requestId)
-      //   setNewImageUrl(response.data.data.url) // 서버에서 받은 이미지 URL 설정
-      //   setIsModalOpen(true) // 모달 열기
-      // } else {
-      //   console.error('Error uploading image:', response.data.message)
-      // }
+      if (response.data.code === 200) {
+        setNewRequestId(response.data.data.requestId)
+        setNewImageUrl(response.data.data.url) // 서버에서 받은 이미지 URL 설정
+        setIsModalOpen(true) // 모달 열기
+      } else {
+        console.error('Error uploading image:', response.data.message)
+      }
     } catch (error) {
       console.error('Error uploading image:', error)
     } finally {
