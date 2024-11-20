@@ -53,7 +53,7 @@ export const api = {
     
     deleteFolder: async (folder2Id: Number): Promise<boolean> => {
       try {
-        const response = await apiClient.delete<CommonResponse<Folder2>>(`/group2/${folder2Id}`)
+        const response = await apiClient.delete<CommonResponse<Folder2>>(`/folder2/${folder2Id}`)
 
         const deletedFolder2 = response.data.data;
         if(response.data.code == 200) return true
