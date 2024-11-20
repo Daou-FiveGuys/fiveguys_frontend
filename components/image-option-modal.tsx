@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import {
   Dialog,
@@ -29,27 +29,34 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '@/components/ui/popover'
+import { useDispatch, useSelector } from 'react-redux'
+import { RootState } from '@/redux/store'
+import {
+  ImageOption,
+  ImageStyle,
+  setImageOption
+} from '@/redux/slices/imageOptionSlice'
 
-const styleOptions = [
+const styleOptions: { value: ImageStyle; label: string; image: string }[] = [
   {
-    value: 'style1',
-    label: '스타일 1',
+    value: 'waterColor',
+    label: '수채화',
     image:
       'https://i.pinimg.com/736x/39/2d/a2/392da2ecea6c95f366c8df5ef461947e.jpg?height=200&width=200'
   },
   {
-    value: 'style2',
-    label: '스타일 2',
+    value: 'cityPop',
+    label: '시티팝',
     image:
       'https://i.pinimg.com/736x/21/74/8e/21748e848c22f6fdfea4fbc876e6261d.jpg?height=200&width=200'
   },
   {
-    value: 'style3',
+    value: 'mix',
     label: '스타일 3',
     image: '/placeholder.svg?height=200&width=200'
   },
   {
-    value: 'style4',
+    value: 'mix',
     label: '스타일 4',
     image: '/placeholder.svg?height=200&width=200'
   }
@@ -81,18 +88,48 @@ export default function Component({
     selectedStyle: string
     imageSize: { width: number; height: number }
     numInferenceSteps: number
-    seed: string
+    seed: number
     guidanceScale: number
     safetyChecker: boolean
   }) => {}
 }) {
+  const imageOption = useSelector((state: RootState) => state.imageOption)
+  const dispatch = useDispatch()
   const [currentStep, setCurrentStep] = useState(1)
-  const [selectedStyle, setSelectedStyle] = useState('')
-  const [imageSize, setImageSize] = useState({ width: 256, height: 256 })
-  const [numInferenceSteps, setNumInferenceSteps] = useState(28)
-  const [seed, setSeed] = useState('')
-  const [guidanceScale, setGuidanceScale] = useState(3.5)
+  const [selectedStyle, setSelectedStyle] = useState<ImageStyle>(
+    imageOption.imageStyle
+  )
+  const [imageSize, setImageSize] = useState({
+    width: imageOption.width,
+    height: imageOption.height
+  })
+  const [numInferenceSteps, setNumInferenceSteps] = useState<number>(
+    imageOption.numInferenceSteps
+  )
+  const [seed, setSeed] = useState<number>(imageOption.seed)
+  const [guidanceScale, setGuidanceScale] = useState<number>(
+    imageOption.guidanceScale
+  )
   const [safetyChecker, setSafetyChecker] = useState(true)
+
+  useEffect(() => {
+    const newImageOption: ImageOption = {
+      imageStyle: selectedStyle,
+      width: imageSize.width,
+      height: imageSize.height,
+      guidanceScale: guidanceScale,
+      seed: seed,
+      numInferenceSteps: numInferenceSteps
+    }
+    dispatch(setImageOption(newImageOption))
+  }, [
+    selectedStyle,
+    imageSize.width,
+    imageSize.height,
+    numInferenceSteps,
+    seed,
+    guidanceScale
+  ])
 
   const handleNext = () => {
     if (currentStep === 1 && selectedStyle) {
@@ -216,7 +253,7 @@ export default function Component({
               <Input
                 id="seed"
                 value={seed}
-                onChange={e => setSeed(e.target.value)}
+                onChange={e => setSeed(parseInt(e.target.value))}
                 placeholder="random"
               />
             </div>
