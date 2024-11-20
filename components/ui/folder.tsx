@@ -1,13 +1,13 @@
 'use client'
 
-import { Dispatch, SetStateAction, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
-import { ChevronDown, ChevronUp, Edit, FolderPlus, Trash2 } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { CustomSelect } from '@/app/address/address-book'
-import { Folder2, Group2 } from '@/app/address/entity'
-import { api } from '@/app/address/service'
+import {Dispatch, SetStateAction, useState} from 'react'
+import {AnimatePresence, motion} from 'framer-motion'
+import {Button} from '@/components/ui/button'
+import {ChevronDown, ChevronUp, Edit, FolderPlus, Trash2} from 'lucide-react'
+import {Input} from '@/components/ui/input'
+import {CustomSelect} from '@/app/address/address-book'
+import {Folder2, Group2} from '@/app/address/entity'
+import {api} from '@/app/address/service'
 
 /**
  * 폴더 및 그룹의 재귀 트리를 렌더링하는 컴포넌트
@@ -93,17 +93,14 @@ function FolderItem({
   folders: Folder2[]
 }) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [isEditingFolder, setIsEditingFolder] = useState(false) // 폴더 수정 상태
+  const [editingGroupId, setEditingGroupId] = useState<number | null>(null) // 특정 그룹 수정 상태
   const [editName, setEditName] = useState<string>('')
-  const [isEditing, setIsEditing] = useState(false)
   const [groupSortOrder, setFolderSortOrder] = useState<'asc' | 'desc'>('asc')
 
-  const handleEdit = () => {
-    handleEditFolder()
-    setIsEditing(false)
-  }
-
-  // 폴더 수정
+  /// 폴더 수정
   const handleEditFolder = async () => {
+    setIsEditingFolder(false)
     folder.name = editName
     if (editName) {
       const updatedFolder = await api.updateFolder(folder)
@@ -131,8 +128,9 @@ function FolderItem({
 
   // 그룹 수정
   const handleEditGroup = async (group: Group2) => {
-    const newName = prompt('새 그룹 이름을 입력하세요:', group.name)
-    if (newName) {
+    setEditingGroupId(null)
+    group.name = editName
+    if (editName) {
       const updatedGroup = await api.updateGroup2(group)
       if (updatedGroup == undefined) return
 
@@ -142,7 +140,7 @@ function FolderItem({
             ? {
                 ...f,
                 group2s: f.group2s.map(g =>
-                  g.groupsId === group.groupsId ? { ...g, name: newName } : g
+                  g.groupsId === group.groupsId ? { ...g, name: editName } : g
                 )
               }
             : f
@@ -220,13 +218,13 @@ function FolderItem({
             <ChevronUp className="h-4 w-4" />
           )}
         </Button>
-        {isEditing ? (
+        {isEditingFolder ? (
           <Input
             value={editName}
             onChange={e => setEditName(e.target.value)}
-            onBlur={handleEdit}
+            onBlur={handleEditFolder}
             onKeyDown={e => {
-              if (e.key === 'Enter') handleEdit()
+              if (e.key === 'Enter') handleEditFolder()
             }}
             className="rounded-lg bg-white dark:bg-gray-800"
           />
@@ -248,7 +246,7 @@ function FolderItem({
               variant="ghost"
               size="icon"
               onClick={() => {
-                setIsEditing(true)
+                setIsEditingFolder(true)
                 setEditName(folder.name)
               }}
               className="text-gray-500 hover:text-blue-500"
@@ -296,30 +294,49 @@ function FolderItem({
                 key={group.groupsId}
                 className="flex items-center space-x-2 py-2 px-3 rounded-lg bg-gray-100 dark:bg-gray-700 mb-2"
               >
-                <span
-                  className={`flex-grow cursor-pointer ${
-                    currentGroup2.groupsId === group.groupsId ? 'font-bold' : ''
-                  }`}
-                  onClick={() => setCurrentGroup2(group)}
-                >
-                  {group.name}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleEditGroup(group)}
-                  className="text-gray-500 hover:text-blue-500"
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteGroup(group)}
-                  className="text-gray-500 hover:text-red-500"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {editingGroupId === group.groupsId ? (
+                  <Input
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    onBlur={() => handleEditGroup(group)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleEditGroup(group)
+                    }}
+                    className="rounded-lg bg-white dark:bg-gray-800"
+                  />
+                ) : (
+                  <>
+                    <span
+                      className={`flex-grow cursor-pointer ${
+                        currentGroup2.groupsId === group.groupsId
+                          ? 'font-bold'
+                          : ''
+                      }`}
+                      onClick={() => setCurrentGroup2(group)}
+                    >
+                      {group.name}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setEditingGroupId(group.groupsId)
+                        setEditName(group.name)
+                      }}
+                      className="text-gray-500 hover:text-blue-500"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteGroup(group)}
+                      className="text-gray-500 hover:text-red-500"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
               </div>
             ))}
           </motion.div>
