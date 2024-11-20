@@ -36,10 +36,10 @@ export default function AddressListView({
   const itemsPerPage = 10;
 
   // 선택된 연락처가 변경될 때마다 부모 컴포넌트에 알림
-  useEffect(() => {
+  // useEffect(() => {
     // const selectedContacts = addresses.filter(address => selectedAddresses.includes(address.contactId));
     // onSelectContacts(selectedContacts);
-  }, [selectedAddresses, addresses, onSelectContacts]);
+  // }, [selectedAddresses, addresses, onSelectContacts]);
 
   // 주소 정렬
   const sortedAddresses = [...addresses].sort((a, b) => {
