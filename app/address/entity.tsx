@@ -33,10 +33,10 @@ export type Contact2 = {
   contactId: number
   name: string
   telNum: string
-  var1: string
-  var2: string
-  var3: string
-  var4: string
+  one: string
+  two: string
+  three: string
+  four: string
   var5: string
   var6: string
   var7: string
