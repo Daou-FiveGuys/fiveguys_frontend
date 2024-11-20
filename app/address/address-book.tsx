@@ -727,7 +727,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
             />
           ) : (
             <AddressListView
-              addresses={currentGroup2.contact2s}
+              addresses={currentGroup2.contact2s || []}
               updateAddress={updateAddress}
               deleteAddress={deleteAddress}
               isLoading={isLoading}
