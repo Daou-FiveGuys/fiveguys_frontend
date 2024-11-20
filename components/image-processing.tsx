@@ -266,7 +266,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     )
 
     try {
-      const response = await apiClient.post('/inpaint', formData)
+      const response = await apiClient.post('/ai/image/inpaint', formData)
 
       if (response.data.code === 200) {
         setNewRequestId(response.data.data.requestId)
