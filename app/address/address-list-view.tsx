@@ -72,7 +72,7 @@ export default function AddressListView({
   const toggleSelectAll = () => {
     if (selectedAddresses.length === paginatedAddresses.length) {
       setSelectedAddresses([]);
-      safeOnSelectContacts(4, { contactId: 0, name: "", telNum: "", var1: "", var2: "", var3: "", var4: "", var5: "", var6: "", var7: "", var8: "" });
+      safeOnSelectContacts(4, { contactId: 0, name: "", telNum: "", one: "", two: "", three: "", four: "", var5: "", var6: "", var7: "", var8: "" });
     } else {
       setSelectedAddresses(paginatedAddresses.map((a) => a.contactId));
       paginatedAddresses.forEach(contact => safeOnSelectContacts(1, contact));
@@ -216,10 +216,10 @@ export default function AddressListView({
                 className="col-span-3"
               />
             </div>
-            {['var1', 'var2', 'var3', 'var4'].map((varName) => (
+            {['one', 'two', 'three', 'four'].map((varName, index) => (
               <div key={varName} className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor={varName} className="text-right">
-                  {`변수 ${varName.slice(-1)}`}
+                  {`변수 ${index+1}`}
                 </Label>
                 <Input
                   id={varName}
@@ -255,12 +255,12 @@ export default function AddressListView({
             <DialogTitle>주소 상세 정보</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            {['name', 'telNum', 'var1', 'var2', 'var3', 'var4'].map((field) => (
+            {['name', 'telNum', 'one', 'two', 'three', 'four'].map((field, index) => (
               <div key={field} className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right font-bold">
                   {field === 'name' ? '이름' : 
                    field === 'telNum' ? '전화번호' : 
-                   `변수 ${field.slice(-1)}`}:
+                   `변수 ${index+1}`}:
                 </Label>
                 <span className="col-span-3">
                   {selectedAddress?.[field as keyof Contact2]}

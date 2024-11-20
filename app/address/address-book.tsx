@@ -42,10 +42,10 @@ const sampleData: Folder2[] = [
             contactId: 1,
             name: 'contact11',
             telNum: '01000000000',
-            var1: 'string',
-            var2: 'string',
-            var3: 'string',
-            var4: 'string',
+            one: 'string',
+            two: 'string',
+            three: 'string',
+            four: 'string',
             var5: 'string',
             var6: 'string',
             var7: 'string',
@@ -55,10 +55,10 @@ const sampleData: Folder2[] = [
             contactId: 2,
             name: 'contact12',
             telNum: '01000000001',
-            var1: 'string',
-            var2: 'string',
-            var3: 'string',
-            var4: 'string',
+            one: 'string',
+            two: 'string',
+            three: 'string',
+            four: 'string',
             var5: 'string',
             var6: 'string',
             var7: 'string',
@@ -68,10 +68,10 @@ const sampleData: Folder2[] = [
             contactId: 3,
             name: 'contact13',
             telNum: '01000000002',
-            var1: 'string',
-            var2: 'string',
-            var3: 'string',
-            var4: 'string',
+            one: 'string',
+            two: 'string',
+            three: 'string',
+            four: 'string',
             var5: 'string',
             var6: 'string',
             var7: 'string',
@@ -87,10 +87,10 @@ const sampleData: Folder2[] = [
             contactId: 4,
             name: 'contact21',
             telNum: '01000000003',
-            var1: 'string',
-            var2: 'string',
-            var3: 'string',
-            var4: 'string',
+            one: 'string',
+            two: 'string',
+            three: 'string',
+            four: 'string',
             var5: 'string',
             var6: 'string',
             var7: 'string',
@@ -100,10 +100,10 @@ const sampleData: Folder2[] = [
             contactId: 5,
             name: 'contact22',
             telNum: '01000000004',
-            var1: 'string',
-            var2: 'string',
-            var3: 'string',
-            var4: 'string',
+            one: 'string',
+            two: 'string',
+            three: 'string',
+            four: 'string',
             var5: 'string',
             var6: 'string',
             var7: 'string',
@@ -113,10 +113,10 @@ const sampleData: Folder2[] = [
             contactId: 6,
             name: 'contact23',
             telNum: 'string',
-            var1: 'string',
-            var2: 'string',
-            var3: 'string',
-            var4: 'string',
+            one: 'string',
+            two: 'string',
+            three: 'string',
+            four: 'string',
             var5: 'string',
             var6: 'string',
             var7: 'string',
@@ -143,10 +143,10 @@ const sampleData: Folder2[] = [
             contactId: 7,
             name: 'contact41',
             telNum: 'string',
-            var1: 'string',
-            var2: 'string',
-            var3: 'string',
-            var4: 'string',
+            one: 'string',
+            two: 'string',
+            three: 'string',
+            four: 'string',
             var5: 'string',
             var6: 'string',
             var7: 'string',
@@ -156,10 +156,10 @@ const sampleData: Folder2[] = [
             contactId: 8,
             name: 'contact42',
             telNum: 'string',
-            var1: 'string',
-            var2: 'string',
-            var3: 'string',
-            var4: 'string',
+            one: 'string',
+            two: 'string',
+            three: 'string',
+            four: 'string',
             var5: 'string',
             var6: 'string',
             var7: 'string',
@@ -169,10 +169,10 @@ const sampleData: Folder2[] = [
             contactId: 9,
             name: 'contact43',
             telNum: 'string',
-            var1: 'string',
-            var2: 'string',
-            var3: 'string',
-            var4: 'string',
+            one: 'string',
+            two: 'string',
+            three: 'string',
+            four: 'string',
             var5: 'string',
             var6: 'string',
             var7: 'string',
@@ -459,10 +459,10 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
             contactId: -1,
             name: newContact2.name,
             telNum: newContact2.telNum,
-            var1: newContact2.var1 || '',
-            var2: newContact2.var2 || '',
-            var3: newContact2.var3 || '',
-            var4: newContact2.var4 || '',
+            one: newContact2.one || '',
+            two: newContact2.two || '',
+            three: newContact2.three || '',
+            four: newContact2.four || '',
             var5: newContact2.var5 || '',
             var6: newContact2.var6 || '',
             var7: newContact2.var7 || '',
@@ -514,10 +514,10 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
         contactId: updatedAddress.contactId,
         name: updatedAddress.name,
         telNum: updatedAddress.telNum,
-        var1: updatedAddress.var1,
-        var2: updatedAddress.var2,
-        var3: updatedAddress.var3,
-        var4: updatedAddress.var4,
+        one: updatedAddress.one,
+        two: updatedAddress.two,
+        three: updatedAddress.three,
+        four: updatedAddress.four,
         var5: updatedAddress.var5,
         var6: updatedAddress.var6,
         var7: updatedAddress.var7,
@@ -763,33 +763,33 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
             />
             <Input
               placeholder="변수 1"
-              value={newContact2.var1 || ''}
+              value={newContact2.one || ''}
               onChange={e =>
-                setNewContact2({ ...newContact2, var1: e.target.value })
+                setNewContact2({ ...newContact2, one: e.target.value })
               }
               className="rounded-lg bg-gray-100 dark:bg-gray-700"
             />
             <Input
               placeholder="변수 2"
-              value={newContact2.var2 || ''}
+              value={newContact2.two || ''}
               onChange={e =>
-                setNewContact2({ ...newContact2, var2: e.target.value })
+                setNewContact2({ ...newContact2, two: e.target.value })
               }
               className="rounded-lg bg-gray-100 dark:bg-gray-700"
             />
             <Input
               placeholder="변수 3"
-              value={newContact2.var3 || ''}
+              value={newContact2.three || ''}
               onChange={e =>
-                setNewContact2({ ...newContact2, var3: e.target.value })
+                setNewContact2({ ...newContact2, three: e.target.value })
               }
               className="rounded-lg bg-gray-100 dark:bg-gray-700"
             />
             <Input
               placeholder="변수 4"
-              value={newContact2.var4 || ''}
+              value={newContact2.four || ''}
               onChange={e =>
-                setNewContact2({ ...newContact2, var4: e.target.value })
+                setNewContact2({ ...newContact2, four: e.target.value })
               }
               className="rounded-lg bg-gray-100 dark:bg-gray-700"
             />
