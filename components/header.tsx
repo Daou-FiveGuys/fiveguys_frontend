@@ -5,57 +5,15 @@ import { cn } from '@/lib/utils'
 import { auth } from '@/auth'
 import { Button, buttonVariants } from '@/components/ui/button'
 import PngImage, {
-  IconGitHub, IconJira,
+  IconGitHub,
+  IconJira,
   IconNextChat,
-  IconSeparator, IconSlack,
+  IconSeparator,
+  IconSlack,
   IconVercel
 } from '@/components/ui/icons'
-import { UserMenu } from '@/components/user-menu'
-import { SidebarMobile } from './sidebar-mobile'
-import { SidebarToggle } from './sidebar-toggle'
-import { ChatHistory } from './chat-history'
-import { Session } from '@/lib/types'
-
-async function UserOrLogin() {
-  const session = (await auth()) as Session
-  return (
-    <>
-      {session?.user ? (
-        <>
-          <SidebarMobile>
-            {/*<ChatHistory userId={session.user.id} />*/}
-            <ChatHistory
-              messages={[
-                {
-                  id: '',
-                  sender: '',
-                  message: '',
-                  timestamp: ''
-                }
-              ]}
-            />
-          </SidebarMobile>
-          <SidebarToggle />
-        </>
-      ) : (
-        <Link href="/new" rel="nofollow">
-          <IconNextChat className="size-6 mr-2 dark:hidden" inverted />
-          <IconNextChat className="hidden size-6 mr-2 dark:block" />
-        </Link>
-      )}
-      <div className="flex items-center">
-        <IconSeparator className="size-6 text-muted-foreground/50" />
-        {session?.user ? (
-          <UserMenu user={session.user} />
-        ) : (
-          <Button variant="link" asChild className="-ml-2">
-            <Link href="/login">Login</Link>
-          </Button>
-        )}
-      </div>
-    </>
-  )
-}
+import { headers } from 'next/headers'
+import UserOrLogin from './header-link'
 
 export function Header() {
   return (
@@ -82,13 +40,15 @@ export function Header() {
           className={cn(buttonVariants({ variant: 'outline' }))}
         >
           <PngImage
-              src="/jira.png"
-              alt="Description of the image"
-              width={20}
-              height={20}
-              className="rounded-md"
+            src="/jira.png"
+            alt="Description of the image"
+            width={20}
+            height={20}
+            className="rounded-md"
           />
-          <span className="hidden ml-2 md:flex text-blue-600">Manage to Jira</span>
+          <span className="hidden ml-2 md:flex text-blue-600">
+            Manage to Jira
+          </span>
         </a>
       </div>
     </header>
