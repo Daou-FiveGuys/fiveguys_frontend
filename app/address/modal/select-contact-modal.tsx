@@ -5,23 +5,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import AddressBook from '../address-book'
 import { Contact2 } from '../entity'
-import { api } from './service'
-
-export type Target = {
-  to: string,
-  changeWord: ChangeWord,
-  name: string
-}
-
-export type ChangeWord = {
-  var1: string,
-  var2: string,
-  var3: string,
-  var4: string,
-  var5: string,
-  var6: string,
-  var7: string
-}
+import { api, Target } from './service'
 
 export default function AddressBookModal() {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -105,15 +89,16 @@ export default function AddressBookModal() {
             <Button 
               onClick={() => {
                 const targets: Target[] = selectedContacts.map(contact => ({
-                  to: contact.telNum,
+                  toNumber: contact.telNum,
                   changeWord: {
-                    var1: contact.var1 || '',
-                    var2: contact.var2 || '',
-                    var3: contact.var3 || '',
-                    var4: contact.var4 || '',
+                    var1: contact.one || '',
+                    var2: contact.two || '',
+                    var3: contact.three || '',
+                    var4: contact.four || '',
                     var5: contact.var5 || '',
                     var6: contact.var6 || '',
-                    var7: contact.var7 || ''
+                    var7: contact.var7 || '',
+                    var8: contact.var8 || '',
                   },
                   name: contact.name
                 }));

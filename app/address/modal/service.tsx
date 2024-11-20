@@ -9,8 +9,8 @@ type PpurioMessageDTO = {
     files: Files;
 };
 
-type Target = {
-    to: string;
+export type Target = {
+    toNumber: string;
     name: string;
     changeWord: ChangeWord;
 };
