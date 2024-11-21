@@ -1,36 +1,113 @@
+// chatSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-export type UserType = '사용자' | '챗봇'
+export type UserType = 'user' | 'assistant-animation' | 'assistant' | 'normal'
 
-export interface ChatMessage {
+export interface Message {
   id: string
   userType: UserType
-  display: string
+  text: string
 }
 
-const initialState: ChatMessage[] = []
+export interface ChatContext {
+  messages: Message[]
+  isTyping: boolean
+}
+
+export type ChatState = {
+  [chatId: string]: ChatContext
+}
+
+const initialState: ChatState = {}
 
 const chatSlice = createSlice({
   name: 'chat',
   initialState,
   reducers: {
-    addMessage: (state, action: PayloadAction<ChatMessage>) => {
-      state.push(action.payload)
+    addMessage: (
+      state,
+      action: PayloadAction<{ chatId: string; message: Message }>
+    ) => {
+      const { chatId, message } = action.payload
+      if (!state[chatId]) {
+        state[chatId] = { messages: [], isTyping: false }
+      }
+      state[chatId].messages.push(message)
     },
-    clearMessages: () => initialState,
-    deleteMessage: (state, action: PayloadAction<string>) => {
-      return state.filter(message => message.id !== action.payload)
+    clearMessages: (state, action: PayloadAction<{ chatId: string }>) => {
+      const { chatId } = action.payload
+      if (state[chatId]) {
+        state[chatId].messages = []
+      }
     },
-    editMessage: (state, action: PayloadAction<string[]>) => {
-      let chatMessage = state.filter(
-        message => message.id === action.payload[0]
-      )
-      if (chatMessage.length === 0) return
-      chatMessage[0].display = action.payload[1]
+    deleteMessage: (
+      state,
+      action: PayloadAction<{ chatId: string; messageId: string }>
+    ) => {
+      const { chatId, messageId } = action.payload
+      if (state[chatId]) {
+        state[chatId].messages = state[chatId].messages.filter(
+          message => message.id !== messageId
+        )
+      }
+    },
+    editMessage: (
+      state,
+      action: PayloadAction<{
+        chatId: string
+        messageId: string
+        newText: string
+      }>
+    ) => {
+      const { chatId, messageId, newText } = action.payload
+      const chatContext = state[chatId]
+      if (chatContext) {
+        const message = chatContext.messages.find(
+          message => message.id === messageId
+        )
+        if (message) {
+          message.text = newText
+        }
+      }
+    },
+    setIsTyping: (
+      state,
+      action: PayloadAction<{ chatId: string; isTyping: boolean }>
+    ) => {
+      const { chatId, isTyping } = action.payload
+      if (!state[chatId]) {
+        state[chatId] = { messages: [], isTyping: false }
+      }
+      state[chatId].isTyping = isTyping
+    },
+    updateMessageUserType: (
+      state,
+      action: PayloadAction<{
+        chatId: string
+        messageId: string
+        userType: UserType
+      }>
+    ) => {
+      const { chatId, messageId, userType } = action.payload
+      const chatContext = state[chatId]
+      if (chatContext) {
+        const message = chatContext.messages.find(
+          message => message.id === messageId
+        )
+        if (message) {
+          message.userType = userType
+        }
+      }
     }
   }
 })
 
-export const { addMessage, clearMessages, deleteMessage, editMessage } =
-  chatSlice.actions
+export const {
+  addMessage,
+  clearMessages,
+  deleteMessage,
+  editMessage,
+  setIsTyping,
+  updateMessageUserType
+} = chatSlice.actions
 export default chatSlice.reducer
