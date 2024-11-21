@@ -8,7 +8,7 @@ interface ImageState {
 
 const initialState: ImageState = {
   requestId: 'e5c449c9-877b-4d33-9e7f-3a12ccb88964',
-  url: 'https://fal.media/files/lion/P6e0ncdN6pP_35_yX6_ez_0c0ad928a6a34b8383c3b3bdb2ba1ecc.jpg'
+  url: 'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'
 }
 
 const imageSlice = createSlice({

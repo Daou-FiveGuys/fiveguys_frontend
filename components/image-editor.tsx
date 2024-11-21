@@ -2011,8 +2011,9 @@ export default function ImageEditor() {
                           onClick={value => {
                             addTextByButton(apiTextData[index])
                           }}
-                          className="w-full max-w-full h-auto px-2 py-1 border border-gray-500 text-white rounded-md whitespace-normal overflow-hidden break-words"
+                          className="w-full max-w-full h-auto px-2 py-1 border border-gray-500 rounded-md whitespace-normal overflow-hidden break-words"
                           variant="outline"
+                          style={{ background: 'default' }}
                         >
                           {text}
                         </Button>

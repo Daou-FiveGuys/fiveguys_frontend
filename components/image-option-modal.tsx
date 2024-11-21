@@ -53,12 +53,14 @@ const styleOptions: { value: ImageStyle; label: string; image: string }[] = [
   {
     value: 'mix',
     label: '스타일 3',
-    image: '/placeholder.svg?height=200&width=200'
+    image:
+      'https://i.pinimg.com/736x/da/7b/32/da7b323a28dda4755c5c5f15fd324880.jpg'
   },
   {
     value: 'mix',
     label: '스타일 4',
-    image: '/placeholder.svg?height=200&width=200'
+    image:
+      'https://tjzk.replicate.delivery/models_organizations_avatar/01ed70be-0d47-4a4a-85fb-32c02cdd4ab5/bfl.png'
   }
 ]
 
@@ -164,23 +166,27 @@ export default function Component({
           </DialogTitle>
         </DialogHeader>
         {currentStep === 1 ? (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 p-4">
             {styleOptions.map(style => (
               <div
                 key={style.value}
-                className={`relative cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ${
-                  selectedStyle === style.value ? 'ring-2 ring-primary' : ''
+                className={`relative cursor-pointer rounded-lg overflow-hidden transition-all duration-200 border ${
+                  selectedStyle === style.value
+                    ? 'border-primary border-2'
+                    : 'border-gray-200'
                 }`}
                 onClick={() => setSelectedStyle(style.value)}
               >
-                <Image
-                  src={style.image}
-                  alt={style.label}
-                  width={200}
-                  height={200}
-                  className="w-full h-auto"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity duration-200">
+                <div className="aspect-square relative overflow-hidden rounded-lg p-1">
+                  <Image
+                    src={style.image}
+                    alt={style.label}
+                    layout="fill"
+                    objectFit="cover"
+                    className="w-full h-full"
+                  />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-lg">
                   <span className="text-white text-sm font-medium">
                     {style.label}
                   </span>

@@ -61,9 +61,12 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
         handleSetMaskObjects()
         sendImageForInpainting()
         break
-      case 'removeText':
-      case 'upscale':
-        sendImageRequestId(mode === 'removeText' ? '/remove-text' : '/upscale')
+      default:
+        sendImageRequestId(
+          mode === 'removeText'
+            ? '/ai/image/remove-text/' + option
+            : '/ai/image/upscale'
+        )
         break
     }
     setShowProcessingModal(true)
@@ -88,6 +91,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
   const applyNewImage = () => {
     if (!canvas) return
     if (newImageUrl) {
+      console.log(newImageUrl)
       fabric.FabricImage.fromURL(newImageUrl, {
         crossOrigin: 'anonymous'
       }).then(img => {
@@ -103,8 +107,8 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
 
         img.left = 0 // 이미지를 캔버스 왼쪽 위로 정렬
         img.top = 0
-
         canvas.backgroundImage = img
+        if (mode === 'removeText') canvas.backgroundImage.visible = false
         originImgObject.setSrc(newImageUrl, { crossOrigin: 'anonymous' })
         canvas.renderAll.bind(canvas)
         img.canvas = canvas
@@ -222,10 +226,10 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
       enableRetinaScaling: false
     })
 
-    // const link = document.createElement('a')
-    // link.href = imageData
-    // link.download = 'canvas_image.png' // 다운로드할 파일 이름 설정
-    // link.click() // 링크 클릭하여 다운로드 시작
+    const link = document.createElement('a')
+    link.href = imageData
+    link.download = 'canvas_image.png' // 다운로드할 파일 이름 설정
+    link.click() // 링크 클릭하여 다운로드 시작
 
     // 배경 이미지와 색상, 객체의 원래 색상 복원
     canvas.backgroundImage = originalBackgroundImage
