@@ -191,7 +191,7 @@ export function PromptForm({
           variant={activeButton === 'send-message' ? 'default' : 'outline'}
           onClick={() => setActiveButton('send-message')}
         >
-          사용량 조회
+          문자 전송
         </Button>
       </div>
       <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12 mt-4">
