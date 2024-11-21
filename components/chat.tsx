@@ -4,15 +4,12 @@ import { cn } from '@/lib/utils'
 import { ChatList } from '@/components/chat-list'
 import { ChatPanel } from '@/components/chat-panel'
 import { EmptyScreen } from '@/components/empty-screen'
-import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 import { useEffect, useState } from 'react'
-import { useUIState, useAIState } from 'ai/rsc'
 import { Message, Session } from '@/lib/types'
-import { usePathname, useRouter } from 'next/navigation'
 import { useScrollAnchor } from '@/lib/hooks/use-scroll-anchor'
-import { toast } from 'sonner'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
+import { ButtonType } from './prompt-form'
 
 export interface ChatProps extends React.ComponentProps<'div'> {
   initialMessages?: Message[]
@@ -23,7 +20,10 @@ export interface ChatProps extends React.ComponentProps<'div'> {
 
 export function Chat({ id, className }: ChatProps) {
   const [input, setInput] = useState<string>('')
-  const messages = useSelector((state: RootState) => state.chat)
+  const [activeButton, setActiveButton] = useState<ButtonType>('faq')
+  const messages = useSelector((state: RootState) =>
+    state.chat[activeButton] ? state.chat[activeButton].messages : []
+  )
 
   const { messagesRef, scrollRef, visibilityRef, isAtBottom, scrollToBottom } =
     useScrollAnchor()
@@ -37,7 +37,11 @@ export function Chat({ id, className }: ChatProps) {
         className={cn('pb-[250px] pt-4 md:pt-10', className)}
         ref={messagesRef}
       >
-        {messages.length ? <ChatList messages={messages} /> : <EmptyScreen />}
+        {messages.length ? (
+          <ChatList chatId={activeButton} messages={messages} />
+        ) : (
+          <EmptyScreen />
+        )}
         <div className="w-full h-px" ref={visibilityRef} />
       </div>
       <ChatPanel
@@ -46,6 +50,8 @@ export function Chat({ id, className }: ChatProps) {
         setInput={setInput}
         isAtBottom={isAtBottom}
         scrollToBottom={scrollToBottom}
+        activeButton={activeButton}
+        setActiveButton={setActiveButton}
       />
     </div>
   )

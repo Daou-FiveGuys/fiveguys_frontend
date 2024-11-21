@@ -75,26 +75,7 @@ const InfoPopover = ({ content }: { content: string }) => (
   </Popover>
 )
 
-export default function Component({
-  isOpen = true,
-  onClose = ({
-    step,
-    selectedStyle,
-    imageSize,
-    numInferenceSteps,
-    seed,
-    guidanceScale,
-    safetyChecker
-  }: {
-    step: number
-    selectedStyle: string
-    imageSize: { width: number; height: number }
-    numInferenceSteps: number
-    seed: number
-    guidanceScale: number
-    safetyChecker: boolean
-  }) => {}
-}) {
+export default function Component({ isOpen = true, onClose = ({}: {}) => {} }) {
   const imageOption = useSelector((state: RootState) => state.imageOption)
   const dispatch = useDispatch()
   const [currentStep, setCurrentStep] = useState(1)
