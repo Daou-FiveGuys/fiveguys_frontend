@@ -8,6 +8,7 @@ import ChatUtils from './chat/utils/ChatUtils'
 import CalendarComponent from './chat/history/calendar'
 import { MessageHistory } from './chat/history/message-history'
 import HistoryPanel from './chat/history/history-panel'
+import { BotCard } from './stocks'
 
 export const ChatList = ({
   chatId,
@@ -50,7 +51,16 @@ export const ChatList = ({
             const reactNode = ChatUtils.stringToReactNode(content as string)
             return (
               <React.Fragment key={message.id}>
-                <div className="ml-2">{reactNode}</div>
+                {chatId === 'faq' ? (
+                  <BotCard>
+                    <div
+                      className="relative mx-auto max-w-2xl prose"
+                      dangerouslySetInnerHTML={{ __html: content }} // HTML 태그 렌더링
+                    />
+                  </BotCard>
+                ) : (
+                  <div className="ml-2">{reactNode}</div>
+                )}
                 {index < messages.length - 1 && <Separator className="my-4" />}
               </React.Fragment>
             )
