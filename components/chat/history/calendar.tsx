@@ -41,10 +41,10 @@ export default function CalendarComponent({
     const newDate = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth() - 1,
-      1
+      0
     )
     setCurrentDate(newDate)
-    setSelectedDate(newDate) // 새로운 달의 1일로 설정
+    setSelectedDate(newDate)
   }
 
   // 다음 달로 이동
@@ -52,7 +52,7 @@ export default function CalendarComponent({
     const newDate = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth() + 1,
-      1
+      0
     )
     setCurrentDate(newDate)
     setSelectedDate(newDate) // 새로운 달의 1일로 설정
