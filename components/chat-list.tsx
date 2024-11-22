@@ -5,8 +5,9 @@ import { useDispatch } from 'react-redux'
 import MessageItem from './chat/utils/MessageItem'
 import { ButtonType } from './prompt-form'
 import ChatUtils from './chat/utils/ChatUtils'
-import CalendarComponent from './chat/utils/Calendar'
-import { MessageHistory } from './chat/utils/message-history'
+import CalendarComponent from './chat/history/calendar'
+import { MessageHistory } from './chat/history/message-history'
+import HistoryPanel from './chat/history/history-panel'
 
 export const ChatList = ({
   chatId,
@@ -38,13 +39,6 @@ export const ChatList = ({
   const isHistoryChat = chatId === 'history'
   return (
     <div className="relative mx-auto max-w-2xl px-4">
-      {isHistoryChat && (
-        <div className="flex-col items-center justify-center mb-4">
-          <CalendarComponent />
-          <Separator className="my-4" />
-          <MessageHistory />
-        </div>
-      )}
       {messages.map((message, index) => {
         const content = message.text
 
@@ -75,6 +69,7 @@ export const ChatList = ({
           </React.Fragment>
         )
       })}
+      {isHistoryChat && HistoryPanel()}
     </div>
   )
 }

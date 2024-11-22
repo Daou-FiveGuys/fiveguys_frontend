@@ -1,10 +1,10 @@
 import React, { forwardRef, useImperativeHandle } from 'react'
 import { Button } from '@/components/ui/button'
-import { ButtonType } from '../prompt-form'
-import ChatUtils from './utils/ChatUtils'
+import { ButtonType } from '@/components/prompt-form'
+import ChatUtils from './../utils/ChatUtils'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
-import CalendarComponent from './utils/Calendar'
+import CalendarComponent from './calendar'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void

@@ -28,6 +28,21 @@ export function Chat({ id, className }: ChatProps) {
   const { messagesRef, scrollRef, visibilityRef, isAtBottom, scrollToBottom } =
     useScrollAnchor()
 
+  useEffect(() => {
+    if (isAtBottom) {
+      scrollToBottomWithAnimation() // 애니메이션 스크롤 호출
+    }
+  }, [messages.length]) // 메시지 길이가 변경될 때 호출
+
+  const scrollToBottomWithAnimation = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: 'smooth' // 부드러운 스크롤 애니메이션
+      })
+    }
+  }
+
   return (
     <div
       className="group w-full overflow-auto pl-0 peer-[[data-state=open]]:lg:pl-[250px] peer-[[data-state=open]]:xl:pl-[300px]"
@@ -49,7 +64,7 @@ export function Chat({ id, className }: ChatProps) {
         input={input}
         setInput={setInput}
         isAtBottom={isAtBottom}
-        scrollToBottom={scrollToBottom}
+        scrollToBottom={scrollToBottomWithAnimation}
         activeButton={activeButton}
         setActiveButton={setActiveButton}
       />

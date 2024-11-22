@@ -4,14 +4,10 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Image from 'next/image'
 import { format } from 'date-fns'
+import { SentMessages } from './history-panel'
 
 interface MessageCardProps {
-  message: {
-    date: string
-    image: string
-    preview: string
-    content: string
-  }
+  message: SentMessages
   isSelected: boolean
   onSelect: () => void
 }
@@ -50,7 +46,7 @@ export function MessageCard({
           />
         </div>
         <p className="text-sm text-gray-500">
-          {isExpanded ? message.content : message.preview}
+          {isExpanded ? message.content : message.title}
         </p>
       </CardContent>
     </Card>

@@ -16,7 +16,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import ChatUtils from './chat/utils/ChatUtils'
 import { RootState } from '@/redux/store'
 import FaqButton, { CustomButtonHandle } from './chat/faq'
-import HistoryButton from './chat/history'
+import HistoryButton from './chat/history/history'
 
 /**
  *
@@ -148,7 +148,11 @@ export function PromptForm({
           <Textarea
             ref={inputRef}
             tabIndex={0}
-            placeholder="Send a message."
+            placeholder={
+              activeButton === 'history'
+                ? '대화 기능을 사용할 수 없습니다'
+                : 'Send a message.'
+            }
             className="min-h-[60px] w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm"
             autoFocus
             spellCheck={false}
@@ -157,6 +161,7 @@ export function PromptForm({
             name="message"
             rows={1}
             value={input}
+            disabled={activeButton === 'history'}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => {
               const nativeEvent = e.nativeEvent as KeyboardEvent

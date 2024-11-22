@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 
-interface ComponentProps {}
+interface CalendarProps {
+  currentDate: Date
+  setCurrentDate: (currentDate: Date) => void
+  selectedDate: Date
+  setSelectedDate: (selectedDate: Date) => void
+  dayStates: boolean[]
+  setDayStates: (dayStates: boolean[]) => void
+}
 
-export default function CalendarComponent(props: ComponentProps): JSX.Element {
-  const [currentDate, setCurrentDate] = useState(new Date()) // 현재 날짜
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date()) // 선택된 날짜
-  const [dayStates, setDayStates] = useState<boolean[]>([]) // 각 날짜의 상태
-
+export default function CalendarComponent({
+  currentDate: currentDate,
+  setCurrentDate: setCurrentDate,
+  selectedDate: selectedDate,
+  setSelectedDate: setSelectedDate,
+  dayStates: dayStates,
+  setDayStates: setDayStates
+}: CalendarProps): JSX.Element {
   // 현재 월의 날짜 계산
   const firstDayOfMonth = new Date(
     currentDate.getFullYear(),
@@ -25,30 +35,7 @@ export default function CalendarComponent(props: ComponentProps): JSX.Element {
     return day > 0 && day <= daysInMonth ? day : null
   })
 
-  // API 호출 (주석 처리)
-  const fetchDayStates = async () => {
-    try {
-      // const response = await fetch(`/api/calendar?month=${currentDate.getMonth() + 1}`);
-      // const data = await response.json();
-      // setDayStates(data.dayStates); // 서버에서 받은 상태로 설정
-    } catch (error) {
-      console.error('Error fetching day states:', error)
-    }
-  }
-
-  // 더미 데이터 생성
-  const generateDummyDayStates = () => {
-    return Array.from({ length: daysInMonth }, () =>
-      Math.random() > 0.5 ? true : false
-    )
-  }
-
   // 월 변경 또는 초기 로딩 시 데이터 설정
-  useEffect(() => {
-    // fetchDayStates(); // 실제 API 호출
-    setDayStates(generateDummyDayStates()) // 더미 데이터 사용
-  }, [currentDate])
-
   // 이전 달로 이동
   const handlePrevMonth = () => {
     const newDate = new Date(

@@ -5,13 +5,18 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { MessageCard } from './message-card'
-import { dummyMessages } from './dummy-data'
+import { SentMessages } from './history-panel'
 
-export function MessageHistory() {
+export function MessageHistory({
+  sentMessages: sentMessages
+}: {
+  sentMessages: SentMessages[]
+}) {
   const [selectedCardIndex, setSelectedCardIndex] = useState<number>(0)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const cardWidth = 300 // 카드의 너비
+  const cardHeight = 400 // 카드의 높이
   const gap = 20 // 카드 간 간격
   const leftPadding = cardWidth / 2 // 첫 번째 카드 왼쪽 여백
   const rightPadding = cardWidth / 2 // 마지막 카드 오른쪽 여백
@@ -32,20 +37,17 @@ export function MessageHistory() {
       const scrollLeft = container.scrollLeft
       const containerWidth = container.clientWidth
 
-      // 현재 스크롤 위치로 가장 가까운 카드 인덱스 계산
       const approximateIndex = Math.round(
         (scrollLeft + containerWidth / 2 - leftPadding) / (cardWidth + gap)
       )
 
-      // 인덱스가 유효한 범위를 벗어나지 않도록 보정
       const validIndex = Math.max(
         0,
-        Math.min(approximateIndex, dummyMessages.length - 1)
+        Math.min(approximateIndex, sentMessages.length - 1)
       )
 
       setSelectedCardIndex(validIndex)
 
-      // 맨 왼쪽에 도달했는지 확인
       if (scrollLeft <= leftPadding) {
         setSelectedCardIndex(0)
       }
@@ -57,15 +59,13 @@ export function MessageHistory() {
   const selectCard = (index: number) => {
     if (containerRef.current) {
       const container = containerRef.current
-      const containerWidth = container.clientWidth // 컨테이너 가시 영역 너비
+      const containerWidth = container.clientWidth
 
-      // 선택한 카드의 중앙 위치를 계산
       const targetScrollLeft =
         index * (cardWidth + gap) +
         leftPadding -
         (containerWidth - cardWidth) / 2
 
-      // 스크롤 이동
       container.scrollTo({
         left: targetScrollLeft,
         behavior: 'smooth'
@@ -97,7 +97,7 @@ export function MessageHistory() {
   }
 
   const handleNext = () => {
-    const maxIndex = dummyMessages.length - 1
+    const maxIndex = sentMessages.length - 1
     const newIndex = Math.min(selectedCardIndex + 1, maxIndex)
     selectCard(newIndex)
   }
@@ -108,7 +108,7 @@ export function MessageHistory() {
     }
   }, [])
 
-  if (dummyMessages.length === 0) {
+  if (sentMessages.length === 0) {
     return (
       <Card className="w-full max-w-md mx-auto mt-4">
         <CardContent className="p-6">
@@ -118,17 +118,22 @@ export function MessageHistory() {
     )
   }
 
-  const isSingleCard = dummyMessages.length === 1
+  const isSingleCard = sentMessages.length === 1
 
   return (
-    <div className="flex flex-col items-center w-full h-screen">
+    <div
+      className="flex flex-col items-center w-full"
+      style={{
+        height: '100%' // 화면의 전체 높이에 맞추기
+      }}
+    >
       <div
         ref={containerRef}
         className={`relative w-full max-w-4xl overflow-x-auto ${
           isSingleCard ? 'justify-center' : 'justify-start'
         }`}
         style={{
-          height: '500px',
+          height: `${cardHeight}px`, // 카드 높이에 맞추기
           display: 'flex',
           alignItems: 'center',
           paddingLeft: isSingleCard ? 0 : `${leftPadding}px`,
@@ -142,18 +147,19 @@ export function MessageHistory() {
             width: `${
               isSingleCard
                 ? cardWidth
-                : dummyMessages.length * (cardWidth + gap) +
+                : sentMessages.length * (cardWidth + gap) +
                   leftPadding +
                   rightPadding
             }px`
           }}
         >
-          {dummyMessages.map((message, index) => (
+          {sentMessages.map((message, index) => (
             <div
               key={message.id}
               className="flex-shrink-0 message-card"
               style={{
                 width: `${cardWidth}px`,
+                height: `${cardHeight}px`, // 카드 높이 설정
                 transition: 'transform 0.1s ease-out'
               }}
             >
@@ -167,10 +173,15 @@ export function MessageHistory() {
         </div>
       </div>
       {!isSingleCard && (
-        <div className="flex justify-center space-x-4 mt-4">
+        <div
+          className="flex justify-center space-x-4"
+          style={{
+            marginTop: '10px' // 버튼 위쪽 간격만 추가
+          }}
+        >
           <Button
             onClick={handlePrevious}
-            disabled={selectedCardIndex === 0} // 왼쪽 버튼 비활성화 조건
+            disabled={selectedCardIndex === 0}
             variant="outline"
             size="icon"
           >
@@ -178,7 +189,7 @@ export function MessageHistory() {
           </Button>
           <Button
             onClick={handleNext}
-            disabled={selectedCardIndex === dummyMessages.length - 1} // 오른쪽 버튼 비활성화 조건
+            disabled={selectedCardIndex === sentMessages.length - 1}
             variant="outline"
             size="icon"
           >
