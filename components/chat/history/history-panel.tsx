@@ -3,6 +3,8 @@ import CalendarComponent from './calendar'
 import { MessageHistory } from './message-history'
 import { Separator } from '@/components/ui/separator'
 import apiClient from '@/services/apiClient'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/redux/store'
 
 export interface SentMessages {
   id: number
@@ -19,6 +21,19 @@ export default function HistoryPanel() {
   )
   const [dayStates, setDayStates] = useState<boolean[]>([]) // 각 날짜의 상태
   const [sentMessages, setSentMessages] = useState<SentMessages[]>([])
+  const [visiable, setVisiable] = useState(false)
+  const isTyping = useSelector(
+    (state: RootState) => state.chat['history'].isTyping
+  )
+
+  useEffect(() => {
+    if (!isTyping) {
+      setTimeout(() => {
+        setVisiable(true)
+      }, 60)
+    }
+  }, [isTyping])
+
   useEffect(() => {
     if (
       currentDate.getMonth() === selectedDate.getMonth() &&
@@ -75,18 +90,20 @@ export default function HistoryPanel() {
    */
 
   return (
-    <div className="flex-col items-center justify-center mb-4">
-      <Separator className="my-4" />
-      <CalendarComponent
-        currentDate={currentDate}
-        setCurrentDate={setCurrentDate}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-        dayStates={dayStates}
-        setDayStates={setDayStates}
-      />
-      <Separator className="my-4" />
-      <MessageHistory sentMessages={sentMessages} />
-    </div>
+    visiable && (
+      <div className="flex-col items-center justify-center mb-4">
+        <Separator className="my-4" />
+        <CalendarComponent
+          currentDate={currentDate}
+          setCurrentDate={setCurrentDate}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          dayStates={dayStates}
+          setDayStates={setDayStates}
+        />
+        <Separator className="my-4" />
+        <MessageHistory sentMessages={sentMessages} />
+      </div>
+    )
   )
 }

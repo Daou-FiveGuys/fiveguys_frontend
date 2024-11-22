@@ -20,8 +20,6 @@ const HistoryButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
   ({ buttonType, activeButton, setActiveButton }, ref) => {
     const isActive = buttonType === activeButton
     const [hasAddedChat, setHasAddedChat] = React.useState(false)
-    const message = useSelector((state: RootState) => state.chat[buttonType])
-    const timeoutRef = React.useRef<NodeJS.Timeout | null>(null)
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
         if (isActive && value.trim()) {
