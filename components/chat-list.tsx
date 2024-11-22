@@ -8,6 +8,7 @@ import ChatUtils from './chat/utils/ChatUtils'
 import CalendarComponent from './chat/history/calendar'
 import { MessageHistory } from './chat/history/message-history'
 import HistoryPanel from './chat/history/history-panel'
+import SendMessagePanel from './chat/send-message/send-message-panel'
 import { BotCard } from './stocks'
 
 export const ChatList = ({
@@ -41,6 +42,7 @@ export const ChatList = ({
   }, [chatId])
 
   const isHistoryChat = chatId === 'history'
+  const isSendMessageChat = chatId === 'send-message'
   return (
     <div className="relative mx-auto max-w-2xl px-4">
       {messages.map((message, index) => {
@@ -83,6 +85,7 @@ export const ChatList = ({
         )
       })}
       {isHistoryChat && <HistoryPanel />}
+      {isSendMessageChat && <SendMessagePanel/>}
     </div>
   )
 }

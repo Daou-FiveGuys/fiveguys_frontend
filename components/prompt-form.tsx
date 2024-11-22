@@ -17,6 +17,7 @@ import ChatUtils from './chat/utils/ChatUtils'
 import { RootState } from '@/redux/store'
 import FaqButton, { CustomButtonHandle } from './chat/faq'
 import HistoryButton from './chat/history/history'
+import SendMessageButton from './chat/send-message/send-message'
 
 /**
  *
@@ -76,6 +77,8 @@ export function PromptForm({
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const FaqButtonRef = React.useRef<CustomButtonHandle>(null)
   const HistoryButtonRef = React.useRef<CustomButtonHandle>(null)
+  const SendMessageButtonRef = React.useRef<CustomButtonHandle>(null)
+
 
   const isTyping = useSelector(
     (state: RootState) => state.chat[activeButton]?.isTyping || false
@@ -107,6 +110,9 @@ export function PromptForm({
     if (HistoryButtonRef.current && activeButton === 'history') {
       HistoryButtonRef.current.handleEnterPress(trimmedValue)
     }
+    if (SendMessageButtonRef.current && activeButton === 'send-message') {
+      SendMessageButtonRef.current.handleEnterPress(trimmedValue)
+    }
 
     setInput('')
   }
@@ -126,6 +132,15 @@ export function PromptForm({
           activeButton={activeButton}
           setActiveButton={setActiveButton}
         />
+<<<<<<< HEAD
+=======
+        <SendMessageButton
+          ref={SendMessageButtonRef}
+          buttonType="send-message"
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
+        />
+>>>>>>> pt
       </div>
       <form>
         <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12 mt-4">
