@@ -3,13 +3,15 @@ import imageReducer from './slices/imageSlice' // Image Slice
 import chatReducer from './slices/chatSlice'
 import imageOptionReducer from './slices/imageOptionSlice'
 import calendarReducer from './slices/calendarSlice'
+import contact2Reducer from './slices/contactsSlice'
 
 export const store = configureStore({
   reducer: {
     image: imageReducer,
     chat: chatReducer,
     imageOption: imageOptionReducer,
-    calendar: calendarReducer
+    calendar: calendarReducer,
+    contact2: contact2Reducer
   }
 })
 
