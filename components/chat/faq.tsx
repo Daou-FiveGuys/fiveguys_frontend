@@ -2,10 +2,7 @@ import React, { forwardRef, useImperativeHandle, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '../prompt-form'
 import ChatUtils from './utils/ChatUtils'
-import { useSelector } from 'react-redux'
-import { RootState } from '@/redux/store'
 import { api } from '@/app/faq_chatbot/faq_service'
-import ReactDOMServer from 'react-dom/server'
 import ReactMarkdown from 'react-markdown'
 
 export interface CustomButtonHandle {
@@ -23,20 +20,13 @@ const FaqButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     const isActive = buttonType === activeButton
     const [hasAddedChat, setHasAddedChat] = React.useState(false)
     const timeoutRef = React.useRef<NodeJS.Timeout | null>(null)
-    const [responseMessage, setResponseMessage] = useState<string>('')
 
     useImperativeHandle(ref, () => ({
       handleEnterPress: async (value: string) => {
         if (isActive && value.trim()) {
           ChatUtils.addChat(buttonType, 'user', value.trim())
 
-          let res = await fetchApiResponse(value.trim());
-
-          const markdownElement = <ReactMarkdown>{res ? res : "Network Error"}</ReactMarkdown>
-
-          await ChatUtils.addChat(buttonType, 'assistant-animation', ChatUtils.reactNodeToString(markdownElement))
-          await console.log(res)
-          await console.log(ChatUtils.reactNodeToString(markdownElement))
+          await fetchApiResponse(value.trim());
 
           setActiveButton(buttonType)
         }
@@ -46,14 +36,16 @@ const FaqButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     // API 요청 함수
     const fetchApiResponse = async (question: string) => {
       try {
+        const id = ChatUtils.addChat(buttonType, 'assistant-animation', "생각중입니다...")
         let data = await api.faqChatbotAsk(question);
 
-        if (data) {
-          return data
-        }
+        const markdownElement = <ReactMarkdown>{data ? data : "Network Error"}</ReactMarkdown>
+
+        ChatUtils.editChat(buttonType, id, ChatUtils.reactNodeToString(markdownElement))
+
       } catch (error) {
         console.error('Error fetching FAQ response:', error)
-        return "응답을 받는 중 오류가 발생했습니다.";
+        ChatUtils.addChat(buttonType, 'assistant', '요청값을 받는중 오류가 발생했습니다.')
       }
     }
 
