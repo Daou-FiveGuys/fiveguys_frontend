@@ -1,55 +1,171 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 
 interface ComponentProps {}
 
 export default function CalendarComponent(props: ComponentProps): JSX.Element {
+  const [currentDate, setCurrentDate] = useState(new Date()) // 현재 날짜
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date()) // 선택된 날짜
+  const [dayStates, setDayStates] = useState<boolean[]>([]) // 각 날짜의 상태
+
+  // 현재 월의 날짜 계산
+  const firstDayOfMonth = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    1
+  )
+  const daysInMonth = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth() + 1,
+    0
+  ).getDate()
+
+  const daysArray = Array.from({ length: 35 }, (_, i) => {
+    const day = i - firstDayOfMonth.getDay() + 1
+    return day > 0 && day <= daysInMonth ? day : null
+  })
+
+  // API 호출 (주석 처리)
+  const fetchDayStates = async () => {
+    try {
+      // const response = await fetch(`/api/calendar?month=${currentDate.getMonth() + 1}`);
+      // const data = await response.json();
+      // setDayStates(data.dayStates); // 서버에서 받은 상태로 설정
+    } catch (error) {
+      console.error('Error fetching day states:', error)
+    }
+  }
+
+  // 더미 데이터 생성
+  const generateDummyDayStates = () => {
+    return Array.from({ length: daysInMonth }, () =>
+      Math.random() > 0.5 ? true : false
+    )
+  }
+
+  // 월 변경 또는 초기 로딩 시 데이터 설정
+  useEffect(() => {
+    // fetchDayStates(); // 실제 API 호출
+    setDayStates(generateDummyDayStates()) // 더미 데이터 사용
+  }, [currentDate])
+
+  // 이전 달로 이동
+  const handlePrevMonth = () => {
+    const newDate = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() - 1,
+      1
+    )
+    setCurrentDate(newDate)
+    setSelectedDate(newDate) // 새로운 달의 1일로 설정
+  }
+
+  // 다음 달로 이동
+  const handleNextMonth = () => {
+    const newDate = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      1
+    )
+    setCurrentDate(newDate)
+    setSelectedDate(newDate) // 새로운 달의 1일로 설정
+  }
+
+  // 날짜 클릭 핸들러
+  const handleDateClick = (day: number | null) => {
+    if (day) {
+      const newSelectedDate = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        day
+      )
+
+      // 이미 선택된 날짜와 동일하면 API 호출 방지
+      if (
+        selectedDate &&
+        selectedDate.getDate() === newSelectedDate.getDate() &&
+        selectedDate.getMonth() === newSelectedDate.getMonth() &&
+        selectedDate.getFullYear() === newSelectedDate.getFullYear()
+      ) {
+        return
+      }
+
+      setSelectedDate(newSelectedDate)
+    }
+  }
+
   return (
     <div className="flex flex-col md:flex-row bg-white dark:bg-gray-950 rounded-lg shadow-lg p-6 gap-6">
-      <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 flex-1">
+      <div className="bg-gray-100 dark:bg-zinc-900 rounded-lg p-6 flex-1">
+        {/* 월과 화살표 버튼 */}
         <div className="flex items-center justify-between mb-4">
-          <div className="text-lg font-medium">April 2023</div>
+          <div className="text-lg font-medium">
+            {currentDate
+              .toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long'
+              })
+              .replace('년 ', '년 ')
+              .replace('월', '월')}
+          </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={handlePrevMonth}>
               <ChevronLeftIcon className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={handleNextMonth}>
               <ChevronRightIcon className="w-5 h-5" />
             </Button>
           </div>
         </div>
+
+        {/* 달력 날짜 */}
         <div className="grid grid-cols-7 gap-4 text-center">
-          <div className="font-medium text-gray-500 dark:text-gray-400">
-            Sun
-          </div>
-          <div className="font-medium text-gray-500 dark:text-gray-400">
-            Mon
-          </div>
-          <div className="font-medium text-gray-500 dark:text-gray-400">
-            Tue
-          </div>
-          <div className="font-medium text-gray-500 dark:text-gray-400">
-            Wed
-          </div>
-          <div className="font-medium text-gray-500 dark:text-gray-400">
-            Thu
-          </div>
-          <div className="font-medium text-gray-500 dark:text-gray-400">
-            Fri
-          </div>
-          <div className="font-medium text-gray-500 dark:text-gray-400">
-            Sat
-          </div>
-          {Array.from({ length: 35 }, (_, i) => (
+          {/* 요일 헤더 */}
+          {['일', '월', '화', '수', '목', '금', '토'].map((day, index) => (
             <div
-              key={i}
-              className={`relative rounded-lg p-2 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer ${
-                i % 7 === 0 ? 'text-red-500 dark:text-red-400' : ''
-              }`}
+              key={index}
+              className="font-medium text-gray-500 dark:text-gray-400"
             >
-              <div className="font-medium">{i + 1}</div>
+              {day}
             </div>
           ))}
+
+          {/* 날짜 렌더링 */}
+          {daysArray.map((day, i) => {
+            const isSelected =
+              day === selectedDate?.getDate() &&
+              currentDate.getMonth() === selectedDate?.getMonth() &&
+              currentDate.getFullYear() === selectedDate?.getFullYear()
+
+            return (
+              <div
+                key={i}
+                className={`relative rounded-lg p-2 ${
+                  day
+                    ? `cursor-pointer ${
+                        isSelected
+                          ? 'bg-black text-white dark:bg-white dark:text-black'
+                          : 'hover:bg-gray-300 dark:hover:bg-zinc-700'
+                      }`
+                    : 'cursor-default bg-transparent'
+                } ${i % 7 === 0 ? 'text-red-500 dark:text-red-400' : ''}`}
+                onClick={day ? () => handleDateClick(day) : undefined}
+              >
+                {day && (
+                  <div className="font-medium flex justify-center items-center space-x-1">
+                    <span>{day}</span>
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        dayStates[day - 1]
+                          ? 'bg-blue-500 dark:bg-blue-300'
+                          : 'bg-transparent'
+                      }`}
+                    ></span>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

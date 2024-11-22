@@ -2,12 +2,14 @@ import { configureStore } from '@reduxjs/toolkit'
 import imageReducer from './slices/imageSlice' // Image Slice
 import chatReducer from './slices/chatSlice'
 import imageOptionReducer from './slices/imageOptionSlice'
+import calendarReducer from './slices/calendarSlice'
 
 export const store = configureStore({
   reducer: {
     image: imageReducer,
     chat: chatReducer,
-    imageOption: imageOptionReducer
+    imageOption: imageOptionReducer,
+    calendar: calendarReducer
   }
 })
 

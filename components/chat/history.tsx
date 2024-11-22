@@ -32,25 +32,11 @@ const HistoryButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
 
     React.useEffect(() => {
       if (ChatUtils.dispatch && !hasAddedChat) {
-        timeoutRef.current = setTimeout(() => {
-          ChatUtils.addChat(
-            buttonType,
-            'assistant-animation',
-            '원하는 날짜의 문자 발송 기록을 조회해보세요! 🗓️'
-          )
-          ChatUtils.addChat(
-            buttonType,
-            'normal',
-            ChatUtils.reactNodeToString(CalendarComponent({}))
-          )
-          setHasAddedChat(true)
-        }, 5000)
-      }
-
-      return () => {
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current)
-        }
+        ChatUtils.addChat(
+          buttonType,
+          'assistant-animation',
+          '원하는 날짜의 문자 발송 기록을 조회해보세요! 🗓️'
+        )
       }
     }, [hasAddedChat])
 
