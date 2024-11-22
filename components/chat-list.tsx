@@ -72,7 +72,7 @@ export const ChatList = ({
           </React.Fragment>
         )
       })}
-      {isHistoryChat && HistoryPanel()}
+      {isHistoryChat && <HistoryPanel />}
     </div>
   )
 }
