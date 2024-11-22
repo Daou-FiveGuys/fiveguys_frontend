@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDispatch } from 'react-redux';
 import { setSelectedContacts, Contact } from '@/redux/slices/contactsSlice';
 import { Dispatch, AnyAction } from 'redux';
@@ -16,87 +17,99 @@ const sampleData: Contact[] = [
 ];
 
 export default function SendMessagePanel() {
-  const [selectedContactNames, setSelectedContactNames] = useState<string[]>([]);
-  const [lastClickedGroup, setLastClickedGroup] = useState<number | null>(null);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("all");
   const dispatch: Dispatch<AnyAction> = useDispatch();
 
-  const toggleContact = (name: string, groupName: number) => {
-    const groupContactNames = sampleData
-      .filter(contact => contact.groupName === groupName)
-      .map(contact => contact.name);
-    
-    setSelectedContactNames(prev => {
-      if (prev.length > 0 && !prev.includes(name)) {
-        return groupContactNames;
-      } else if (prev.includes(name)) {
-        return prev.filter(contactName => !groupContactNames.includes(contactName));
-      } else {
-        return [...prev, ...groupContactNames.filter(gName => !prev.includes(gName))];
-      }
-    });
+  const groupedContacts = sampleData.reduce((acc, contact) => {
+    if (!acc[contact.groupName]) {
+      acc[contact.groupName] = [];
+    }
+    acc[contact.groupName].push(contact);
+    return acc;
+  }, {} as Record<number, Contact[]>);
+
+  const handleContactSelect = (contact: Contact) => {
+    setSelectedContact(contact);
   };
 
   const toggleGroup = (groupName: number) => {
-    const groupContactNames = sampleData
-      .filter(contact => contact.groupName === groupName)
-      .map(contact => contact.name);
-    
-    setSelectedContactNames(prev => {
-      if (lastClickedGroup === groupName && prev.length === groupContactNames.length) {
-        return [];
-      } else if (prev.length > 0 && !groupContactNames.every(name => prev.includes(name))) {
-        return groupContactNames;
-      } else {
-        return [...prev, ...groupContactNames.filter(name => !prev.includes(name))];
-      }
-    });
-    setLastClickedGroup(groupName);
+    setSelectedGroup(prevGroup => prevGroup === groupName ? null : groupName);
   };
 
   const handleConfirm = () => {
-    const selectedContactsData = sampleData.filter(contact => selectedContactNames.includes(contact.name));
-    dispatch(setSelectedContacts(selectedContactsData));
-    console.log("선택된 연락처:", selectedContactsData);
+    if (activeTab === "all" && selectedContact) {
+      dispatch(setSelectedContacts([selectedContact]));
+      console.log("선택된 연락처:", selectedContact);
+    } else if (activeTab === "groups" && selectedGroup !== null) {
+      const selectedContactsData = groupedContacts[selectedGroup] || [];
+      dispatch(setSelectedContacts(selectedContactsData));
+      console.log("선택된 그룹의 연락처:", selectedContactsData);
+    }
   };
 
   return (
-    <div>
-      <div className="p-4 max-w-md mx-auto bg-white rounded-xl shadow-md mb-4">
-        <h2 className="text-xl font-bold mb-4">메시지 보내기</h2>
-        <div className="space-y-2 mb-4">
-          {sampleData.map(contact => (
-            <div key={`${contact.name}-${contact.tel}`} className="flex items-center p-2 rounded hover:bg-gray-100">
-              <input
-                type="checkbox"
-                id={`contact-${contact.name}`}
-                checked={selectedContactNames.includes(contact.name)}
-                onChange={() => toggleContact(contact.name, contact.groupName)}
-                className="sr-only peer"
-              />
-              <label
-                htmlFor={`contact-${contact.name}`}
-                className="flex-grow cursor-pointer peer-checked:font-bold"
+    <div className="p-4 max-w-md mx-auto bg-white rounded-xl shadow-md">
+      <h2 className="text-xl font-bold mb-4">메시지 보내기</h2>
+      <Tabs defaultValue="all" onValueChange={(value) => setActiveTab(value)}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="all">전체 연락처</TabsTrigger>
+          <TabsTrigger value="groups">그룹별 연락처</TabsTrigger>
+        </TabsList>
+        <TabsContent value="all">
+          <div className="space-y-2 mb-4">
+            {sampleData.map(contact => (
+              <div 
+                key={`${contact.name}-${contact.tel}`} 
+                className={`flex items-center p-2 rounded cursor-pointer ${
+                  selectedContact === contact ? 'bg-blue-100' : 'hover:bg-gray-100'
+                }`}
+                onClick={() => handleContactSelect(contact)}
               >
-                <div className="font-medium">{contact.name}</div>
-                <div className="text-sm text-gray-500">{contact.tel}</div>
-              </label>
-              <button
-                onClick={() => toggleGroup(contact.groupName)}
-                className={`text-sm text-gray-400 hover:underline focus:outline-none ${selectedContactNames.includes(contact.name) ? 'font-bold' : ''}`}
-              >
-                {contact.groupName}
-              </button>
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-end">
-          <Button
-            onClick={handleConfirm}
-            disabled={selectedContactNames.length === 0}
-          >
-            확인
-          </Button>
-        </div>
+                <div className="flex-grow">
+                  <div className="font-medium">{contact.name}</div>
+                  <div className="text-sm text-gray-500">{contact.tel}</div>
+                </div>
+                <div className="text-sm text-gray-400">그룹 {contact.groupName}</div>
+              </div>
+            ))}
+          </div>
+        </TabsContent>
+        <TabsContent value="groups">
+          <div className="space-y-4 mb-4">
+            {Object.entries(groupedContacts).map(([groupId, contacts]) => (
+              <div key={groupId} className="border rounded p-2">
+                <button
+                  onClick={() => toggleGroup(Number(groupId))}
+                  className={`w-full text-left font-medium p-2 rounded ${
+                    selectedGroup === Number(groupId) ? 'bg-blue-100' : 'hover:bg-gray-100'
+                  }`}
+                >
+                  그룹 {groupId} ({contacts.length})
+                </button>
+                {selectedGroup === Number(groupId) && (
+                  <div className="mt-2 space-y-2">
+                    {contacts.map(contact => (
+                      <div key={contact.name} className="ml-4 text-sm">
+                        <div>{contact.name}</div>
+                        <div className="text-gray-500">{contact.tel}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
+      <div className="flex justify-end">
+        <Button
+          onClick={handleConfirm}
+          disabled={(activeTab === "all" && !selectedContact) || (activeTab === "groups" && selectedGroup === null)}
+        >
+          확인
+        </Button>
       </div>
       <SendAddressList />
     </div>
