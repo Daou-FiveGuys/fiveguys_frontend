@@ -1,9 +1,9 @@
-'use client'
+// PromptForm.tsx
+
+'Use client'
 
 import * as React from 'react'
 import Textarea from 'react-textarea-autosize'
-
-import { BotCard } from './stocks/message'
 import { Button } from '@/components/ui/button'
 import { IconArrowElbow, IconPlus } from '@/components/ui/icons'
 import {
@@ -11,11 +11,12 @@ import {
   TooltipContent,
   TooltipTrigger
 } from '@/components/ui/tooltip'
-import { useEnterSubmit } from '@/lib/hooks/use-enter-submit'
 import { useRouter } from 'next/navigation'
 import { useDispatch, useSelector } from 'react-redux'
 import ChatUtils from './chat/utils/ChatUtils'
 import { RootState } from '@/redux/store'
+import FaqButton, { CustomButtonHandle } from './chat/faq'
+import HistoryButton from './chat/history'
 
 /**
  *
@@ -72,11 +73,9 @@ export function PromptForm({
 }) {
   const dispatch = useDispatch()
   const router = useRouter()
-  const { formRef, onKeyDown } = useEnterSubmit()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
-
-  const [hasAddedChat, setHasAddedChat] = React.useState(false)
-  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null)
+  const FaqButtonRef = React.useRef<CustomButtonHandle>(null)
+  const HistoryButtonRef = React.useRef<CustomButtonHandle>(null)
 
   const isTyping = useSelector(
     (state: RootState) => state.chat[activeButton]?.isTyping || false
@@ -89,159 +88,102 @@ export function PromptForm({
     ChatUtils.initialize(dispatch)
   }, [])
 
-  React.useEffect(() => {
-    if (ChatUtils.dispatch && !hasAddedChat) {
-      timeoutRef.current = setTimeout(() => {
-        ChatUtils.addChat(
-          'faq',
-          'assistant-animation',
-          '안녕하세요 뿌리오 FAQ 챗봇입니다. 궁금하신 점이 있으신가요? 🙋🏻'
-        )
-        setHasAddedChat(true)
-      }, 5000)
-    }
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
-  }, [hasAddedChat])
-
-  const handleFormSubmit = (e: any) => {
+  const handleFormSubmit = (
+    e: React.FormEvent | React.KeyboardEvent,
+    value: string
+  ) => {
     e.preventDefault()
-    const value = input.trim()
-    if (!value) return
 
-    // 타이핑 애니메이션 진행중이면 입력 막음
+    const trimmedValue = value.trim()
+    if (!trimmedValue) return
+
     if (isTyping) {
       return
     }
 
-    /**
-     * 🚨 채팅방마다 채팅이 섞이지 않게 setActiveButton을 확실히 수행해주세요 🚨
-     */
-    switch (activeButton) {
-      case 'faq':
-        ChatUtils.addChat('faq', 'user', value)
-        break
-      case 'history':
-        break
-      case 'usage':
-        break
-      case 'send-message':
-        break
-      case 'return':
-        break
-      case 'create-message':
-        break
-      case 'create-image-prompt':
-        break
-      case 'image-generate':
-        break
-      default:
-        break
+    if (FaqButtonRef.current && activeButton === 'faq') {
+      FaqButtonRef.current.handleEnterPress(trimmedValue)
+    }
+    if (HistoryButtonRef.current && activeButton === 'history') {
+      HistoryButtonRef.current.handleEnterPress(trimmedValue)
     }
 
     setInput('')
   }
 
-  /**
-   * input field 에 값이 입력되고 엔터가 눌리면
-   * handleFormSubmit(e) call => activeButton에 따라 함수 호출 됨
-   *
-   */
   return (
-    <form
-      ref={formRef}
-      onSubmit={async (e: any) => {
-        e.preventDefault()
-
-        if (window.innerWidth < 600) {
-          e.target['message']?.blur()
-        }
-
-        handleFormSubmit(e)
-      }}
-    >
+    <>
       <div className="flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-2 px-4 md:px-8">
-        <Button
-          className="w-full md:w-28 h-8 mb-2 md:mb-0"
-          variant={activeButton === 'faq' ? 'default' : 'outline'}
-          onClick={() => setActiveButton('faq')}
-        >
-          FAQ
-        </Button>
-        <Button
-          className="w-full md:w-28 h-8 mb-2 md:mb-0"
-          variant={activeButton === 'history' ? 'default' : 'outline'}
-          onClick={() => setActiveButton('history')}
-        >
-          문자 내역
-        </Button>
-        <Button
-          className="w-full md:w-28 h-8 mb-2 md:mb-0"
-          variant={activeButton === 'usage' ? 'default' : 'outline'}
-          onClick={() => setActiveButton('usage')}
-        >
-          사용량 조회
-        </Button>
-        <Button
-          className="w-full md:w-28 h-8 mb-2 md:mb-0"
-          variant={activeButton === 'send-message' ? 'default' : 'outline'}
-          onClick={() => setActiveButton('send-message')}
-        >
-          문자 전송
-        </Button>
-      </div>
-      <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12 mt-4">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
-              onClick={() => {
-                router.push('/new')
-              }}
-            >
-              <IconPlus />
-              <span className="sr-only">New Chat</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>New Chat</TooltipContent>
-        </Tooltip>
-        <Textarea
-          ref={inputRef}
-          tabIndex={0}
-          onKeyDown={onKeyDown}
-          placeholder="Send a message."
-          className="min-h-[60px] w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm"
-          autoFocus
-          spellCheck={false}
-          autoComplete="off"
-          autoCorrect="off"
-          name="message"
-          rows={1}
-          value={input}
-          onChange={e => setInput(e.target.value)}
+        <FaqButton
+          ref={FaqButtonRef}
+          buttonType="faq"
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
         />
-        <div className="absolute right-0 top-[13px] sm:right-4">
+        <HistoryButton
+          ref={HistoryButtonRef}
+          buttonType="history"
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
+        />
+      </div>
+      <form>
+        <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12 mt-4">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                type="submit"
+                variant="outline"
                 size="icon"
-                disabled={input === '' || isTyping}
+                className="absolute left-0 top-[14px] size-8 rounded-full bg-background p-0 sm:left-4"
+                onClick={() => {
+                  router.push('/new')
+                }}
               >
-                <IconArrowElbow />
-                <span className="sr-only">Send message</span>
+                <IconPlus />
+                <span className="sr-only">New Chat</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Send message</TooltipContent>
+            <TooltipContent>New Chat</TooltipContent>
           </Tooltip>
+          <Textarea
+            ref={inputRef}
+            tabIndex={0}
+            placeholder="Send a message."
+            className="min-h-[60px] w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm"
+            autoFocus
+            spellCheck={false}
+            autoComplete="off"
+            autoCorrect="off"
+            name="message"
+            rows={1}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => {
+              const nativeEvent = e.nativeEvent as KeyboardEvent
+              if (e.key === 'Enter' && !nativeEvent.isComposing) {
+                e.preventDefault()
+                handleFormSubmit(e, input)
+              }
+            }}
+          />
+          <div className="absolute right-0 top-[13px] sm:right-4">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button" // 버튼 타입을 'button'으로 설정
+                  size="icon"
+                  disabled={input === '' || isTyping}
+                  onClick={e => handleFormSubmit(e, input)} // onClick 이벤트로 변경
+                >
+                  <IconArrowElbow />
+                  <span className="sr-only">Send message</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Send message</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
-      </div>
-    </form>
+      </form>
+    </>
   )
 }

@@ -4,6 +4,7 @@ import { setIsTyping, Message } from '@/redux/slices/chatSlice'
 import { useDispatch } from 'react-redux'
 import MessageItem from './chat/utils/MessageItem'
 import { ButtonType } from './prompt-form'
+import ChatUtils from './chat/utils/ChatUtils'
 
 export const ChatList = ({
   chatId,
@@ -22,18 +23,48 @@ export const ChatList = ({
     dispatch(setIsTyping({ chatId: chatId, isTyping: false }))
   }
 
+  const isSerializedReactNode = (
+    content: string | React.ReactNode
+  ): boolean => {
+    return (
+      typeof content === 'string' &&
+      content.startsWith('<') &&
+      content.endsWith('>')
+    )
+  }
+
   return (
     <div className="relative mx-auto max-w-2xl px-4">
-      {messages.map((message, index) => (
-        <div key={message.id} className="ml-2">
-          <MessageItem
-            chatId={chatId}
-            message={message}
-            onTypingComplete={handleTypingComplete}
-          />
-          {index < messages.length - 1 && <Separator className="my-4" />}
-        </div>
-      ))}
+      {messages.map((message, index) => {
+        const content = message.text
+
+        if (isSerializedReactNode(content)) {
+          try {
+            const reactNode = ChatUtils.stringToReactNode(content as string)
+            return (
+              <React.Fragment key={message.id}>
+                <div className="ml-2">{reactNode}</div>
+                {index < messages.length - 1 && <Separator className="my-4" />}
+              </React.Fragment>
+            )
+          } catch (error) {
+            console.error('Failed to deserialize ReactNode:', error)
+          }
+        }
+
+        return (
+          <React.Fragment key={message.id}>
+            <div className="ml-2">
+              <MessageItem
+                chatId={chatId}
+                message={message}
+                onTypingComplete={handleTypingComplete}
+              />
+            </div>
+            {index < messages.length - 1 && <Separator className="my-4" />}
+          </React.Fragment>
+        )
+      })}
     </div>
   )
 }

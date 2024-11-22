@@ -140,12 +140,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
 
     try {
       // POST 요청 전송
-      const response = await apiClient.post(`${url}`, ImageRequestDTO, {
-        headers: {
-          Authorization: `Bearer `, // 실제 인증 토큰으로 변경
-          'Content-Type': 'application/json'
-        }
-      })
+      const response = await apiClient.post(`${url}`, ImageRequestDTO)
 
       // 응답 데이터 처리
       if (response.data.code === 200) {

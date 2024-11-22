@@ -18,7 +18,12 @@ export type ChatState = {
   [chatId: string]: ChatContext
 }
 
-const initialState: ChatState = {}
+const initialState: ChatState = {
+  ['faq']: { messages: [], isTyping: false },
+  ['history']: { messages: [], isTyping: false },
+  ['usage']: { messages: [], isTyping: false },
+  ['send-message']: { messages: [], isTyping: false }
+}
 
 const chatSlice = createSlice({
   name: 'chat',
