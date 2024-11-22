@@ -132,6 +132,15 @@ export function PromptForm({
           activeButton={activeButton}
           setActiveButton={setActiveButton}
         />
+<<<<<<< HEAD
+=======
+        <SendMessageButton
+          ref={SendMessageButtonRef}
+          buttonType="send-message"
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
+        />
+>>>>>>> pt
       </div>
       <form>
         <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12 mt-4">
