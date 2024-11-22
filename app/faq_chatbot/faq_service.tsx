@@ -3,9 +3,8 @@ import { FaqResponse } from './faq_response';
 
 export const api = {
     faqChatbotAsk: async (
-      question: String,
-      callback: (ans:any)=>void
-    ): Promise<FaqResponse|undefined> => {
+      question: string
+    ): Promise<string|undefined> => {
       try {
         const response = await apiClient.post<CommonResponse<FaqResponse>>(`/chatbot`,{
           message: question,
@@ -13,7 +12,7 @@ export const api = {
         })
         
         const faqChatbotAnswer = response.data;
-        if(response.data.code == 200 || response.data.code==404) callback(faqChatbotAnswer);
+        if(response.data.code == 200 || response.data.code==404) return ""+faqChatbotAnswer.data;
 
         return undefined;
       } catch(error) {
