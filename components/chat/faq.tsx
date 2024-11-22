@@ -1,9 +1,9 @@
-import React, { forwardRef, useImperativeHandle } from 'react'
+import React, { forwardRef, useImperativeHandle, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '../prompt-form'
 import ChatUtils from './utils/ChatUtils'
-import { useSelector } from 'react-redux'
-import { RootState } from '@/redux/store'
+import { api } from '@/app/faq_chatbot/faq_service'
+import ReactMarkdown from 'react-markdown'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -22,12 +22,32 @@ const FaqButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     const timeoutRef = React.useRef<NodeJS.Timeout | null>(null)
 
     useImperativeHandle(ref, () => ({
-      handleEnterPress: (value: string) => {
+      handleEnterPress: async (value: string) => {
         if (isActive && value.trim()) {
           ChatUtils.addChat(buttonType, 'user', value.trim())
+
+          await fetchApiResponse(value.trim());
+
+          setActiveButton(buttonType)
         }
       }
     }))
+
+    // API 요청 함수
+    const fetchApiResponse = async (question: string) => {
+      try {
+        const id = ChatUtils.addChat(buttonType, 'assistant-animation', "생각중입니다...")
+        let data = await api.faqChatbotAsk(question);
+
+        const markdownElement = <ReactMarkdown>{data ? data : "Network Error"}</ReactMarkdown>
+
+        ChatUtils.editChat(buttonType, id, ChatUtils.reactNodeToString(markdownElement))
+
+      } catch (error) {
+        console.error('Error fetching FAQ response:', error)
+        ChatUtils.addChat(buttonType, 'assistant', '요청값을 받는중 오류가 발생했습니다.')
+      }
+    }
 
     React.useEffect(() => {
       if (ChatUtils.dispatch && !hasAddedChat && isActive) {
