@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/earlyaccess/notosanskr.css');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -72,6 +73,29 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  border: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+@media (prefers-color-scheme: dark) {
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.5);
   }
 }
 
@@ -198,4 +222,24 @@
     format('woff');
   font-weight: normal;
   font-style: normal;
+}
+@font-face {
+  font-family: 'GmarketSansMedium';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff')
+    format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'GothicA1-Light';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2205@1.0/GothicA1-Light.woff2')
+    format('woff2');
+  font-weight: 300;
+  font-style: normal;
+}
+
+.bot-message {
+  font-family: 'Noto Sans KR', 'GothicA1-Light', sans-serif;
+  font-size: 18px;
+  font-weight: 300;
 }

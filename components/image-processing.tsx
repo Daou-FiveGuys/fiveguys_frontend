@@ -2,7 +2,11 @@ import React, { useEffect, useState } from 'react'
 import * as fabric from 'fabric'
 import ImageInpantMoal from './image-modal'
 import ImageProcessingRequestSuccessModal from './image-confirm-modal'
-import axios from 'axios'
+import { useDispatch, useSelector } from 'react-redux'
+import { setImageData } from '@/redux/slices/imageSlice'
+import { RootState } from '@/redux/store'
+import apiClient from '@/services/apiClient'
+import { isVisible } from 'handsontable/helpers/dom'
 
 interface YourComponentProps {
   canvas: fabric.Canvas | null
@@ -10,6 +14,18 @@ interface YourComponentProps {
   setIsProcessing: React.Dispatch<React.SetStateAction<boolean>>
   mode: string
   option: string | null
+  originImgObject: fabric.FabricImage<
+    Partial<fabric.ImageProps>,
+    fabric.SerializedImageProps,
+    fabric.ObjectEvents
+  > | null
+  setOriginImgObject: React.Dispatch<
+    React.SetStateAction<fabric.FabricImage<
+      Partial<fabric.ImageProps>,
+      fabric.SerializedImageProps,
+      fabric.ObjectEvents
+    > | null>
+  >
 }
 
 const ImageAIEdit: React.FC<YourComponentProps> = ({
@@ -17,83 +33,123 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
   isProcessing,
   setIsProcessing,
   mode,
-  option
+  option,
+  originImgObject
 }) => {
+  const dispatch = useDispatch()
+  const image = useSelector((state: RootState) => state.image)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newImageUrl, setNewImageUrl] = useState<string | null>(null)
+  const [newRequestId, setNewRequestId] = useState<string | null>(null)
   const [showProcessingModal, setShowProcessingModal] = useState(false)
+  const [maskObjects, setMaskObjects] = useState<
+    fabric.FabricObject<
+      Partial<fabric.FabricObjectProps>,
+      fabric.SerializedObjectProps,
+      fabric.ObjectEvents
+    >[]
+  >([])
+
+  const handleImageUpdate = (requestId: string, url: string) => {
+    dispatch(setImageData({ requestId: requestId, url: url }))
+  }
 
   useEffect(() => {
     if (!canvas || !isProcessing) return
     switch (mode) {
       case 'inpaint':
+        handleSetMaskObjects()
         sendImageForInpainting()
         break
-      case 'removeText':
-      case 'upscale':
-        let url = ''
-        if (mode === 'removeText') url = `local-${option}`
-        else url = 'local-upscale'
+      default:
+        sendImageRequestId(
+          mode === 'removeText'
+            ? '/ai/image/remove-text/' + option
+            : '/ai/image/upscale'
+        )
         break
     }
     setShowProcessingModal(true)
 
     const timer = setTimeout(() => {
       setShowProcessingModal(false)
-      setNewImageUrl(
-        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRWg7X0YYzUCU5m8BA_sH_ti92q4X0lCz5h_w&s'
-      )
-      setIsModalOpen(true) // 최종 모달 열기
-      setIsProcessing(false) // 업스케일링 상태 해제
     }, 3000) // 3초 동안 처리 완료 모달 표시
 
     return () => clearTimeout(timer) // 타이머 정리
   }, [canvas, isProcessing, setIsProcessing])
 
+  const handleSetMaskObjects = () => {
+    if (!canvas) return
+    setMaskObjects([])
+    canvas.getObjects().map(obj => {
+      if (obj.visible) {
+        setMaskObjects(prev => [...prev, obj])
+      }
+    })
+  }
+
   const applyNewImage = () => {
     if (!canvas) return
     if (newImageUrl) {
-      fabric.FabricImage.fromURL(newImageUrl).then(function (img) {
+      console.log(newImageUrl)
+      fabric.FabricImage.fromURL(newImageUrl, {
+        crossOrigin: 'anonymous'
+      }).then(img => {
+        if (!canvas || !originImgObject) return
+
+        // 기존 캔버스 크기 가져오기
+        const canvasWidth = canvas.getWidth()
+        const canvasHeight = canvas.getHeight()
+
+        // 이미지의 비율이 동일하므로, 그대로 캔버스 크기에 맞게 설정
+        img.scaleToWidth(canvasWidth) // 캔버스 폭에 맞게 스케일링
+        img.scaleToHeight(canvasHeight) // 캔버스 높이에 맞게 스케일링
+
+        img.left = 0 // 이미지를 캔버스 왼쪽 위로 정렬
+        img.top = 0
         canvas.backgroundImage = img
+        if (mode === 'removeText') canvas.backgroundImage.visible = false
+        originImgObject.setSrc(newImageUrl, { crossOrigin: 'anonymous' })
+        canvas.renderAll.bind(canvas)
         img.canvas = canvas
+        canvas.renderAll()
       })
     }
+    dispatch(setImageData({ requestId: newRequestId, url: newImageUrl }))
     if (mode === 'inpaint')
       canvas.getObjects().forEach(obj => {
-        if (obj.visible) {
-          canvas.remove(obj)
-        }
+        if (maskObjects.some(mask => obj === mask)) canvas.remove(obj)
       })
     canvas.renderAll()
     setIsModalOpen(false) // 최종 모달 닫기
   }
 
   const cancelNewImage = () => {
+    setNewRequestId(null)
     setNewImageUrl(null)
     setIsModalOpen(false)
   }
+
   const sendImageRequestId = async (url: string) => {
     // 필요한 조건 체크: canvas가 존재하고 처리 중일 때만 요청
     if (!canvas || !isProcessing) return
 
-    // `requestId`와 기타 필요한 정보를 포함한 DTO 객체 생성
-    const imageUpscaleDTO = {
-      requestId: 'your-request-id' // 여기에 실제 requestId를 입력하세요
-      // 추가적으로 필요한 필드가 있다면 여기에 추가합니다.
+    const ImageRequestDTO = {
+      requestId: image.requestId
     }
 
     try {
       // POST 요청 전송
-      const response = await axios.post(`${url}`, imageUpscaleDTO, {
-        headers: {
-          Authorization: `Bearer `, // 실제 인증 토큰으로 변경
-          'Content-Type': 'application/json'
-        }
-      })
+      const response = await apiClient.post(`${url}`, ImageRequestDTO)
 
       // 응답 데이터 처리
-      setNewImageUrl(response.data.imageUrl) // 서버에서 받은 이미지 URL 설정
-      setIsModalOpen(true) // 모달 열기
+      if (response.data.code === 200) {
+        setNewRequestId(response.data.data.requestId)
+        setNewImageUrl(response.data.data.url) // 서버에서 받은 이미지 URL 설정
+        setIsModalOpen(true) // 모달 열기
+      } else {
+        console.error('Error uploading image:', response.data.message)
+      }
     } catch (error) {
       console.error('Error uploading image:', error)
     } finally {
@@ -102,38 +158,73 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
   }
 
   const sendImageForInpainting = async () => {
-    if (!canvas || !isProcessing) return
+    if (!canvas || !isProcessing || !canvas.backgroundImage) return
 
     // 복제할 캔버스를 생성
+    const originalWidth = canvas.width // 현재 캔버스 크기 저장
+    const originalHeight = canvas.height
+
+    // 원본 이미지 크기 가져오기
+    let scaleX = 1
+    let scaleY = 1
+
+    if (canvas.backgroundImage) {
+      scaleX = canvas.backgroundImage.width / canvas.width
+      scaleY = canvas.backgroundImage.height / canvas.height
+
+      canvas.setWidth(canvas.backgroundImage.width)
+      canvas.setHeight(canvas.backgroundImage.height)
+      canvas.renderAll()
+    }
+
+    // 배경 이미지를 제거하고 배경색을 검은색으로 설정
     const originalBackgroundImage = canvas.backgroundImage
     const originalBackgroundColor = canvas.backgroundColor
 
-    // 배경 이미지를 제거하고 배경색을 검은색으로 설정
     canvas.backgroundImage = undefined
     canvas.backgroundColor = 'black'
 
-    // 모든 객체의 원래 색상을 저장
+    // 모든 객체의 원래 색상과 좌표 저장
     const originalStrokeColors = canvas
       .getObjects()
       .map(obj => obj.stroke as string)
     const originalFillColors = canvas
       .getObjects()
       .map(obj => obj.fill as string)
+    const originalPositions = canvas.getObjects().map(obj => ({
+      left: obj.left,
+      top: obj.top,
+      scaleX: obj.scaleX,
+      scaleY: obj.scaleY
+    }))
 
     // 모든 객체의 외곽선을 흰색으로, 내부 채우기를 검정색으로 변경
     canvas.getObjects().forEach(obj => {
       obj.set({
         stroke: 'white',
-        fill: 'black'
+        fill: 'black',
+        left: obj.left * scaleX,
+        top: obj.top * scaleY,
+        scaleX: obj.scaleX * scaleX,
+        scaleY: obj.scaleY * scaleY
       })
+      obj.setCoords()
     })
+
     canvas.renderAll() // 변경 사항 렌더링
+
+    // 마스크 이미지 추출
     const imageData = canvas.toDataURL({
       format: 'png',
       quality: 1.0,
       multiplier: 1,
-      enableRetinaScaling: true
+      enableRetinaScaling: false
     })
+
+    const link = document.createElement('a')
+    link.href = imageData
+    link.download = 'canvas_image.png' // 다운로드할 파일 이름 설정
+    link.click() // 링크 클릭하여 다운로드 시작
 
     // 배경 이미지와 색상, 객체의 원래 색상 복원
     canvas.backgroundImage = originalBackgroundImage
@@ -141,9 +232,17 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     canvas.getObjects().forEach((obj, index) => {
       obj.set({
         stroke: originalStrokeColors[index],
-        fill: originalFillColors[index]
+        fill: originalFillColors[index],
+        left: originalPositions[index].left,
+        top: originalPositions[index].top,
+        scaleX: originalPositions[index].scaleX,
+        scaleY: originalPositions[index].scaleY
       })
+      obj.setCoords()
     })
+
+    canvas.setWidth(originalWidth) // 캔버스 크기 복원
+    canvas.setHeight(originalHeight)
     canvas.renderAll() // 원래 상태로 다시 렌더링
 
     // 이미지 데이터를 Blob 형식으로 변환
@@ -154,8 +253,10 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     formData.append('multipartFile', blob, 'canvas_image.png')
 
     const imageInpaintDTO = {
-      requestId: 'your-request-id', // 실제 요청 ID로 설정
-      prompt: option // 사용자가 입력한 프롬프트
+      requestId: image.requestId, // 실제 요청 ID로 설정
+      prompt: option, // 사용자가 입력한 프롬프트,
+      width: canvas.backgroundImage?.width,
+      height: canvas.backgroundImage?.height
     }
 
     formData.append(
@@ -164,21 +265,15 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     )
 
     try {
-      // axios를 사용하여 서버로 데이터 전송
-      const response = await axios.post(
-        'https://your-server-url/inpaint',
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer `, // 실제 인증 토큰으로 변경
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      )
+      const response = await apiClient.post('/ai/image/inpaint', formData)
 
-      // 서버 응답 처리
-      setNewImageUrl(response.data.imageUrl) // 서버에서 받은 이미지 URL 설정
-      setIsModalOpen(true) // 모달 열기
+      if (response.data.code === 200) {
+        setNewRequestId(response.data.data.requestId)
+        setNewImageUrl(response.data.data.url) // 서버에서 받은 이미지 URL 설정
+        setIsModalOpen(true) // 모달 열기
+      } else {
+        console.error('Error uploading image:', response.data.message)
+      }
     } catch (error) {
       console.error('Error uploading image:', error)
     } finally {

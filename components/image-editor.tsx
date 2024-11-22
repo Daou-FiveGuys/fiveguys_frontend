@@ -1,16 +1,7 @@
 'use client'
-
+import toast, { Toaster } from 'react-hot-toast'
 import { useEffect, useRef, useState } from 'react'
-import {
-  Canvas,
-  CanvasOptions,
-  Circle,
-  Triangle,
-  Rect,
-  Object as FabricObject,
-  PencilBrush,
-  Textbox
-} from 'fabric'
+import { Rect, Object as FabricObject } from 'fabric'
 import * as fabric from 'fabric'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -29,9 +20,8 @@ import {
   HammerIcon,
   Wand2Icon,
   SparklesIcon,
-  EyeOffIcon,
-  Crop,
-  Image
+  ImagePlusIcon,
+  FrameIcon
 } from 'lucide-react'
 import {
   Popover,
@@ -46,27 +36,27 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { ChromePicker, ColorResult } from 'react-color'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog'
 import { EyeClosedIcon } from '@radix-ui/react-icons'
 import Modal from './modal'
 import { Separator } from '@radix-ui/react-dropdown-menu'
 import ImageAIEdit from './image-processing'
 import SaveEditedImage from './image-save'
-import { Input } from './ui/input'
-import { object } from 'zod'
 import ImageNotAvailableModal from './image-not-available-modal'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/redux/store'
+import { Input } from './ui/input'
+import { ChangeEvent } from 'react'
+
+type FrameOption = 'default' | '512x512' | 'landscape' | 'custom'
+
+const frameOptions: Record<
+  Exclude<FrameOption, 'custom'>,
+  { width: number; height: number }
+> = {
+  default: { width: 1024, height: 1024 },
+  '512x512': { width: 512, height: 512 },
+  landscape: { width: 1024, height: 768 }
+}
 
 const thicknesses = [1, 2, 3, 5, 8, 13, 21, 34, 40]
 
@@ -77,21 +67,30 @@ interface MaskInfo {
   height: number
 }
 //마스킹 정보 인터페이스.
-
 class CustomPencilBrush extends fabric.PencilBrush {
   globalCompositeOperation: GlobalCompositeOperation
 
   constructor(canvas: fabric.Canvas) {
     super(canvas)
-    this.globalCompositeOperation = 'destination-out' // 원하는 블렌딩 모드 설정
+    this.globalCompositeOperation = 'destination-out'
   }
 
-  applyCompositeOperation(ctx: CanvasRenderingContext2D) {
-    ctx.globalCompositeOperation = this.globalCompositeOperation
+  onMouseUp({ e }: fabric.TEvent<fabric.TPointerEvent>): boolean {
+    // 부모 메서드 호출
+    const shouldContinue = super.onMouseUp({ e })
+
+    // 추가적으로 globalCompositeOperation 적용
+    const ctx = this.canvas.getContext() as CanvasRenderingContext2D
+    if (ctx) {
+      const originalCompositeOperation = ctx.globalCompositeOperation
+      ctx.globalCompositeOperation = this.globalCompositeOperation
+      ctx.restore()
+      ctx.globalCompositeOperation = originalCompositeOperation
+    }
+
+    return shouldContinue
   }
 }
-
-type ShapeType = 'circle' | 'triangle' | 'rectangle'
 
 interface ShapeOptions {
   fill: string
@@ -105,9 +104,20 @@ interface ShapeOptions {
 }
 
 export default function ImageEditor() {
+  const imageSlice = useSelector((state: RootState) => state.image)
+  const [originalBackgroundImgObject, setOriginalBackgroundImgObject] =
+    useState<fabric.FabricImage<
+      Partial<fabric.ImageProps>,
+      fabric.SerializedImageProps,
+      fabric.ObjectEvents
+    > | null>(null)
+  const [originImgObject, setOriginImgObject] = useState<fabric.FabricImage<
+    Partial<fabric.ImageProps>,
+    fabric.SerializedImageProps,
+    fabric.ObjectEvents
+  > | null>(null)
   const canvasElementRef = useRef<HTMLCanvasElement | null>(null)
   const [canvas, setCanvas] = useState<fabric.Canvas | null>(null)
-  // const [canvas, setCanvas] = useState<Canvas | null>(null)
   const [activeShape, setActiveShape] = useState<string | null>(null)
   const [currentColor, setCurrentColor] = useState('#000000')
   const [currentThickness, setCurrentThickness] = useState(5)
@@ -116,44 +126,148 @@ export default function ImageEditor() {
   const [maskRect, setMaskRect] = useState<Rect | null>(null)
   const [maskInfo, setMaskInfo] = useState<MaskInfo | null>(null)
   const [isPen, setIsPen] = useState(false)
+  const [canvasDimensions, setCanvasDimensions] = useState({
+    width: 1024,
+    height: 682
+  })
+  const [originalImgDimensions, setOriginalImgDimension] = useState({
+    width: 0,
+    height: 0
+  })
 
   useEffect(() => {
     if (canvasElementRef.current) {
       const initializeCanvas = () => {
         const parent = canvasElementRef.current!.parentElement
-        const width = parent?.offsetWidth || 800
-        const height = width * 0.6666
+        const maxWidth = parent?.offsetWidth || 1024 // 최대 너비
+        const maxHeight = maxWidth * 0.6666 // 최대 높이 비율 설정 (2:3 비율)
 
         const options = {
-          width,
-          height,
-          backgroundColor: '#f0f0f0'
+          width: maxWidth,
+          height: maxHeight,
+          backgroundColor: '#FFFFFF'
         }
 
-        const fabricCanvas = new Canvas(
+        const fabricCanvas = new fabric.Canvas(
           canvasElementRef.current as HTMLCanvasElement,
           options
         )
-        fabricCanvas.isDrawingMode = false
-        setCanvas(fabricCanvas)
+        fabricCanvas.isDrawingMode = false // 초기 드로잉 모드 비활성화
+        fabricCanvas.enableRetinaScaling = true
 
+        setCanvas(fabricCanvas)
         return fabricCanvas
       }
 
       const fabricCanvas = initializeCanvas()
-      fabric.FabricImage.fromURL('/123.jpg').then(function (img) {
-        fabricCanvas.backgroundImage = img
-        img.canvas = fabricCanvas
+
+      if (imageSlice.url) {
+        fabric.FabricImage.fromURL(imageSlice.url, {
+          crossOrigin: 'anonymous'
+        }).then(img => {
+          if (
+            !canvasElementRef.current ||
+            !fabricCanvas ||
+            !fabricCanvas.lowerCanvasEl ||
+            !fabricCanvas
+          )
+            return
+          const parent = canvasElementRef.current.parentElement
+          const parentWidth = parent?.offsetWidth || 1024
+
+          // 최대 캔버스 크기 제한 설정
+          const maxWidth = parentWidth
+          const maxHeight = maxWidth * 0.6666
+
+          // 이미지 크기 가져오기
+          const imgWidth = img.width || 1024
+          const imgHeight = img.height || 600
+
+          // 이미지 비율 유지하며 최대 크기 제한 적용
+          let scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight)
+          const canvasWidth = imgWidth * scale
+          const canvasHeight = imgHeight * scale
+
+          setCanvasDimensions({ width: canvasWidth, height: canvasHeight })
+          setOriginalImgDimension({ width: canvasWidth, height: canvasHeight })
+          fabricCanvas.setDimensions({
+            width: canvasWidth,
+            height: canvasHeight
+          })
+          frameOptions.default.width = canvasWidth
+          frameOptions.default.height = canvasHeight
+
+          console.log(canvasWidth * scale, canvasHeight * scale)
+
+          // 이미지 배경 설정 (캔버스 중앙에 배치)
+          img.set({
+            left: (canvasWidth - img.width * scale) / 2,
+            top: (canvasHeight - img.height * scale) / 2
+          })
+          img
+            .clone()
+            .then((clonedImg: fabric.FabricImage) => {
+              // 비동기 처리 (Promise 사용)
+              clonedImg.visible = false
+              clonedImg.set({
+                left: (canvasWidth - img.width * scale) / 2,
+                top: (canvasHeight - img.height * scale) / 2
+              })
+              clonedImg.scale(scale)
+              fabricCanvas.backgroundImage = clonedImg
+              setOriginalBackgroundImgObject(clonedImg)
+              fabricCanvas.renderAll()
+            })
+            .catch(error => {
+              console.error('Error cloning image:', error)
+            })
+          img.scale(scale)
+          setOriginImgObject(img)
+          fabricCanvas.sendObjectToBack(img)
+          fabricCanvas.add(img)
+          fabricCanvas.renderAll()
+        })
+      }
+
+      fabricCanvas.on('object:moving', function (e) {
+        var obj = e.target
+
+        // 캔버스 크기
+        var canvasWidth = fabricCanvas.getWidth()
+        var canvasHeight = fabricCanvas.getHeight()
+
+        // 객체의 크기
+        var objWidth = obj.getScaledWidth()
+        var objHeight = obj.getScaledHeight()
+
+        // 객체가 캔버스 밖으로 나가지 않도록 제한
+        if (obj.left < 0) {
+          obj.left = 0
+        }
+        if (obj.top < 0) {
+          obj.top = 0
+        }
+        if (obj.left + objWidth > canvasWidth) {
+          obj.left = canvasWidth - objWidth
+        }
+        if (obj.top + objHeight > canvasHeight) {
+          obj.top = canvasHeight - objHeight
+        }
+
+        // 객체 위치 업데이트
+        obj.setCoords()
       })
 
       const handleResize = () => {
-        const parent = canvasElementRef.current?.parentElement
-        const width = parent?.offsetWidth || 800
-        const height = width * 0.6666
-
-        fabricCanvas.setDimensions({ width, height })
-        fabricCanvas.renderAll()
+        // 크기 설정 후에는 이 이벤트가 동작하지 않도록 합니다.
+        return
       }
+      fabricCanvas.on('object:added', () => {
+        fabricCanvas.sendObjectToBack(originImgObject!)
+      })
+      fabricCanvas.on('object:modified', () => {
+        fabricCanvas.sendObjectToBack(originImgObject!)
+      })
 
       window.addEventListener('resize', handleResize)
 
@@ -162,51 +276,7 @@ export default function ImageEditor() {
         window.removeEventListener('resize', handleResize)
       }
     }
-  }, [])
-
-  // const addShape = (shape: string) => {
-  //   if (!canvas) return
-
-  //   let fabricShape: FabricObject
-
-  //   const shapeOptions = {
-  //     fill: 'transparent',
-  //     stroke: currentColor,
-  //     strokeWidth: currentThickness,
-  //     left: 100,
-  //     top: 100
-  //   }
-
-  //   switch (shape) {
-  //     case 'circle':
-  //       fabricShape = new Circle({
-  //         ...shapeOptions,
-  //         radius: 50
-  //       })
-  //       break
-  //     case 'triangle':
-  //       fabricShape = new Triangle({
-  //         ...shapeOptions,
-  //         width: 100,
-  //         height: 100
-  //       })
-  //       break
-  //     case 'rectangle':
-  //       fabricShape = new Rect({
-  //         ...shapeOptions,
-  //         width: 100,
-  //         height: 100
-  //       })
-  //       break
-  //     default:
-  //       return
-  //   }
-
-  //   canvas.add(fabricShape)
-  //   canvas.renderAll()
-  //   setActiveShape(shape)
-  // }
-  //도형 추가 기능
+  }, []) // 빈 배열로 한 번만 실행되도록 설정
 
   const enableDrawing = () => {
     if (!canvas) return
@@ -214,18 +284,27 @@ export default function ImageEditor() {
     canvas.isDrawingMode = true
     if (!canvas.freeDrawingBrush) {
       const customBrush = new CustomPencilBrush(canvas)
-      customBrush.globalCompositeOperation = 'source-atop' // 겹치는 부분을 투명하게 처리
+      customBrush.globalCompositeOperation = 'source-atop'
       canvas.freeDrawingBrush = customBrush
+
+      // 객체 추가 이벤트로 배경색 유지
       canvas.on('before:path:created', () => {
         const ctx = canvas.getContext() as CanvasRenderingContext2D
         if (ctx) {
-          customBrush.applyCompositeOperation(ctx)
+          ctx.save()
+          ctx.globalCompositeOperation = 'source-over'
+          ctx.fillStyle = '#FFFFFF'
+          ctx.fillRect(0, 0, canvas.width!, canvas.height!)
+          ctx.restore()
         }
       })
-      // canvas.freeDrawingBrush = new PencilBrush(canvas)
     }
     canvas.freeDrawingBrush.width = currentThickness
     canvas.freeDrawingBrush.color = currentColor
+
+    // 명시적 배경 렌더링
+    canvas.backgroundColor = '#FFFFFF'
+    canvas.renderAll()
     setActiveShape('pen')
   }
   //펜 기능
@@ -389,17 +468,6 @@ export default function ImageEditor() {
     }
   }
 
-  const handleImageEdit = () => {
-    if (canvas) {
-      canvas.forEachObject(obj => {
-        if (obj !== maskRect) {
-          obj.opacity = 1
-        }
-      })
-      canvas.renderAll()
-    }
-  }
-
   useEffect(() => {
     if (!canvas) return
 
@@ -456,25 +524,6 @@ export default function ImageEditor() {
     })
   }
   //색상 파커에 색상 추가(전부 채워진 상태)
-
-  /**
-   *
-   * 김상준
-   *
-   *
-   *
-   *
-   *
-   *
-   *
-   *
-   *
-   *
-   *
-   *
-   *
-   *
-   */
 
   const [font, setFont] = useState<string>('Arial')
   const [fontSize, setFontSize] = useState<number>(20)
@@ -576,11 +625,12 @@ export default function ImageEditor() {
 
   const addTextByButton = (value: string) => {
     if (!canvas) return
+
     const text = getIText(value)
-    text.left = textRef.current == null ? 100 : textRef.current.left
+    text.left = textRef.current == null ? 0 : textRef.current.left
     text.top =
       textRef.current == null
-        ? 100
+        ? 40
         : textRef.current.top + text.fontSize + textRef.current.fontSize
 
     // 캔버스 경계를 벗어나지 않도록 위치 조정
@@ -589,18 +639,60 @@ export default function ImageEditor() {
 
     // 텍스트가 캔버스 너비를 넘어가면 왼쪽으로 위치를 초기화
     if (text.left + text.width > canvasWidth) {
-      text.left = 100
+      text.left = 0
     }
 
     // 텍스트가 캔버스 높이를 넘어가면 맨 위로 초기화
     if (text.top + text.fontSize > canvasHeight) {
-      text.top = 100
+      text.top = 40
     }
+
+    // 객체가 화면을 벗어나면 사이즈를 줄이고 toast 메시지를 표시
+    if (
+      text.left + text.width > canvasWidth ||
+      text.top + text.fontSize > canvasHeight
+    ) {
+      const scaleFactor = Math.min(
+        canvasWidth / text.width,
+        canvasHeight / text.fontSize
+      )
+      text.set({ scaleX: scaleFactor, scaleY: scaleFactor })
+
+      // toast 메시지 출력
+      toast(
+        t => (
+          <div
+            style={{
+              padding: '8px 12px',
+              display: 'flex',
+              alignItems: 'center',
+              whiteSpace: 'nowrap', // 텍스트가 한 줄로 표시되도록 설정
+              borderRadius: '8px',
+              backgroundColor: 'black',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: 500
+            }}
+          >
+            텍스트가 화면을 벗어났습니다. 텍스트 크기가 자동으로 줄어들었습니다.
+          </div>
+        ),
+        {
+          duration: 3000,
+          position: 'bottom-center',
+          style: {
+            background: 'transparent',
+            boxShadow: 'none'
+          }
+        }
+      )
+    }
+
     textRef.current = text
     canvas.add(text)
     canvas.setActiveObject(text)
+    canvas.renderAll()
   }
-
   useEffect(() => {
     if (!canvas) return
 
@@ -700,6 +792,8 @@ export default function ImageEditor() {
   }
 
   const disableAll = () => {
+    setFramePopoverOpen(false)
+    setSelectedShape(null)
     disableMasking()
     disableDrawing()
     disableErasing()
@@ -774,40 +868,36 @@ export default function ImageEditor() {
 
   const setMasking = () => {
     if (!canvas) return
-    let canvasObjects = canvas.getObjects()
-    canvasObjects.map(obj =>
-      setNormalObject(noneMaskObject => [...noneMaskObject, obj])
-    )
+
+    // 현재 캔버스 객체를 상태에 저장
+    canvas
+      .getObjects()
+      .forEach(obj => setNormalObject(prevState => [...prevState, obj]))
+
     canvas.isDrawingMode = true
     setIsMaskingMode(true)
     setIsEraseMode(false)
+
     if (!canvas.freeDrawingBrush) {
+      // CustomPencilBrush 인스턴스 생성
       const customBrush = new CustomPencilBrush(canvas)
-      customBrush.globalCompositeOperation = 'source-atop' // 겹치는 부분을 투명하게 처리
+      customBrush.globalCompositeOperation = 'source-atop' // 겹치는 부분 투명 처리
       canvas.freeDrawingBrush = customBrush
-      canvas.on('before:path:created', () => {
-        const ctx = canvas.getContext() as CanvasRenderingContext2D
-        if (ctx) {
-          customBrush.applyCompositeOperation(ctx)
-        }
-      })
-      // canvas.freeDrawingBrush = new PencilBrush(canvas)
     }
+
+    // 브러시 속성 설정
     canvas.freeDrawingBrush.color = '#CC99FF80'
     canvas.freeDrawingBrush.width = maskingPenThickness
-    canvas.renderAll
+
+    // 변경 사항 즉시 반영
+    canvas.renderAll()
   }
+
   const startMasking = () => {
     if (!canvas) return
     setIsMaskingMode(true)
     setIsEraseMode(false)
 
-    /** TODO
-     *
-     * 이미지 수정 모드가 종료되었을 때도 수행할것
-     *
-     *
-     * */
     canvas.off('mouse:down')
     canvas.isDrawingMode = true
 
@@ -872,11 +962,54 @@ export default function ImageEditor() {
     setIsUpcale(true)
   }
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = function (f) {
+        const data = f.target?.result
+        if (typeof data === 'string') {
+          fabric.FabricImage.fromURL(data, { crossOrigin: 'anonymous' }).then(
+            img => {
+              if (!canvas) return
+              const canvasWidth = canvas.getWidth()
+              const canvasHeight = canvas.getHeight()
+
+              // 이미지 크기 조정
+              const maxWidth = canvasWidth * 0.8 // 캔버스의 80% 너비
+              const maxHeight = canvasHeight * 0.8 // 캔버스의 80% 높이
+
+              const scaleX = maxWidth / img.width!
+              const scaleY = maxHeight / img.height!
+              const scale = Math.min(scaleX, scaleY, 1) // 비율 유지하며 스케일 제한
+
+              img.scale(scale)
+
+              // 정중앙 배치
+              img.set({
+                left: canvasWidth / 2 - img.getScaledWidth() / 2,
+                top: canvasHeight / 2 - img.getScaledHeight() / 2,
+                originX: 'left',
+                originY: 'top'
+              })
+
+              canvas.add(img)
+            }
+          )
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+  const triggerFileInput = () => {
+    document.getElementById('fileInput')?.click()
+  }
+
   /**
    * 마스킹 객체, 원본 객체 토글 수행
    */
   useEffect(() => {
-    if (!canvas) return
+    if (!canvas || !canvas.backgroundImage || !originImgObject) return
     if (isMasking) {
       normalObjects.forEach(obj => {
         obj.set({
@@ -884,6 +1017,10 @@ export default function ImageEditor() {
           selectable: false
         })
       })
+      canvas.backgroundImage.visible = true
+      console.log(originalImgDimensions)
+      canvas.setDimensions(originalImgDimensions)
+      originImgObject.visible = false
     } else {
       let maskObjects = canvas
         ?.getObjects()
@@ -895,6 +1032,9 @@ export default function ImageEditor() {
           selectable: true
         })
       })
+      canvas.backgroundImage.visible = false
+      canvas.setDimensions(canvasDimensions)
+      originImgObject.visible = true
     }
     canvas.renderAll() // 화면 업데이트
   }, [isMasking])
@@ -929,6 +1069,13 @@ export default function ImageEditor() {
         break
       case 'upscale':
         handleUpscale()
+        break
+      case 'addSticker':
+        triggerFileInput()
+        break
+      case 'frameSize':
+        console.log('dd')
+        setFramePopoverOpen(true)
         break
       default:
         console.warn(`Unknown tool: ${tool}`)
@@ -1018,12 +1165,20 @@ export default function ImageEditor() {
       const target = canvas.findTarget(
         event as unknown as fabric.TPointerEvent
       ) as fabric.Object
-      if (target) {
+
+      // 객체가 선택되었고, 그것이 도형 객체라면 선택만 수행
+      if (
+        target &&
+        (target.type === 'circle' ||
+          target.type === 'triangle' ||
+          target.type === 'rect')
+      ) {
         canvas.setActiveObject(target)
         canvas.renderAll()
         return
       }
 
+      // 새로운 도형을 그릴 준비
       isDrawing = true
       isDragged = false // 드래그 여부 초기화
       const pointer = canvas.getPointer(event.e)
@@ -1189,11 +1344,75 @@ export default function ImageEditor() {
       })
     }
   }, [currentShapeColor])
+  // 팝오버 열림 상태
+  useEffect(() => {
+    if (!canvas) return
+    canvas.setWidth(canvasDimensions.width)
+    canvas.setHeight(canvasDimensions.height)
+    setWidth(canvas.width)
+    setHeight(canvas.height)
+    canvas.renderAll()
+  }, [canvasDimensions.width, canvasDimensions.height])
+
+  useEffect(() => {
+    if (!originImgObject || !canvas) return
+    if (originImgObject.left + originImgObject.width > canvas.width) {
+      originImgObject.left = 0
+    }
+
+    // 텍스트가 캔버스 높이를 넘어가면 맨 위로 초기화
+    if (originImgObject.top + originImgObject.height > canvas.height) {
+      originImgObject.top = 0
+    }
+  }, [originImgObject, canvas])
+
+  const handleFrameSize = (e: ChangeEvent<HTMLInputElement>, loc: string) => {
+    switch (loc) {
+      case 'width':
+        setCanvasDimensions({
+          width: parseInt(e.target.value),
+          height: canvasDimensions.height
+        })
+        break
+      case 'height':
+        setCanvasDimensions({
+          width: canvasDimensions.width,
+          height: parseInt(e.target.value)
+        })
+        break
+    }
+  }
+
+  const [framePopoverOpen, setFramePopoverOpen] = useState(false)
+
+  const [selectedOption, setSelectedOption] = useState<FrameOption>('default')
+  const [width, setWidth] = useState(canvasDimensions.width)
+  const [height, setHeight] = useState(canvasDimensions.height)
+
+  useEffect(() => {
+    if (selectedOption !== 'custom') {
+      const option = frameOptions[selectedOption]
+      setWidth(option.width)
+      setHeight(option.height)
+    }
+  }, [selectedOption])
+
+  const handleOptionChange = (value: FrameOption) => {
+    setSelectedOption(value)
+  }
+
+  const applyCanvasSize = () => {
+    if (!canvas) return
+    setCanvasDimensions({ width: width, height: height })
+    canvas.width = width
+    canvas.height = height
+    canvas.renderAll()
+  }
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardContent className="p-6">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 mb-4">
           <Button
             onClick={() => {
               handleToolSwitch('move')
@@ -1203,6 +1422,103 @@ export default function ImageEditor() {
           >
             <HandIcon className="mr-2 h-4 w-4" />
             선택
+          </Button>
+          <Popover open={isPenPopoverOpen} onOpenChange={setIsPenPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                className="w-full text-sm p-2 h-9"
+                onClick={() => {
+                  if (!isPen) {
+                    handleToolSwitch('pen')
+                  }
+                }}
+                variant={activeShape === 'pen' ? 'default' : 'outline'}
+              >
+                <Pen className="mr-2 h-4 w-4" /> 펜
+              </Button>
+            </PopoverTrigger>
+            {isPen && (
+              <PopoverContent className="w-auto p-0">
+                <div className="flex space-x-2 p-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-[80px]">
+                        <div
+                          className="w-4 h-4 rounded-full mr-2"
+                          style={{ backgroundColor: currentColor }}
+                        />
+                        색상
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[225px]">
+                      <ChromePicker
+                        color={currentColor}
+                        onChange={handleColorChange}
+                        onChangeComplete={handleColorChangeComplete}
+                        disableAlpha={true}
+                        styles={{
+                          default: {
+                            picker: {
+                              boxShadow: 'none',
+                              border: 'none',
+                              width: '100%'
+                            }
+                          }
+                        }}
+                      />
+                      {recentColors.length > 0 && (
+                        <div className="mt-4 w-full">
+                          <p className="text-sm font-medium mb-2">
+                            최근 사용한 색상
+                          </p>
+                          <div className="flex gap-2 justify-between">
+                            {recentColors.map((color, index) => (
+                              <button
+                                key={index}
+                                className="w-[32px] h-[32px] rounded-full border border-gray-300"
+                                style={{ backgroundColor: color }}
+                                onClick={() =>
+                                  handleColorChangeComplete({
+                                    hex: color
+                                  } as ColorResult)
+                                }
+                                title={`색상: ${color}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                  <Select
+                    onValueChange={value => setCurrentThickness(Number(value))}
+                  >
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue placeholder="굵기" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {thicknesses.map(thickness => (
+                        <SelectItem
+                          key={thickness}
+                          value={thickness.toString()}
+                        >
+                          {thickness}px
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </PopoverContent>
+            )}
+          </Popover>
+          <Button
+            className="w-full text-sm p-2 h-9"
+            onClick={() => {
+              handleToolSwitch('eraser')
+            }}
+            variant={activeShape === 'eraser' ? 'default' : 'outline'}
+          >
+            <Eraser className="mr-2 h-4 w-4" /> 지우개
           </Button>
           <Popover>
             <PopoverTrigger asChild>
@@ -1328,103 +1644,6 @@ export default function ImageEditor() {
               </div>
             </PopoverContent>
           </Popover>
-          <Popover open={isPenPopoverOpen} onOpenChange={setIsPenPopoverOpen}>
-            <PopoverTrigger>
-              <Button
-                className="w-full text-sm p-2 h-9"
-                onClick={() => {
-                  if (!isPen) {
-                    handleToolSwitch('pen')
-                  }
-                }}
-                variant={activeShape === 'pen' ? 'default' : 'outline'}
-              >
-                <Pen className="mr-2 h-4 w-4" /> 펜
-              </Button>
-            </PopoverTrigger>
-            {isPen && (
-              <PopoverContent className="w-auto p-0">
-                <div className="flex space-x-2 p-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-[80px]">
-                        <div
-                          className="w-4 h-4 rounded-full mr-2"
-                          style={{ backgroundColor: currentColor }}
-                        />
-                        색상
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[225px]">
-                      <ChromePicker
-                        color={currentColor}
-                        onChange={handleColorChange}
-                        onChangeComplete={handleColorChangeComplete}
-                        disableAlpha={true}
-                        styles={{
-                          default: {
-                            picker: {
-                              boxShadow: 'none',
-                              border: 'none',
-                              width: '100%'
-                            }
-                          }
-                        }}
-                      />
-                      {recentColors.length > 0 && (
-                        <div className="mt-4 w-full">
-                          <p className="text-sm font-medium mb-2">
-                            최근 사용한 색상
-                          </p>
-                          <div className="flex gap-2 justify-between">
-                            {recentColors.map((color, index) => (
-                              <button
-                                key={index}
-                                className="w-[32px] h-[32px] rounded-full border border-gray-300"
-                                style={{ backgroundColor: color }}
-                                onClick={() =>
-                                  handleColorChangeComplete({
-                                    hex: color
-                                  } as ColorResult)
-                                }
-                                title={`색상: ${color}`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </PopoverContent>
-                  </Popover>
-                  <Select
-                    onValueChange={value => setCurrentThickness(Number(value))}
-                  >
-                    <SelectTrigger className="w-[100px]">
-                      <SelectValue placeholder="굵기" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {thicknesses.map(thickness => (
-                        <SelectItem
-                          key={thickness}
-                          value={thickness.toString()}
-                        >
-                          {thickness}px
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </PopoverContent>
-            )}
-          </Popover>
-          <Button
-            className="w-full text-sm p-2 h-9"
-            onClick={() => {
-              handleToolSwitch('eraser')
-            }}
-            variant={activeShape === 'eraser' ? 'default' : 'outline'}
-          >
-            <Eraser className="mr-2 h-4 w-4" /> 지우개
-          </Button>
           <div className="flex">
             <Popover>
               <PopoverTrigger asChild>
@@ -1470,7 +1689,9 @@ export default function ImageEditor() {
                       <div className="flex w-full items-center justify-center">
                         <Button
                           className="w-full"
-                          onClick={() => handleToolChange('masking')}
+                          onClick={() => {
+                            if (isMasking) handleToolChange('masking')
+                          }}
                           variant={isMaskingMode ? 'default' : 'outline'}
                         >
                           마스킹
@@ -1478,7 +1699,9 @@ export default function ImageEditor() {
                         <Separator className="p-1" />
                         <Button
                           className="w-full"
-                          onClick={() => handleToolChange('eraser')}
+                          onClick={() => {
+                            if (isMasking) handleToolChange('eraser')
+                          }}
                           variant={isEraseMode ? 'default' : 'outline'}
                         >
                           지우개
@@ -1587,6 +1810,25 @@ export default function ImageEditor() {
                 텍스트
               </Button>
             </PopoverTrigger>
+            <div>
+              <Button
+                className="w-full text-sm p-2 h-9"
+                onClick={() => {
+                  handleToolSwitch('addSticker')
+                }}
+                variant="outline"
+              >
+                <ImagePlusIcon className="mr-2 h-4 w-4" />
+                스티커
+              </Button>
+              <input
+                id="fileInput"
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleImageUpload}
+              />
+            </div>
             {isAddingText && (
               <PopoverContent
                 className="w-[225px] mt-2 relative left-0"
@@ -1769,8 +2011,9 @@ export default function ImageEditor() {
                           onClick={value => {
                             addTextByButton(apiTextData[index])
                           }}
-                          className="w-full max-w-full h-auto px-2 py-1 border border-gray-500 text-white rounded-md whitespace-normal overflow-hidden break-words"
+                          className="w-full max-w-full h-auto px-2 py-1 border border-gray-500 rounded-md whitespace-normal overflow-hidden break-words"
                           variant="outline"
+                          style={{ background: 'default' }}
                         >
                           {text}
                         </Button>
@@ -1785,6 +2028,63 @@ export default function ImageEditor() {
               </PopoverContent>
             )}
           </Popover>
+
+          <Popover open={framePopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant={framePopoverOpen ? 'default' : 'outline'}
+                onClick={() => {
+                  if (!framePopoverOpen) handleToolSwitch('frameSize')
+                }}
+              >
+                <FrameIcon className="mr-2 h-4 w-4" />
+                프레임
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+              <div className="space-y-4">
+                <Select
+                  onValueChange={handleOptionChange}
+                  value={selectedOption}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="프레임 크기 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Default</SelectItem>
+                    <SelectItem value="512x512">512x512</SelectItem>
+                    <SelectItem value="landscape">
+                      Landscape 4:3 (1024x768)
+                    </SelectItem>
+                    <SelectItem value="custom">Custom</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium">Width:</span>
+                    <Input
+                      type="number"
+                      value={Math.floor(width)}
+                      onChange={e => setWidth(Number(e.target.value))}
+                      disabled={selectedOption !== 'custom'}
+                    />
+                  </label>
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium">Height:</span>
+                    <Input
+                      type="number"
+                      value={Math.floor(height)}
+                      onChange={e => setHeight(Number(e.target.value))}
+                      disabled={selectedOption !== 'custom'}
+                    />
+                  </label>
+                </div>
+                <Button onClick={applyCanvasSize} className="w-full">
+                  적용
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
         {showConfirmationModal && (
           <Modal
@@ -1793,12 +2093,31 @@ export default function ImageEditor() {
             onCancel={cancelToolSwitch}
           />
         )}
-        <div className="relative w-full h-0 pb-[66.66%] bg-gray-200">
-          <canvas
-            ref={canvasElementRef}
-            className="absolute top-0 left-0 w-full h-full"
-          />
+        <div
+          className="flex items-center justify-center bg-black" // Flexbox 설정
+          style={{
+            width: '100%', // 부모 div 너비를 화면 전체로 설정
+            position: 'relative' // 화면 중앙 정렬을 위한 position 설정
+          }}
+        >
+          <div
+            className="flex items-center justify-center"
+            style={
+              !isMasking
+                ? {
+                    width: `${canvasDimensions.width}px`,
+                    height: `${canvasDimensions.height}px`
+                  }
+                : {
+                    width: `${originalImgDimensions.width}px`,
+                    height: `${originalImgDimensions.height}px`
+                  }
+            }
+          >
+            <canvas ref={canvasElementRef} />
+          </div>
         </div>
+
         <Separator className="p-2" />
         {isMasking && (
           <>
@@ -1826,7 +2145,7 @@ export default function ImageEditor() {
           <Button
             disabled={isMasking && inpaintPrompt.length === 0}
             onClick={() => {
-              if (isInpainting || isRemovingText || isUpscale) {
+              if (isInpainting || isRemovingText || isUpscaling) {
                 setAvailable(false)
                 return
               }
@@ -1847,7 +2166,7 @@ export default function ImageEditor() {
             className="w-full"
           >
             {isMasking
-              ? '프롬프트 입력'
+              ? '이미지 수정'
               : isRemoveText
                 ? '텍스트 제거'
                 : isUpscale
@@ -1863,6 +2182,8 @@ export default function ImageEditor() {
             setIsProcessing={setIsProcessing}
             option={option}
             mode={mode}
+            originImgObject={originImgObject}
+            setOriginImgObject={setOriginImgObject}
           />
         ))}
         {isDone && (

@@ -1,58 +1,78 @@
 import { Separator } from '@/components/ui/separator'
-import { UIState } from '@/lib/chat/actions'
-import { Session } from '@/lib/types'
-import Link from 'next/link'
-import { ExclamationTriangleIcon } from '@radix-ui/react-icons'
 import React from 'react'
+import { setIsTyping, Message } from '@/redux/slices/chatSlice'
+import { useDispatch } from 'react-redux'
+import MessageItem from './chat/utils/MessageItem'
+import { ButtonType } from './prompt-form'
+import ChatUtils from './chat/utils/ChatUtils'
+import CalendarComponent from './chat/history/calendar'
+import { MessageHistory } from './chat/history/message-history'
+import HistoryPanel from './chat/history/history-panel'
 
-export interface ChatList {
-  messages: UIState
-  session?: Session
-  isShared: boolean
-}
-
-export function ChatList({ messages, session, isShared }: ChatList) {
-  if (!messages.length) {
+export const ChatList = ({
+  chatId,
+  messages
+}: {
+  chatId: ButtonType
+  messages: Message[]
+}) => {
+  if (messages.length === 0) {
     return null
   }
 
-  return (
-      <div className="relative mx-auto max-w-2xl px-4">
-        {!isShared && !session ? (
-            <>
-              <div className="group relative mb-4 flex items-start ml-2">
-                <div
-                    className="bg-background flex size-[25px] shrink-0 select-none items-center justify-center rounded-md border shadow-sm">
-                  <ExclamationTriangleIcon/>
-                </div>
-                <div className="ml-4 flex-1 space-y-2 overflow-hidden px-1">
-                  <p className="text-muted-foreground leading-normal">
-                    Please{' '}
-                    <Link href="/login" className="underline">
-                      log in
-                    </Link>{' '}
-                    or{' '}
-                    <Link href="/signup" className="underline">
-                      sign up
-                    </Link>{' '}
-                    to save and revisit your chat history!
-                  </p>
-                </div>
-              </div>
-              <Separator className="my-4"/>
-            </>
-        ) : null}
+  const dispatch = useDispatch()
 
-        {messages.map((message, index) => (
-            <div key={message.id} className="ml-2">
-              {React.isValidElement(message.display) ? (
-                  message.display
-              ) : (
-                  <div>{message.display}</div>
-              )}
-              {index < messages.length - 1 && <Separator className="my-4"/>}
+  const handleTypingComplete = () => {
+    dispatch(setIsTyping({ chatId: chatId, isTyping: false }))
+  }
+
+  const isSerializedReactNode = (
+    content: string | React.ReactNode
+  ): boolean => {
+    return (
+      typeof content === 'string' &&
+      content.startsWith('<') &&
+      content.endsWith('>')
+    )
+  }
+  React.useEffect(() => {
+    console.log('activeButton updated:', chatId)
+  }, [chatId])
+
+  const isHistoryChat = chatId === 'history'
+  return (
+    <div className="relative mx-auto max-w-2xl px-4">
+      {messages.map((message, index) => {
+        const content = message.text
+
+        if (isSerializedReactNode(content)) {
+          try {
+            const reactNode = ChatUtils.stringToReactNode(content as string)
+            return (
+              <React.Fragment key={message.id}>
+                <div className="ml-2">{reactNode}</div>
+                {index < messages.length - 1 && <Separator className="my-4" />}
+              </React.Fragment>
+            )
+          } catch (error) {
+            console.error('Failed to deserialize ReactNode:', error)
+          }
+        }
+
+        return (
+          <React.Fragment key={message.id}>
+            <div className="ml-2">
+              <MessageItem
+                chatId={chatId}
+                message={message}
+                onTypingComplete={handleTypingComplete}
+              />
             </div>
-        ))}
-      </div>
+            {index < messages.length - 1 && <Separator className="my-4" />}
+          </React.Fragment>
+        )
+      })}
+      {isHistoryChat && <HistoryPanel />}
+    </div>
   )
 }
