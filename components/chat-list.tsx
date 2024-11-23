@@ -8,6 +8,9 @@ import ChatUtils from './chat/utils/ChatUtils'
 import CalendarComponent from './chat/history/calendar'
 import { MessageHistory } from './chat/history/message-history'
 import HistoryPanel from './chat/history/history-panel'
+import SendMessagePanel from './chat/send-message/send-message-panel'
+import { BotCard } from './stocks'
+import AddressBookModal from '@/app/address/modal/select-contact-modal';
 
 export const ChatList = ({
   chatId,
@@ -40,6 +43,7 @@ export const ChatList = ({
   }, [chatId])
 
   const isHistoryChat = chatId === 'history'
+  const isSendMessageChat = chatId === 'send-message'
   return (
     <div className="relative mx-auto max-w-2xl px-4">
       {messages.map((message, index) => {
@@ -50,7 +54,16 @@ export const ChatList = ({
             const reactNode = ChatUtils.stringToReactNode(content as string)
             return (
               <React.Fragment key={message.id}>
-                <div className="ml-2">{reactNode}</div>
+                {chatId === 'faq' ? (
+                  <BotCard>
+                    <div
+                      className="relative mx-auto max-w-2xl prose"
+                      dangerouslySetInnerHTML={{ __html: content }} // HTML 태그 렌더링
+                    />
+                  </BotCard>
+                ) : (
+                  <div className="ml-2">{reactNode}</div>
+                )}
                 {index < messages.length - 1 && <Separator className="my-4" />}
               </React.Fragment>
             )
@@ -73,6 +86,7 @@ export const ChatList = ({
         )
       })}
       {isHistoryChat && <HistoryPanel />}
+      {/* {isSendMessageChat && <AddressBookModal/>} */}
     </div>
   )
 }

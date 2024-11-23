@@ -17,6 +17,7 @@ import ChatUtils from './chat/utils/ChatUtils'
 import { RootState } from '@/redux/store'
 import FaqButton, { CustomButtonHandle } from './chat/faq'
 import HistoryButton from './chat/history/history'
+import SendMessageButton from './chat/send-message/send-message'
 
 /**
  *
@@ -76,6 +77,8 @@ export function PromptForm({
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const FaqButtonRef = React.useRef<CustomButtonHandle>(null)
   const HistoryButtonRef = React.useRef<CustomButtonHandle>(null)
+  const SendMessageButtonRef = React.useRef<CustomButtonHandle>(null)
+
 
   const isTyping = useSelector(
     (state: RootState) => state.chat[activeButton]?.isTyping || false
@@ -107,6 +110,9 @@ export function PromptForm({
     if (HistoryButtonRef.current && activeButton === 'history') {
       HistoryButtonRef.current.handleEnterPress(trimmedValue)
     }
+    if (SendMessageButtonRef.current && activeButton === 'send-message') {
+      SendMessageButtonRef.current.handleEnterPress(trimmedValue)
+    }
 
     setInput('')
   }
@@ -123,6 +129,12 @@ export function PromptForm({
         <HistoryButton
           ref={HistoryButtonRef}
           buttonType="history"
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
+        />
+        <SendMessageButton
+          ref={SendMessageButtonRef}
+          buttonType="send-message"
           activeButton={activeButton}
           setActiveButton={setActiveButton}
         />

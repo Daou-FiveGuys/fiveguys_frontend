@@ -11,6 +11,10 @@ export default function AddressBookModal() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedContacts, setSelectedContacts] = useState<Contact2[]>([])
 
+  // ※ 임시코드!!!! 모달 적용하는 사람은 해당 정보 삭제할 것
+  const [inputValue, setInputValue] = useState(""); // 전송 번호 설정
+  const [file, setFile] = useState<File | null>(null) // 파일 상태 추가
+
   const handleClose = () => setIsModalOpen(false)
 
   /**
@@ -43,8 +47,10 @@ export default function AddressBookModal() {
     })
   }
 
-  // ※ 임시코드!!!! 모달 적용하는 사람은 해당 정보 삭제할 것
-  const [inputValue, setInputValue] = useState("");
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0] || null
+    setFile(selectedFile) // 선택된 파일 상태 저장
+  }
 
   return (
     <div className="p-8">
@@ -57,6 +63,11 @@ export default function AddressBookModal() {
         className="border border-gray-300 rounded-lg p-2 w-80 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
 
+      <input
+        type="file"
+        onChange={handleFileChange} // 파일 선택 이벤트 핸들러
+        className="block mt-4"
+      />
 
       {/* Trigger Button */}
       <Button
@@ -121,20 +132,14 @@ export default function AddressBookModal() {
 
                 // 5. 파일 바이너리 데이터 전송 받기, 파일 이름은 DateTime으로 할 듯
                 // ※ 파일 길이 예외처리 할 것
-                const fileData = "" // 파일 바이너리 데이터
 
                 api.sendMessage({
                   "messageType": messageType,
                   "content": content,
                   "fromNumber": fromNumber,
                   "targets": targets,
-                  "subject": subject,
-                  "files": {
-                    "name": `image_${new Date().toLocaleDateString()}`,
-                    "size": fileData.length,
-                    "data": fileData
-                  }
-                })
+                  "subject": subject
+                }, file!) // TODO: ※ 임시코드!!!! 꼭 파일 정보 등록하고 실행할 것
 
                 handleClose();
               }}
