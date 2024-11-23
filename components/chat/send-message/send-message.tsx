@@ -37,7 +37,7 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         ChatUtils.addChat(
           buttonType,
           'assistant-animation',
-          '홍보 메시지를 만들어보세요! 뒤에 "직접 입력"하거나 "자동 생성"을 요청할 수 있습니다.'
+          '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
         )
         setHasAddedChat(true)
       }
