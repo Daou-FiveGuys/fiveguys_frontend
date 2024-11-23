@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import ChatUtils from './../utils/ChatUtils'
 import { ButtonType } from '@/components/prompt-form'
 import { useDispatch } from 'react-redux'
-import { setText, clearText } from '@/main/redux/slices/createTextSlice'
+import { setText, clearText } from '@/redux/slices/createTextSlice'
 
 interface CreateMessageProps {
   buttonType: ButtonType
@@ -46,14 +46,14 @@ const CreateMessage: React.FC<CreateMessageProps> = ({ buttonType, lastUserInput
         }
         break
       case 'directInput':
-        dispatch(setText({ text: input, type: 'direct' }))
+        dispatch(setText({ text: input}))
         ChatUtils.addChat(buttonType, 'user', input)
         setStage('imageOption')
         ChatUtils.addChat(buttonType, 'assistant', '입력하신 내용이 저장되었습니다. 이미지 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"')
         break
       case 'autoGenerate':
         const generatedText = JSON.stringify(sampleData)
-        dispatch(setText({ text: generatedText, type: 'auto' }))
+        dispatch(setText({ text: generatedText }))
         ChatUtils.addChat(buttonType, 'user', input)
         ChatUtils.addChat(buttonType, 'assistant', '샘플 데이터가 생성되었습니다: ' + generatedText)
         ChatUtils.addChat(buttonType, 'assistant', '이미지 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"')
