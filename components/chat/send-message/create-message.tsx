@@ -2,7 +2,13 @@ import React, { useEffect, useState } from 'react'
 import ChatUtils from './../utils/ChatUtils'
 import { ButtonType } from '@/components/prompt-form'
 import { useDispatch } from 'react-redux'
-import { setText, clearText } from '@/redux/slices/createTextSlice'
+import { clearText, setText } from '@/redux/slices/createTextSlice'
+import Component from '@/components/image-option-modal'
+import { ImageOption } from '@/redux/slices/imageOptionSlice'
+import { postImageGenerate } from '@/components/image-generator-api'
+import { setImageData } from '@/redux/slices/imageSlice'
+import Image from 'next/image'
+import ReactDOMServer from 'react-dom/server'
 
 interface CreateMessageProps {
   buttonType: ButtonType
@@ -16,10 +22,15 @@ const sampleData = {
   imageUrl: "/placeholder.svg?height=300&width=400"
 }
 
-const CreateMessage: React.FC<CreateMessageProps> = ({ buttonType, lastUserInput }) => {
-  const [stage, setStage] = useState<'initial' | 'directInput' | 'autoGenerate' | 'imageOption'>('initial')
-  const dispatch = useDispatch()
+export interface imgResponse {
+  requestId: string
+  url: string
+}
 
+const CreateMessage: React.FC<CreateMessageProps> = ({ buttonType, lastUserInput }) => {
+  const [stage, setStage] = useState<'initial' | 'directInput' | 'autoGenerate' | 'imageOption' | 'generateImage' | 'loading'>('initial')
+  const dispatch = useDispatch()
+  const [prompt, setPrompt] = useState<string>('')
   useEffect(() => {
     if (!ChatUtils.dispatch) {
       ChatUtils.initialize(dispatch)
@@ -47,6 +58,7 @@ const CreateMessage: React.FC<CreateMessageProps> = ({ buttonType, lastUserInput
         break
       case 'directInput':
         dispatch(setText({ text: input}))
+        setPrompt(input)
         ChatUtils.addChat(buttonType, 'user', input)
         setStage('imageOption')
         ChatUtils.addChat(buttonType, 'assistant', '입력하신 내용이 저장되었습니다. 이미지 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"')
@@ -60,21 +72,102 @@ const CreateMessage: React.FC<CreateMessageProps> = ({ buttonType, lastUserInput
         setStage('imageOption')
         break
       case 'imageOption':
-        if (['이미지 생성', '이미지 업로드', '이미지 없이'].includes(input)) {
+        if (input === '이미지 생성') {
           ChatUtils.addChat(buttonType, 'user', input)
-          ChatUtils.addChat(buttonType, 'assistant', `선택하신 옵션 "${input}"이(가) 저장되었습니다.`)
+          ChatUtils.addChat(
+            buttonType,
+            'assistant',
+            '이미지 생성 옵션을 시작합니다.'
+          )
+          setStage('generateImage')
+        } else if (['이미지 업로드', '이미지 없이'].includes(input)) {
+          ChatUtils.addChat(buttonType, 'user', input)
+          ChatUtils.addChat(
+            buttonType,
+            'assistant',
+            `선택하신 옵션 "${input}"이(가) 저장되었습니다.`
+          )
           setStage('initial')
           dispatch(clearText())
         } else {
           ChatUtils.addChat(buttonType, 'user', input)
-          ChatUtils.addChat(buttonType, 'assistant', '올바른 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"')
+          ChatUtils.addChat(
+            buttonType,
+            'assistant',
+            '올바른 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"'
+          )
         }
+        break
+      case 'generateImage':
+        ChatUtils.addChat(
+          buttonType,
+          'assistant',
+          '이미지를 생성하는 중입니다.'
+        )
         break
     }
   }
 
-  return null
+  const handleGenerateImage = async (imageOption: ImageOption) => {
+    try {
+      setStage('loading') // 로딩 상태로 변경
+
+      // 이미지 생성 API 호출
+      const result = await postImageGenerate(imageOption, prompt)
+      // 이미지 생성 완료 후 데이터 저장
+      dispatch(
+        setImageData({
+          requestId: result.requestId,
+          url: result.url // 또는 필요한 이미지 URL을 할당
+        })
+      )
+
+      // 이미지 메시지 추가
+      const imageUrl = result.url // 이미지 URL (실제 URL로 변경 필요)
+      const imageComp = (
+        <Image
+          src={imageUrl}
+          alt="Message image"
+          width={200}
+          height={200}
+          className="rounded-md"
+        />
+      )
+
+      ChatUtils.addChat(
+        buttonType,
+        'assistant',
+        ReactDOMServer.renderToString(imageComp)
+      )
+
+      // 완료 후 상태 리셋
+      setStage('initial') // 이미지 생성 완료 시 초기 단계로
+      dispatch(clearText())
+    } catch (error) {
+      console.error('이미지 생성 실패:', error)
+      setStage('initial') // 실패 시 초기 상태로
+    }
+  }
+
+  return (
+    <div>
+      {stage === 'generateImage' ? (
+        <Component isOpen={true} onClose={handleGenerateImage} />
+      ) : null}
+
+      {stage === 'loading' && (
+        <LoadingModal isOpen={true} /> // 로딩 중 상태에 대한 컴포넌트 표시
+      )}
+    </div>
+  )
 }
 
 export default CreateMessage
 
+const LoadingModal = ({ isOpen }: { isOpen: boolean }) => {
+  return isOpen ? (
+    <div className="loading-modal">
+      <div className="loading-spinner">로딩 중...</div>
+    </div>
+  ) : null
+}

@@ -75,7 +75,7 @@ const InfoPopover = ({ content }: { content: string }) => (
   </Popover>
 )
 
-export default function Component({ isOpen = true, onClose = ({}: {}) => {} }) {
+export default function Component({ isOpen = true, onClose = ({}: any) => {} }) {
   const imageOption = useSelector((state: RootState) => state.imageOption)
   const dispatch = useDispatch()
   const [currentStep, setCurrentStep] = useState(1)
@@ -129,11 +129,12 @@ export default function Component({ isOpen = true, onClose = ({}: {}) => {} }) {
   const handleSubmit = () => {
     onClose({
       step: currentStep,
-      selectedStyle,
-      imageSize,
-      numInferenceSteps,
-      seed,
-      guidanceScale,
+      imageStyle: selectedStyle,
+      width: imageSize.width,
+      height: imageSize.height,
+      numInferenceSteps: numInferenceSteps,
+      seed: seed,
+      guidanceScale: guidanceScale,
       safetyChecker
     })
   }
@@ -150,7 +151,7 @@ export default function Component({ isOpen = true, onClose = ({}: {}) => {} }) {
           <div className="grid grid-cols-2 gap-4 p-4">
             {styleOptions.map(style => (
               <div
-                key={style.value}
+                key={style.value+style.label}
                 className={`relative cursor-pointer rounded-lg overflow-hidden transition-all duration-200 border ${
                   selectedStyle === style.value
                     ? 'border-primary border-2'
