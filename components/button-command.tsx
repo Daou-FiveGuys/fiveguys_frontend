@@ -1,3 +1,4 @@
+/*
 import React, { Dispatch, SetStateAction, forwardRef } from 'react';
 import {Button, ButtonProps} from "@/components/ui/button";
 
@@ -7,7 +8,7 @@ interface ButtonCommandProps extends ButtonProps {
     ref: React.RefObject<HTMLTextAreaElement>
 }
 
-/**
+/!**
  * 버튼 컴포넌트를 사용해 입력창에 명령어를 추가하는 컴포넌트
  *
  * @param setInput 명령어를 치는 프롬프트 입력창에 set함수
@@ -15,7 +16,7 @@ interface ButtonCommandProps extends ButtonProps {
  * @param ref
  * @param props ButtonProps
  * @constructor
- */
+ *!/
 export const ButtonCommand = forwardRef<HTMLTextAreaElement, ButtonCommandProps>(
     ({ setInput, command, ...props }, ref) => {
 
@@ -35,3 +36,4 @@ export const ButtonCommand = forwardRef<HTMLTextAreaElement, ButtonCommandProps>
         );
     }
 );
+*/
