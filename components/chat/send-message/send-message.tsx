@@ -1,9 +1,10 @@
-import React, { forwardRef, useImperativeHandle } from 'react'
+import React, { forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
+import CreateMessage from './create-message'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -19,34 +20,40 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
   ({ buttonType, activeButton, setActiveButton }, ref) => {
     const isActive = buttonType === activeButton
     const [hasAddedChat, setHasAddedChat] = React.useState(false)
+    const [lastUserInput, setLastUserInput] = React.useState<string | null>(null)
     const message = useSelector((state: RootState) => state.chat[buttonType])
-    const timeoutRef = React.useRef<NodeJS.Timeout | null>(null)
+
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
         if (isActive && value.trim()) {
           ChatUtils.addChat(buttonType, 'user', value.trim())
+          setLastUserInput(value.trim())
         }
       }
     }))
 
-    React.useEffect(() => {
+    useEffect(() => {
       if (ChatUtils.dispatch && !hasAddedChat) {
         ChatUtils.addChat(
           buttonType,
           'assistant-animation',
-          '원하는 날짜의 문자 발송 기록을 조회해보세요! 🗓️'
+          '홍보 메시지를 만들어보세요! 뒤에 "직접 입력"하거나 "자동 생성"을 요청할 수 있습니다.'
         )
+        setHasAddedChat(true)
       }
-    }, [hasAddedChat])
+    }, [hasAddedChat, buttonType])
 
     return (
-      <Button
-        className="w-full md:w-28 h-8 mb-2 md:mb-0"
-        variant={isActive ? 'default' : 'outline'}
-        onClick={() => setActiveButton(buttonType)}
-      >
-        문자 내역
-      </Button>
+      <>
+        <Button
+          className="w-full md:w-28 h-8 mb-2 md:mb-0"
+          variant={isActive ? 'default' : 'outline'}
+          onClick={() => setActiveButton(buttonType)}
+        >
+          메시지 전송
+        </Button>
+        <CreateMessage buttonType={buttonType} lastUserInput={lastUserInput} />
+      </>
     )
   }
 )
