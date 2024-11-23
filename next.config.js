@@ -10,5 +10,4 @@ module.exports = {
       'fal.media',
     ],
   },
-  disableStaticImages: true
 };
