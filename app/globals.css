@@ -99,6 +99,38 @@
   }
 }
 
+@keyframes spinLinear {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spinLinear {
+  animation: spinLinear calc(var(--speed) * 2) infinite linear;
+  transform-origin: center;
+}
+
+.button-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.spark {
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(
+    from 0deg,
+    transparent 98%,
+    var(--shimmer-color) 100%
+  );
+  background-size: 200% 200%;
+  background-position: center;
+  animation: spinLinear calc(var(--speed) * 2) infinite linear;
+}
+
 @font-face {
   font-family: '쿠키런';
   src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/CookieRun-Regular.woff')
