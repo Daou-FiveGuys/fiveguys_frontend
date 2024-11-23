@@ -42,31 +42,53 @@ export default function HistoryPanel() {
       fetchMessageHistory()
     else if (currentDate.getMonth() !== selectedDate.getMonth())
       fetchDayStates()
-    /**
-     * 추후 제거
-     */
-    setDayStates(generateDummyDayStates()) // 더미 데이터 사용
   }, [selectedDate])
 
   const fetchDayStates = async () => {
     try {
       await apiClient
-        .post('주소', { headers: { date: selectedDate } })
-        .then(res => {})
+        .get(`/messageHistory/month/${selectedDate.toString()}`)
+        .then(res => {
+          if (res.data.code === 200) {
+            setDayStates(res.data.data)
+          } else {
+            throw new Error()
+          }
+        })
         .catch(err => {})
     } catch (error) {
-      console.error('Error fetching day states:', error)
+      console.error('Error fetching month states:', error)
     }
   }
 
   const fetchMessageHistory = async () => {
     try {
       await apiClient
-        .post('주소', { headers: { date: selectedDate } })
-        .then(res => {})
-        .catch(err => {})
+        .get(`/messageHistory/date/${selectedDate.toString()}`)
+        .then(res => {
+          if (res.data.code === 200) {
+            const messages = res.data.data
+            const newMessages: SentMessages[] = []
+            let id = 0
+
+            for (const message of messages) {
+              newMessages.push({
+                id: id++,
+                title: message.subject as string,
+                content: message.content as string,
+                date: new Date(message.createdAt), // Date 객체 생성
+                image: message.sendImage === null ? null : message.sendImage.url
+              })
+            }
+          } else {
+            throw new Error()
+          }
+        })
+        .catch(err => {
+          throw new Error()
+        })
     } catch (error) {
-      console.error('Error fetching month states:', error)
+      console.error('Error fetching day states:', error)
     }
   }
 
