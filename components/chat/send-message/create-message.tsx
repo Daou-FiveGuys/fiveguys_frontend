@@ -4,11 +4,13 @@ import { ButtonType } from '@/components/prompt-form'
 import { useDispatch } from 'react-redux'
 import { clearText, setText } from '@/redux/slices/createTextSlice'
 import Component from '@/components/image-option-modal'
-import { ImageOption } from '@/redux/slices/imageOptionSlice'
+import {ImageOption, setImageOption} from '@/redux/slices/imageOptionSlice'
 import { postImageGenerate } from '@/components/image-generator-api'
 import { setImageData } from '@/redux/slices/imageSlice'
 import Image from 'next/image'
 import ReactDOMServer from 'react-dom/server'
+import {ImageSkeleton} from "@/components/ui/image-skeleton";
+import {BotCard} from "@/components/stocks";
 
 interface CreateMessageProps {
   buttonType: ButtonType
@@ -77,7 +79,7 @@ const CreateMessage: React.FC<CreateMessageProps> = ({ buttonType, lastUserInput
           ChatUtils.addChat(
             buttonType,
             'assistant',
-            '이미지 생성 옵션을 시작합니다.'
+            '이미지 생성을 시작합니다.'
           )
           setStage('generateImage')
         } else if (['이미지 업로드', '이미지 없이'].includes(input)) {
@@ -109,43 +111,49 @@ const CreateMessage: React.FC<CreateMessageProps> = ({ buttonType, lastUserInput
   }
 
   const handleGenerateImage = async (imageOption: ImageOption) => {
+    dispatch(setImageOption(imageOption))
+    setStage('loading') // 로딩 상태로 변경
+    const imageSkeleton = ImageLoader()
+    const imageSkeletonId = ChatUtils.addChat(
+        buttonType,
+        'assistant',
+        ReactDOMServer.renderToString(imageSkeleton)
+    )
     try {
-      setStage('loading') // 로딩 상태로 변경
-
       // 이미지 생성 API 호출
       const result = await postImageGenerate(imageOption, prompt)
       // 이미지 생성 완료 후 데이터 저장
       dispatch(
         setImageData({
           requestId: result.requestId,
-          url: result.url // 또는 필요한 이미지 URL을 할당
+          url: result.url
         })
       )
-
+      const imageUrl = result.url // 이미지 URL
       // 이미지 메시지 추가
-      const imageUrl = result.url // 이미지 URL (실제 URL로 변경 필요)
       const imageComp = (
-        <Image
-          src={imageUrl}
-          alt="Message image"
-          width={200}
-          height={200}
-          className="rounded-md"
-        />
+          <BotCard>
+            <Image
+              src={imageUrl}
+              alt="Message image"
+              width={200}
+              height={200}
+              className="rounded-md"
+            />
+          </BotCard>
       )
 
+      ChatUtils.deleteChat(buttonType, imageSkeletonId) // 로딩창 삭제
       ChatUtils.addChat(
         buttonType,
         'assistant',
         ReactDOMServer.renderToString(imageComp)
       )
-
-      // 완료 후 상태 리셋
-      setStage('initial') // 이미지 생성 완료 시 초기 단계로
       dispatch(clearText())
     } catch (error) {
       console.error('이미지 생성 실패:', error)
-      setStage('initial') // 실패 시 초기 상태로
+    } finally {
+      setStage('initial') // 초기 상태로
     }
   }
 
@@ -154,20 +162,19 @@ const CreateMessage: React.FC<CreateMessageProps> = ({ buttonType, lastUserInput
       {stage === 'generateImage' ? (
         <Component isOpen={true} onClose={handleGenerateImage} />
       ) : null}
-
-      {stage === 'loading' && (
-        <LoadingModal isOpen={true} /> // 로딩 중 상태에 대한 컴포넌트 표시
-      )}
     </div>
   )
 }
 
 export default CreateMessage
 
-const LoadingModal = ({ isOpen }: { isOpen: boolean }) => {
-  return isOpen ? (
-    <div className="loading-modal">
-      <div className="loading-spinner">로딩 중...</div>
-    </div>
-  ) : null
+
+export function ImageLoader() {
+  return (
+      <div className="space-y-2">
+        <BotCard>
+          <ImageSkeleton  />
+        </BotCard>
+      </div>
+  )
 }

@@ -14,21 +14,12 @@ export async function postImageGenerate(imageOption: ImageOption, prompt: string
     requestId: '',
     url: ''
   };
-  const a = {
-    prompt: prompt,
-    lora: imageOption.imageStyle,
-    width: imageOption.width,
-    height: imageOption.height,
-    numInterfaceSteps: imageOption.numInferenceSteps,
-    seed: imageOption.seed,
-    cfg: imageOption.guidanceScale,
-  }
   try {
     const response = await apiClient.post(
         '/ai/image/generate-lora',
         {
-          prompt: "pink bunny",
-          lora: "cityPop",
+          prompt: prompt,
+          lora: imageOption.imageStyle,
           width: imageOption.width,
           height: imageOption.height,
           numInterfaceSteps: imageOption.numInferenceSteps,
