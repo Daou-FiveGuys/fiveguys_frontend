@@ -6,7 +6,6 @@ type PpurioMessageDTO = {
     fromNumber: string;
     targets: Target[];
     subject: string;
-    files: Files;
 };
 
 export type Target = {
@@ -44,19 +43,41 @@ export interface CommonResponse<T> {
     data: T;
   }
 
-export const api = {
+  export const api = {
     sendMessage: async (
-        PpurioMessageDTO : PpurioMessageDTO
-    ): Promise<PpurioMessageResponse|undefined> => {
+        PpurioMessageDTO: PpurioMessageDTO,
+        multipartFile?: File
+    ): Promise<PpurioMessageResponse | undefined> => {
         try {
-            const response = await apiClient.post<CommonResponse<PpurioMessageResponse>>(`/ppurio/message`, PpurioMessageDTO)
+            const formData = new FormData();
 
-            const newFolder2 = response.data.data;
-            if(response.data.code == 200) return newFolder2
-    
+            // PpurioMessageDTO를 FormData에 추가
+            formData.append(
+                "ppurioMessageDTO",
+                new Blob([JSON.stringify(PpurioMessageDTO)], { type: "application/json" })
+            );
+
+            // multipartFile이 존재하는 경우에만 추가
+            if (multipartFile) {
+                formData.append("multipartFile", multipartFile);
+            }
+
+            const response = await apiClient.post<CommonResponse<PpurioMessageResponse>>(
+                `/ppurio/message`, formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                }
+            );
+
+            const newMessageResponse = response.data.data;
+            if (response.data.code === 200) return newMessageResponse;
+
             return undefined;
-        } catch(error) {
-            return undefined
+        } catch (error) {
+            console.error("Error while sending message:", error);
+            return undefined;
         }
     },
-}
+};

@@ -19,7 +19,9 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['var(--font-geist-sans)'],
-        mono: ['var(--font-geist-mono)']
+        mono: ['var(--font-geist-mono)'],
+        saas: ['강원교육튼튼체', '강원교육튼튼체'],
+        pretendard: ['프리텐다드', '프리텐다드']
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -77,5 +79,9 @@ module.exports = {
       }
     }
   },
-  plugins: [require('tailwindcss-animate'), require('@tailwindcss/typography'), require('tailwind-scrollbar-hide')]
+  plugins: [
+    require('tailwindcss-animate'),
+    require('@tailwindcss/typography'),
+    require('tailwind-scrollbar-hide')
+  ]
 }

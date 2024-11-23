@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import Image from 'next/image'
 import { format } from 'date-fns'
 import { SentMessages } from './history-panel'
 
@@ -35,18 +34,20 @@ export function MessageCard({
           {format(date, 'yyyy년 MM월 dd일 HH:mm')}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="aspect-square relative mb-4">
-          <Image
-            src={message.image}
+      <CardContent className="flex flex-col items-center">
+        <div className="flex justify-center mb-4 w-full">
+          <img
+            src={
+              message.image === 'null'
+                ? 'https://www.freeiconspng.com/img/23485'
+                : message.image
+            }
             alt="Message image"
-            width={200}
-            height={200}
-            className="rounded-md"
+            className="rounded-md w-full h-[250] object-cover"
           />
         </div>
-        <p className="text-sm text-gray-500">
-          {isExpanded ? message.content : message.title}
+        <p className="text-sm text-gray-500 text-left w-full overflow-hidden text-ellipsis whitespace-nowrap">
+          {message.title}
         </p>
       </CardContent>
     </Card>
