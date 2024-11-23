@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import CalendarComponent from './calendar'
 import { MessageHistory } from './message-history'
 import { Separator } from '@/components/ui/separator'
 import apiClient from '@/services/apiClient'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
+import { format } from 'date-fns'
+import { ko } from 'date-fns/locale'
+import { CSSTransition } from 'react-transition-group'
+import './HistoryPanel.css'
 
 export interface SentMessages {
   id: number
@@ -16,15 +20,14 @@ export interface SentMessages {
 
 export default function HistoryPanel() {
   const [currentDate, setCurrentDate] = useState(new Date()) // 현재 날짜
-  const [selectedDate, setSelectedDate] = useState<Date>(
-    new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 0)
-  )
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null) // 선택된 날짜를 null로 초기화
   const [dayStates, setDayStates] = useState<boolean[]>([]) // 각 날짜의 상태
   const [sentMessages, setSentMessages] = useState<SentMessages[]>([])
   const [visiable, setVisiable] = useState(false)
   const isTyping = useSelector(
     (state: RootState) => state.chat['history'].isTyping
   )
+  const previousDate = useRef<Date | null>(null) // 이전 날짜 상태 저장
 
   useEffect(() => {
     if (!isTyping) {
@@ -34,85 +37,67 @@ export default function HistoryPanel() {
     }
   }, [isTyping])
 
+  // currentDate 변경 시 fetchDayStates 호출
   useEffect(() => {
-    if (
-      currentDate.getMonth() === selectedDate.getMonth() &&
-      currentDate.getDate() != selectedDate.getDate()
-    )
+    fetchDayStates()
+  }, [currentDate])
+
+  // selectedDate 변경 시 fetchMessageHistory 호출
+  useEffect(() => {
+    if (selectedDate) {
       fetchMessageHistory()
-    else if (currentDate.getMonth() !== selectedDate.getMonth())
-      fetchDayStates()
+    } else {
+      setSentMessages([]) // 날짜 선택이 해제되면 메시지 목록 초기화
+    }
   }, [selectedDate])
 
   const fetchDayStates = async () => {
     try {
-      await apiClient
-        .get(`/messageHistory/month/${selectedDate.toString()}`)
-        .then(res => {
-          if (res.data.code === 200) {
-            setDayStates(res.data.data)
-          } else {
-            throw new Error()
-          }
-        })
-        .catch(err => {})
+      const formattedDate = format(currentDate, 'yyyy-MM-dd', { locale: ko })
+      const res = await apiClient.get(`/messageHistory/month/${formattedDate}`)
+      if (res.data.code === 200) {
+        const newDaystate = res.data.data.slice(1)
+        setDayStates(newDaystate)
+      } else {
+        throw new Error('Failed to fetch day states')
+      }
     } catch (error) {
       console.error('Error fetching month states:', error)
     }
   }
 
   const fetchMessageHistory = async () => {
-    try {
-      await apiClient
-        .get(`/messageHistory/date/${selectedDate.toString()}`)
-        .then(res => {
-          if (res.data.code === 200) {
-            const messages = res.data.data
-            const newMessages: SentMessages[] = []
-            let id = 0
+    if (!selectedDate) return // 날짜가 선택되지 않은 경우 함수 종료
 
-            for (const message of messages) {
-              newMessages.push({
-                id: id++,
-                title: message.subject as string,
-                content: message.content as string,
-                date: new Date(message.createdAt), // Date 객체 생성
-                image: message.sendImage === null ? null : message.sendImage.url
-              })
-            }
-          } else {
-            throw new Error()
-          }
-        })
-        .catch(err => {
-          throw new Error()
-        })
+    try {
+      if (!dayStates[selectedDate.getDate() - 1]) {
+        setSentMessages([])
+        return
+      }
+      const formattedDate = format(selectedDate, 'yyyy-MM-dd', { locale: ko })
+      const res = await apiClient.get(`/messageHistory/date/${formattedDate}`)
+      if (res.data.code === 200) {
+        const messages = res.data.data
+        const newMessages: SentMessages[] = messages.map(
+          (message: any, index: number) => ({
+            id: index,
+            title: message.subject as string,
+            content: message.content as string,
+            date: new Date(message.createdAt),
+            image: message.sendImage === null ? null : message.sendImage.url
+          })
+        )
+        setSentMessages(newMessages)
+      } else {
+        throw new Error('Failed to fetch message history')
+      }
     } catch (error) {
-      console.error('Error fetching day states:', error)
+      console.error('Error fetching message history:', error)
     }
   }
 
-  /**
-   * 나중에 삭제
-   */
-  const daysInMonth = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth() + 1,
-    0
-  ).getDate()
-
-  // 더미 데이터 생성
-  const generateDummyDayStates = () => {
-    return Array.from({ length: daysInMonth }, () =>
-      Math.random() > 0.5 ? true : false
-    )
-  }
-  /**
-   *
-   */
-
   return (
-    visiable && (
+    <CSSTransition in={visiable} timeout={1000} classNames="fade" unmountOnExit>
       <div className="flex-col items-center justify-center mb-4">
         <Separator className="my-4" />
         <CalendarComponent
@@ -126,6 +111,6 @@ export default function HistoryPanel() {
         <Separator className="my-4" />
         <MessageHistory sentMessages={sentMessages} />
       </div>
-    )
+    </CSSTransition>
   )
 }
