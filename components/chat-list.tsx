@@ -9,6 +9,7 @@ import CalendarComponent from './chat/history/calendar'
 import { MessageHistory } from './chat/history/message-history'
 import HistoryPanel from './chat/history/history-panel'
 import SendMessagePanel from './chat/send-message/send-message-panel'
+import AddressBookModal from '@/app/address/modal/select-contact-modal';
 
 export const ChatList = ({
   chatId,
@@ -75,7 +76,7 @@ export const ChatList = ({
         )
       })}
       {isHistoryChat && <HistoryPanel />}
-      {isSendMessageChat && <SendMessagePanel/>}
+      {/* {isSendMessageChat && <AddressBookModal/>} */}
     </div>
   )
 }
