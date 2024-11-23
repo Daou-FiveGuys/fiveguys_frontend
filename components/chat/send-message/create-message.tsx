@@ -4,13 +4,13 @@ import { ButtonType } from '@/components/prompt-form'
 import { useDispatch } from 'react-redux'
 import { clearText, setText } from '@/redux/slices/createTextSlice'
 import Component from '@/components/image-option-modal'
-import {ImageOption, setImageOption} from '@/redux/slices/imageOptionSlice'
+import { ImageOption, setImageOption } from '@/redux/slices/imageOptionSlice'
 import { postImageGenerate } from '@/components/image-generator-api'
 import { setImageData } from '@/redux/slices/imageSlice'
 import Image from 'next/image'
 import ReactDOMServer from 'react-dom/server'
-import {ImageSkeleton} from "@/components/ui/image-skeleton";
-import {BotCard} from "@/components/stocks";
+import { ImageSkeleton } from '@/components/ui/image-skeleton'
+import { BotCard } from '@/components/stocks'
 
 interface CreateMessageProps {
   buttonType: ButtonType
@@ -19,9 +19,9 @@ interface CreateMessageProps {
 
 // 샘플 데이터
 const sampleData = {
-  title: "여름 할인 이벤트",
-  content: "무더운 여름을 시원하게! 전 제품 20% 할인",
-  imageUrl: "/placeholder.svg?height=300&width=400"
+  title: '여름 할인 이벤트',
+  content: '무더운 여름을 시원하게! 전 제품 20% 할인',
+  imageUrl: '/placeholder.svg?height=300&width=400'
 }
 
 export interface imgResponse {
@@ -29,8 +29,18 @@ export interface imgResponse {
   url: string
 }
 
-const CreateMessage: React.FC<CreateMessageProps> = ({ buttonType, lastUserInput }) => {
-  const [stage, setStage] = useState<'initial' | 'directInput' | 'autoGenerate' | 'imageOption' | 'generateImage' | 'loading'>('initial')
+const CreateMessage: React.FC<CreateMessageProps> = ({
+  buttonType,
+  lastUserInput
+}) => {
+  const [stage, setStage] = useState<
+    | 'initial'
+    | 'directInput'
+    | 'autoGenerate'
+    | 'imageOption'
+    | 'generateImage'
+    | 'loading'
+  >('initial')
   const dispatch = useDispatch()
   const [prompt, setPrompt] = useState<string>('')
   useEffect(() => {
@@ -50,27 +60,51 @@ const CreateMessage: React.FC<CreateMessageProps> = ({ buttonType, lastUserInput
       case 'initial':
         if (input.toLowerCase() === '직접입력') {
           setStage('directInput')
-          ChatUtils.addChat(buttonType, 'assistant', '홍보메시지를 직접 입력해주세요')
+          ChatUtils.addChat(
+            buttonType,
+            'assistant',
+            '홍보메시지를 직접 입력해주세요'
+          )
         } else if (input.toLowerCase() === '자동생성') {
           setStage('autoGenerate')
-          ChatUtils.addChat(buttonType, 'assistant', '홍보메시지의 주제를 입력해주세요')
+          ChatUtils.addChat(
+            buttonType,
+            'assistant',
+            '홍보메시지의 주제를 입력해주세요'
+          )
         } else {
-          ChatUtils.addChat(buttonType, 'assistant', '다시 입력해주세요. "직접입력" 또는 "자동생성"을 선택해주세요.')
+          ChatUtils.addChat(
+            buttonType,
+            'assistant',
+            '다시 입력해주세요. "직접입력" 또는 "자동생성"을 선택해주세요.'
+          )
         }
         break
       case 'directInput':
-        dispatch(setText({ text: input}))
+        dispatch(setText({ text: input }))
         setPrompt(input)
         ChatUtils.addChat(buttonType, 'user', input)
         setStage('imageOption')
-        ChatUtils.addChat(buttonType, 'assistant', '입력하신 내용이 저장되었습니다. 이미지 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"')
+        ChatUtils.addChat(
+          buttonType,
+          'assistant',
+          '입력하신 내용이 저장되었습니다. 이미지 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"'
+        )
         break
       case 'autoGenerate':
         const generatedText = JSON.stringify(sampleData)
         dispatch(setText({ text: generatedText }))
         ChatUtils.addChat(buttonType, 'user', input)
-        ChatUtils.addChat(buttonType, 'assistant', '샘플 데이터가 생성되었습니다: ' + generatedText)
-        ChatUtils.addChat(buttonType, 'assistant', '이미지 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"')
+        ChatUtils.addChat(
+          buttonType,
+          'assistant',
+          '샘플 데이터가 생성되었습니다: ' + generatedText
+        )
+        ChatUtils.addChat(
+          buttonType,
+          'assistant',
+          '이미지 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"'
+        )
         setStage('imageOption')
         break
       case 'imageOption':
@@ -115,9 +149,9 @@ const CreateMessage: React.FC<CreateMessageProps> = ({ buttonType, lastUserInput
     setStage('loading') // 로딩 상태로 변경
     const imageSkeleton = ImageLoader()
     const imageSkeletonId = ChatUtils.addChat(
-        buttonType,
-        'assistant',
-        ReactDOMServer.renderToString(imageSkeleton)
+      buttonType,
+      'assistant',
+      ReactDOMServer.renderToString(imageSkeleton)
     )
     try {
       // 이미지 생성 API 호출
@@ -132,15 +166,15 @@ const CreateMessage: React.FC<CreateMessageProps> = ({ buttonType, lastUserInput
       const imageUrl = result.url // 이미지 URL
       // 이미지 메시지 추가
       const imageComp = (
-          <BotCard>
-            <Image
-              src={imageUrl}
-              alt="Message image"
-              width={200}
-              height={200}
-              className="rounded-md"
-            />
-          </BotCard>
+        <BotCard>
+          <Image
+            src={imageUrl}
+            alt="Message image"
+            width={200}
+            height={200}
+            className="rounded-md"
+          />
+        </BotCard>
       )
 
       ChatUtils.deleteChat(buttonType, imageSkeletonId) // 로딩창 삭제
@@ -168,13 +202,12 @@ const CreateMessage: React.FC<CreateMessageProps> = ({ buttonType, lastUserInput
 
 export default CreateMessage
 
-
 export function ImageLoader() {
   return (
-      <div className="space-y-2">
-        <BotCard>
-          <ImageSkeleton  />
-        </BotCard>
-      </div>
+    <div className="space-y-2">
+      <BotCard>
+        <ImageSkeleton />
+      </BotCard>
+    </div>
   )
 }
