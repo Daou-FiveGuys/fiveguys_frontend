@@ -11,6 +11,8 @@ import Image from 'next/image'
 import ReactDOMServer from 'react-dom/server'
 import { ImageSkeleton } from '@/components/ui/image-skeleton'
 import { BotCard } from '@/components/stocks'
+import ImagePreviewModal from '@/components/image-preview-modal'
+import { useRouter } from 'next/navigation'
 
 interface CreateMessageProps {
   buttonType: ButtonType
@@ -40,6 +42,7 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
     | 'imageOption'
     | 'generateImage'
     | 'loading'
+    | 'editImage'
   >('initial')
   const dispatch = useDispatch()
   const [prompt, setPrompt] = useState<string>('')
@@ -183,18 +186,33 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
         'assistant',
         ReactDOMServer.renderToString(imageComp)
       )
+      setImageUrls(imageUrl)
+      setStage('editImage')
       dispatch(clearText())
     } catch (error) {
       console.error('이미지 생성 실패:', error)
-    } finally {
-      setStage('initial') // 초기 상태로
     }
+  }
+  const [imageUrls, setImageUrls] = useState('')
+  const router = useRouter()
+  const handleEditImage = (isEdit: boolean) => {
+    const editMessage = isEdit ? '편집을 시작합니다.' : '편집을 취소합니다.'
+    ChatUtils.addChat(buttonType, 'assistant-animation', editMessage)
+    isEdit && router.push('/edit/1')
+    setStage('initial')
   }
 
   return (
     <div>
       {stage === 'generateImage' ? (
         <Component isOpen={true} onClose={handleGenerateImage} />
+      ) : null}
+      {stage === 'editImage' ? (
+        <ImagePreviewModal
+          imageUrl={imageUrls}
+          isOpen={true}
+          onClose={handleEditImage}
+        />
       ) : null}
     </div>
   )
