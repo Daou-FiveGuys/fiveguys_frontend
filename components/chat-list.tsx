@@ -21,7 +21,7 @@ export const ChatList = ({
   messages: Message[]
 }) => {
   console.log(messages) 
-  const newMessage = messages.filter((m,i)=> i!=1);
+  const newMessage = messages.filter((m,i)=> i == 0 || (i>0 && messages[i-1].text) !== m.text);
   if (newMessage.length === 0) {
     return null
   }
