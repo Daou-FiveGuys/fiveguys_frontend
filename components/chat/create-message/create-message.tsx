@@ -4,7 +4,8 @@ import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
-import CreateMessage from './create-message'
+import CreateMessage from '@/components/chat/send-message/create-message'
+import { setText, clearText } from '@/redux/slices/createTextSlice'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -16,16 +17,20 @@ interface CustomButtonProps {
   setActiveButton: (value: ButtonType) => void
 }
 
-const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
+const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
   ({ buttonType, activeButton, setActiveButton }, ref) => {
+    
     const isActive = buttonType === activeButton
     const [hasAddedChat, setHasAddedChat] = React.useState(false)
     const [lastUserInput, setLastUserInput] = React.useState<string | null>(null)
     const message = useSelector((state: RootState) => state.chat[buttonType])
+    const message2 = useSelector((state: RootState) => state.createText)
 
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
-        if (isActive && value.trim()) {
+        ChatUtils.clearChat('send-message')
+        setText({text:''})
+        if (value.trim()) {
           ChatUtils.addChat(buttonType, 'user', value.trim())
           setLastUserInput(value.trim())
         }
@@ -48,14 +53,14 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         <Button
           className="w-full md:w-28 h-8 mb-2 md:mb-0"
           variant={isActive ? 'default' : 'outline'}
-          onClick={() => setActiveButton(buttonType)}
+          onClick={() => setActiveButton('create-message')}
         >
-          메시지 전송
+          문자 생성
         </Button>
-        <CreateMessage buttonType={'send-message'} lastUserInput={lastUserInput} />
+        <CreateMessage buttonType={'create-message'} lastUserInput={lastUserInput} />
       </>
     )
   }
 )
 
-export default SendMessageButton
+export default CreateMessageButton

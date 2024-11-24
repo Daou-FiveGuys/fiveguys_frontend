@@ -1,9 +1,11 @@
-import React, { forwardRef, useImperativeHandle } from 'react'
+import React, { forwardRef, useImperativeHandle, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '../prompt-form'
 import ChatUtils from './utils/ChatUtils'
-import { useSelector } from 'react-redux'
-import { RootState } from '@/redux/store'
+import { api, CommonResponse } from '@/app/faq_chatbot/faq_service'
+import ReactMarkdown from 'react-markdown'
+import apiClient from '@/services/apiClient'
+import { FaqResponse } from '@/app/faq_chatbot/faq_response'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -22,12 +24,58 @@ const FaqButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     const timeoutRef = React.useRef<NodeJS.Timeout | null>(null)
 
     useImperativeHandle(ref, () => ({
-      handleEnterPress: (value: string) => {
+      handleEnterPress: async (value: string) => {
         if (isActive && value.trim()) {
           ChatUtils.addChat(buttonType, 'user', value.trim())
+
+          await fetchApiResponse(value.trim())
+
+          setActiveButton(buttonType)
         }
       }
     }))
+
+    // FaqButton.tsx
+    // ...
+    const fetchApiResponse = async (question: string) => {
+      try {
+        const id = ChatUtils.addChat(
+          buttonType,
+          'assistant-animation',
+          '생각중입니다...'
+        )
+        await apiClient
+          .post<CommonResponse<FaqResponse>>(`/chatbot`, {
+            message: question,
+            ai_model_id: 0
+          })
+          .then(res => {
+            if (res.data.code == 200 || res.data.code == 404) {
+              ChatUtils.editUserType('faq', id, 'assistant-animation-html')
+              ChatUtils.editChat(
+                'faq',
+                id,
+                ChatUtils.reactNodeToString(
+                  <ReactMarkdown>{`${res.data.data}`}</ReactMarkdown>
+                )
+              )
+              ChatUtils.editIsTyping('faq', true)
+            } else {
+              ChatUtils.editIsTyping('faq', false)
+              throw new Error()
+            }
+          })
+          .catch(err => {})
+      } catch (error) {
+        console.error('Error fetching FAQ response:', error)
+        ChatUtils.addChat(
+          buttonType,
+          'assistant',
+          '요청값을 받는중 오류가 발생했습니다.'
+        )
+      }
+    }
+    // ...
 
     React.useEffect(() => {
       if (ChatUtils.dispatch && !hasAddedChat && isActive) {

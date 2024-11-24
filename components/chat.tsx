@@ -4,9 +4,8 @@ import { cn } from '@/lib/utils'
 import { ChatList } from '@/components/chat-list'
 import { ChatPanel } from '@/components/chat-panel'
 import { EmptyScreen } from '@/components/empty-screen'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Message, Session } from '@/lib/types'
-import { useScrollAnchor } from '@/lib/hooks/use-scroll-anchor'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import { ButtonType } from './prompt-form'
@@ -25,23 +24,107 @@ export function Chat({ id, className }: ChatProps) {
     state.chat[activeButton] ? state.chat[activeButton].messages : []
   )
 
-  const { messagesRef, scrollRef, visibilityRef, isAtBottom, scrollToBottom } =
-    useScrollAnchor()
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (isAtBottom) {
-      scrollToBottomWithAnimation() // 애니메이션 스크롤 호출
-    }
-  }, [messages.length]) // 메시지 길이가 변경될 때 호출
+  const [isUserScrolling, setIsUserScrolling] = useState(false)
+  const isUserScrollingRef = useRef(false) // 사용자 스크롤 상태 레퍼런스
+
+  const [isAtBottom, setIsAtBottom] = useState(true)
+  const isAtBottomRef = useRef(true) // 스크롤 최하단 상태 레퍼런스
+
+  const scrollTimeoutRef = useRef<number | null>(null) // 스크롤 타임아웃 레퍼런스
+
+  const easeCustom = (progress: number) => {
+    // sine 기반 부드러운 가속/감속
+    return Math.sin((progress * Math.PI) / 2)
+  }
 
   const scrollToBottomWithAnimation = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: 'smooth' // 부드러운 스크롤 애니메이션
-      })
+    if (
+      scrollRef.current &&
+      isAtBottomRef.current &&
+      !isUserScrollingRef.current
+    ) {
+      const start = scrollRef.current.scrollTop
+      const end = scrollRef.current.scrollHeight
+      const duration = 1000 // 애니메이션 지속 시간 (ms)
+      const startTime = performance.now()
+
+      const animateScroll = (currentTime: number) => {
+        const elapsed = currentTime - startTime
+        const progress = Math.min(elapsed / duration, 1) // 진행 비율 (0~1)
+
+        const easeCustomProgress = easeCustom(progress)
+        scrollRef.current!.scrollTop =
+          start + (end - start) * easeCustomProgress
+
+        if (progress < 1) {
+          requestAnimationFrame(animateScroll)
+        }
+      }
+
+      requestAnimationFrame(animateScroll)
     }
   }
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current
+
+    // 현재 스크롤이 하단에 있는지 확인
+    const isAtBottomNow = scrollHeight - scrollTop <= clientHeight + 5
+    setIsAtBottom(isAtBottomNow)
+    isAtBottomRef.current = isAtBottomNow // 레퍼런스 업데이트
+
+    // 사용자가 스크롤 중임을 표시
+    setIsUserScrolling(true)
+    isUserScrollingRef.current = true // 레퍼런스 업데이트
+
+    // 이전 타임아웃 클리어
+    if (scrollTimeoutRef.current) {
+      window.clearTimeout(scrollTimeoutRef.current)
+    }
+
+    // 스크롤 중단 후 200ms 뒤에 isUserScrolling을 false로 설정
+    scrollTimeoutRef.current = window.setTimeout(() => {
+      setIsUserScrolling(false)
+      isUserScrollingRef.current = false // 레퍼런스 업데이트
+    }, 200)
+  }
+
+  useEffect(() => {
+    const observer = new ResizeObserver(() => {
+      if (!scrollRef.current) return
+
+      // 레퍼런스 값을 사용하여 조건 확인
+      if (isAtBottomRef.current && !isUserScrollingRef.current) {
+        scrollToBottomWithAnimation()
+      }
+    })
+
+    if (messagesContainerRef.current) {
+      observer.observe(messagesContainerRef.current)
+    }
+
+    return () => {
+      if (messagesContainerRef.current) {
+        observer.unobserve(messagesContainerRef.current)
+      }
+    }
+  }, []) // 빈 배열로 의존성 제거
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.addEventListener('scroll', handleScroll)
+    }
+
+    return () => {
+      if (scrollRef.current) {
+        scrollRef.current.removeEventListener('scroll', handleScroll)
+      }
+    }
+  }, [])
 
   return (
     <div
@@ -50,14 +133,13 @@ export function Chat({ id, className }: ChatProps) {
     >
       <div
         className={cn('pb-[250px] pt-4 md:pt-10', className)}
-        ref={messagesRef}
+        ref={messagesContainerRef}
       >
         {messages.length ? (
           <ChatList chatId={activeButton} messages={messages} />
         ) : (
           <EmptyScreen />
         )}
-        <div className="w-full h-px" ref={visibilityRef} />
       </div>
       <ChatPanel
         id={id}

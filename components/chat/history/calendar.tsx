@@ -1,22 +1,21 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { Button } from '@/components/ui/button'
 
 interface CalendarProps {
   currentDate: Date
   setCurrentDate: (currentDate: Date) => void
-  selectedDate: Date
-  setSelectedDate: (selectedDate: Date) => void
+  selectedDate: Date | null
+  setSelectedDate: (selectedDate: Date | null) => void
   dayStates: boolean[]
   setDayStates: (dayStates: boolean[]) => void
 }
 
 export default function CalendarComponent({
-  currentDate: currentDate,
-  setCurrentDate: setCurrentDate,
-  selectedDate: selectedDate,
-  setSelectedDate: setSelectedDate,
-  dayStates: dayStates,
-  setDayStates: setDayStates
+  currentDate,
+  setCurrentDate,
+  selectedDate,
+  setSelectedDate,
+  dayStates
 }: CalendarProps): JSX.Element {
   // 현재 월의 날짜 계산
   const firstDayOfMonth = new Date(
@@ -35,7 +34,6 @@ export default function CalendarComponent({
     return day > 0 && day <= daysInMonth ? day : null
   })
 
-  // 월 변경 또는 초기 로딩 시 데이터 설정
   // 이전 달로 이동
   const handlePrevMonth = () => {
     const newDate = new Date(
@@ -44,9 +42,7 @@ export default function CalendarComponent({
       1
     )
     setCurrentDate(newDate)
-    setSelectedDate(
-      new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 0)
-    )
+    setSelectedDate(null) // 선택된 날짜 해제
   }
 
   // 다음 달로 이동
@@ -57,9 +53,7 @@ export default function CalendarComponent({
       1
     )
     setCurrentDate(newDate)
-    setSelectedDate(
-      new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
-    ) // 새로운 달의 1일로 설정
+    setSelectedDate(null) // 선택된 날짜 해제
   }
 
   // 날짜 클릭 핸들러
@@ -71,13 +65,14 @@ export default function CalendarComponent({
         day
       )
 
-      // 이미 선택된 날짜와 동일하면 API 호출 방지
+      // 같은 날짜를 선택한 경우 해제
       if (
         selectedDate &&
         selectedDate.getDate() === newSelectedDate.getDate() &&
         selectedDate.getMonth() === newSelectedDate.getMonth() &&
         selectedDate.getFullYear() === newSelectedDate.getFullYear()
       ) {
+        setSelectedDate(null) // 선택 해제
         return
       }
 
@@ -124,9 +119,11 @@ export default function CalendarComponent({
           {/* 날짜 렌더링 */}
           {daysArray.map((day, i) => {
             const isSelected =
-              day === selectedDate?.getDate() &&
-              currentDate.getMonth() === selectedDate?.getMonth() &&
-              currentDate.getFullYear() === selectedDate?.getFullYear()
+              day &&
+              selectedDate &&
+              day === selectedDate.getDate() &&
+              currentDate.getMonth() === selectedDate.getMonth() &&
+              currentDate.getFullYear() === selectedDate.getFullYear()
 
             return (
               <div
@@ -168,16 +165,11 @@ function ChevronLeftIcon(props: React.SVGProps<SVGSVGElement>): JSX.Element {
     <svg
       {...props}
       xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
       fill="none"
+      viewBox="0 0 24 24"
       stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
     >
-      <path d="m15 18-6-6 6-6" />
+      <path d="M15 19l-7-7 7-7" />
     </svg>
   )
 }
@@ -187,16 +179,11 @@ function ChevronRightIcon(props: React.SVGProps<SVGSVGElement>): JSX.Element {
     <svg
       {...props}
       xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
       fill="none"
+      viewBox="0 0 24 24"
       stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
     >
-      <path d="m9 18 6-6-6-6" />
+      <path d="M9 5l7 7-7 7" />
     </svg>
   )
 }

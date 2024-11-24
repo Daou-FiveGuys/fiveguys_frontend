@@ -18,6 +18,8 @@ import { RootState } from '@/redux/store'
 import FaqButton, { CustomButtonHandle } from './chat/faq'
 import HistoryButton from './chat/history/history'
 import SendMessageButton from './chat/send-message/send-message'
+import CreateMessageButton from './chat/create-message/create-message'
+import ImagePromptButton from './chat/image-prompt/image-prompt'
 
 /**
  *
@@ -77,7 +79,9 @@ export function PromptForm({
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const FaqButtonRef = React.useRef<CustomButtonHandle>(null)
   const HistoryButtonRef = React.useRef<CustomButtonHandle>(null)
+  const CreateMessageButtonRef = React.useRef<CustomButtonHandle>(null)
   const SendMessageButtonRef = React.useRef<CustomButtonHandle>(null)
+  const ImagePromptButtonRef = React.useRef<CustomButtonHandle>(null)
 
 
   const isTyping = useSelector(
@@ -110,9 +114,16 @@ export function PromptForm({
     if (HistoryButtonRef.current && activeButton === 'history') {
       HistoryButtonRef.current.handleEnterPress(trimmedValue)
     }
+    if (CreateMessageButtonRef.current && activeButton === 'create-message') {
+      CreateMessageButtonRef.current.handleEnterPress(trimmedValue)
+    }
     if (SendMessageButtonRef.current && activeButton === 'send-message') {
       SendMessageButtonRef.current.handleEnterPress(trimmedValue)
     }
+    if (ImagePromptButtonRef.current && activeButton === 'create-image-prompt') {
+      ImagePromptButtonRef.current.handleEnterPress(trimmedValue)
+    }
+    
 
     setInput('')
   }
@@ -120,7 +131,8 @@ export function PromptForm({
   return (
     <>
       <div className="flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-2 px-4 md:px-8">
-        <FaqButton
+
+      <FaqButton
           ref={FaqButtonRef}
           buttonType="faq"
           activeButton={activeButton}
@@ -132,9 +144,36 @@ export function PromptForm({
           activeButton={activeButton}
           setActiveButton={setActiveButton}
         />
+        {/* {
+          activeButton==="send-message"?
+                  <CreateMessageButton
+          ref={CreateMessageButtonRef}
+          buttonType="create-message"
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
+          />:
+          <FaqButton
+          ref={FaqButtonRef}
+          buttonType="faq"
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
+        />
+        } */}
+        <CreateMessageButton
+          ref={CreateMessageButtonRef}
+          buttonType="create-message"
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
+          />
+        <ImagePromptButton
+          ref={ImagePromptButtonRef}
+          buttonType="create-image-prompt"
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
+          />
         <SendMessageButton
           ref={SendMessageButtonRef}
-          buttonType="send-message"
+          buttonType='send-message'
           activeButton={activeButton}
           setActiveButton={setActiveButton}
         />
