@@ -121,7 +121,7 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
             'assistant',
             '이미지 생성을 시작합니다.'
           )
-          //setStage('generateImage') 로컬에선 오류떠서.
+          setStage('generateImage')
         } else if (['이미지 업로드', '이미지 없이'].includes(input)) {
           ChatUtils.addChat(buttonType, 'user', input)
           ChatUtils.addChat(
@@ -139,7 +139,19 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
             'assistant',
             '올바른 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"'
           )
+          ChatUtils.addChat(
+            buttonType,
+            'assistant',
+            '올바른 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"'
+          )
         }
+        break
+      case 'generateImage':
+        ChatUtils.addChat(
+          buttonType,
+          'assistant',
+          '이미지를 생성하는 중입니다.'
+        )
         break
       case 'generateImage':
         ChatUtils.addChat(

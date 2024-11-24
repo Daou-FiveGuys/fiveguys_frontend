@@ -42,30 +42,33 @@ export function Chat({ id, className }: ChatProps) {
 
   const scrollToBottomWithAnimation = () => {
     if (
-      scrollRef.current &&
-      isAtBottomRef.current &&
-      !isUserScrollingRef.current
+      !scrollRef.current ||
+      !isAtBottomRef.current ||
+      isUserScrollingRef.current
     ) {
-      const start = scrollRef.current.scrollTop
-      const end = scrollRef.current.scrollHeight
-      const duration = 1000 // 애니메이션 지속 시간 (ms)
-      const startTime = performance.now()
-
-      const animateScroll = (currentTime: number) => {
-        const elapsed = currentTime - startTime
-        const progress = Math.min(elapsed / duration, 1) // 진행 비율 (0~1)
-
-        const easeCustomProgress = easeCustom(progress)
-        scrollRef.current!.scrollTop =
-          start + (end - start) * easeCustomProgress
-
-        if (progress < 1) {
-          requestAnimationFrame(animateScroll)
-        }
-      }
-
-      requestAnimationFrame(animateScroll)
+      return
     }
+
+    const start = scrollRef.current.scrollTop
+    const end = scrollRef.current.scrollHeight
+    const duration = 1000 // animation duration (ms)
+    const startTime = performance.now()
+
+    const animateScroll = (currentTime: number) => {
+      if (!scrollRef.current) return
+
+      const elapsed = currentTime - startTime
+      const progress = Math.min(elapsed / duration, 1) // Progress (0 to 1)
+      const easeCustomProgress = easeCustom(progress)
+
+      scrollRef.current.scrollTop = start + (end - start) * easeCustomProgress
+
+      if (progress < 1) {
+        requestAnimationFrame(animateScroll)
+      }
+    }
+
+    requestAnimationFrame(animateScroll)
   }
 
   const handleScroll = () => {

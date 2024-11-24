@@ -8,10 +8,14 @@ const matchUrl = (request: NextRequest, paths: string[]): boolean => {
 
 // 미들웨어
 export async function middleware(request: NextRequest): Promise<NextResponse> {
-  const PUBLIC_PATHS = ['/login', '/signup']
+  const PUBLIC_PATHS = ['/login', '/signup', '/welcome']
   const BASE_URL = 'http://hansung-fiveguys.duckdns.org'
+  // const BASE_URL = 'http://localhost:3000'
 
   const access_token = request.cookies.get('access_token')
+  if (request.nextUrl.pathname === '/' && !access_token) {
+    return NextResponse.redirect(new URL(`${BASE_URL}/welcome`, request.url))
+  }
 
   // 공개 경로 요청인지 확인
   if (!access_token) {

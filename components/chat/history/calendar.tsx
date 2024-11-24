@@ -15,7 +15,8 @@ export default function CalendarComponent({
   setCurrentDate,
   selectedDate,
   setSelectedDate,
-  dayStates
+  dayStates,
+  setDayStates
 }: CalendarProps): JSX.Element {
   // 현재 월의 날짜 계산
   const firstDayOfMonth = new Date(
@@ -43,6 +44,7 @@ export default function CalendarComponent({
     )
     setCurrentDate(newDate)
     setSelectedDate(null) // 선택된 날짜 해제
+    setDayStates([])
   }
 
   // 다음 달로 이동
@@ -54,6 +56,7 @@ export default function CalendarComponent({
     )
     setCurrentDate(newDate)
     setSelectedDate(null) // 선택된 날짜 해제
+    setDayStates([])
   }
 
   // 날짜 클릭 핸들러

@@ -6,6 +6,9 @@ import { api, CommonResponse } from '@/app/faq_chatbot/faq_service'
 import ReactMarkdown from 'react-markdown'
 import apiClient from '@/services/apiClient'
 import { FaqResponse } from '@/app/faq_chatbot/faq_response'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/redux/store'
+import { useIsMessagesEmpty } from '@/lib/hooks/use-message-is-empty'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -77,15 +80,18 @@ const FaqButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     }
     // ...
 
+    const isMessagesEmpty = useIsMessagesEmpty(buttonType)
     React.useEffect(() => {
       if (ChatUtils.dispatch && !hasAddedChat && isActive) {
         timeoutRef.current = setTimeout(() => {
-          ChatUtils.addChat(
-            buttonType,
-            'assistant-animation',
-            '안녕하세요 뿌리오 FAQ 챗봇입니다. 궁금하신 점이 있으신가요? 🙋🏻'
-          )
-          setHasAddedChat(true)
+          if (isMessagesEmpty) {
+            ChatUtils.addChat(
+              buttonType,
+              'assistant-animation',
+              '안녕하세요 뿌리오 FAQ 챗봇입니다. 궁금하신 점이 있으신가요? 🙋🏻'
+            )
+            setHasAddedChat(true)
+          }
         }, 5000)
       }
 
