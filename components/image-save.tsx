@@ -1,24 +1,24 @@
+'use client'
+
 import React, { useEffect, useState } from 'react'
 import * as fabric from 'fabric'
-import ImageProcessingRequestSuccessModal from './image-confirm-modal'
 
-interface YourComponentProps {
+interface SaveEditedImageProps {
   canvas: fabric.Canvas | null
   isDone: boolean
   setIsDone: React.Dispatch<React.SetStateAction<boolean>>
+  onFileGenerated: (file: File) => void // Callback prop
 }
 
-const SaveEditedImage: React.FC<YourComponentProps> = ({
+const SaveEditedImage: React.FC<SaveEditedImageProps> = ({
   canvas,
   isDone,
-  setIsDone
+  setIsDone,
+  onFileGenerated
 }) => {
-  const [showProcessingModal, setShowProcessingModal] = useState(false)
-
   useEffect(() => {
     if (!canvas || !isDone) return
 
-    // 캔버스를 이미지 데이터로 변환 (검은 배경에 흰색 외곽선, 검정색 채우기로 추출)
     const imageData = canvas.toDataURL({
       format: 'png',
       quality: 1.0,
@@ -26,35 +26,31 @@ const SaveEditedImage: React.FC<YourComponentProps> = ({
       enableRetinaScaling: true
     })
 
-    setShowProcessingModal(true)
+    const blob = dataURLToBlob(imageData)
+    const fileName = `edited_image_${new Date().toISOString()}.png`
+    const generatedFile = new File([blob], fileName, { type: 'image/png' })
 
-    const timer = setTimeout(() => {
-      setShowProcessingModal(false)
+    onFileGenerated(generatedFile) // Notify parent
+    setIsDone(false)
+  }, [canvas, isDone, setIsDone, onFileGenerated])
 
-      // 다운로드 처리
-      const link = document.createElement('a')
-      link.href = imageData
-      link.download = 'canvas_image.png'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+  const dataURLToBlob = (dataURL: string): Blob => {
+    const parts = dataURL.split(',')
+    const byteString =
+      parts[0].indexOf('base64') >= 0
+        ? atob(parts[1])
+        : decodeURIComponent(parts[1])
+    const mimeString = parts[0].split(':')[1].split(';')[0]
 
-      canvas.renderAll()
-      setIsDone(false) // 업스케일링 상태 해제
-    }, 3000) // 3초 동안 처리 완료 모달 표시
+    const array = new Uint8Array(byteString.length)
+    for (let i = 0; i < byteString.length; i++) {
+      array[i] = byteString.charCodeAt(i)
+    }
 
-    return () => clearTimeout(timer) // 타이머 정리
-  }, [canvas, isDone, setIsDone])
+    return new Blob([array], { type: mimeString })
+  }
 
-  return (
-    <div>
-      {showProcessingModal && (
-        <ImageProcessingRequestSuccessModal
-          onConfirm={() => setShowProcessingModal(false)}
-        />
-      )}
-    </div>
-  )
+  return null // No UI needed
 }
 
 export default SaveEditedImage
