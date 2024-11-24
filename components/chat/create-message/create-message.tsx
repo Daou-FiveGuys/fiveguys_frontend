@@ -2,11 +2,12 @@ import React, { forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import CreateMessage from '@/components/chat/send-message/create-message'
 import { setText, clearText } from '@/redux/slices/createTextSlice'
 import {setImageOption} from '@/redux/slices/imageOptionSlice'
+import { clearMessages, deleteMessage } from '@/redux/slices/chatSlice'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -27,11 +28,16 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     const message = useSelector((state: RootState) => state.chat[buttonType])
     const message2 = useSelector((state: RootState) => state.createText)
     const imageOption = useSelector((state: RootState) => state.imageOption)
-
+    const dispatch = useDispatch()
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
-        ChatUtils.clearChat('send-message')
-        ChatUtils.clearChat('create-image-prompt')
+        //ChatUtils.clearChat('send-message')
+         dispatch(
+          clearMessages({chatId:'send-message'})
+        )
+        dispatch(
+          clearMessages({chatId:'create-image-prompt'})
+        )
         setText({text:''})
         setImageOption(
           {
