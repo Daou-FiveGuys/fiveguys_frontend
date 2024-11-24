@@ -1412,7 +1412,9 @@ export default function ImageEditor() {
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
-  const handleFileGenerated = (generatedFile: File) => {
+  const [method, setMethod] = useState<string>('image')
+  const handleFileGenerated = (generatedFile: File, method: string) => {
+    setMethod(method)
     setFile(generatedFile)
     setIsModalOpen(true)
   }
@@ -2210,7 +2212,11 @@ export default function ImageEditor() {
           />
         )}
         {isModalOpen && file && (
-          <AddressBookModal file={file} onClose={handleCloseModal} />
+          <AddressBookModal
+            file={file}
+            onClose={handleCloseModal}
+            method={method}
+          />
         )}
         {!available && (
           <ImageNotAvailableModal onConfirm={() => setAvailable(true)} />
