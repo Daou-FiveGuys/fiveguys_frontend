@@ -2,9 +2,10 @@ import React, { forwardRef, useImperativeHandle, useEffect, useMemo } from 'reac
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import CreateMessage from './create-message'
+import { clearMessages } from '@/redux/slices/chatSlice'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -22,7 +23,7 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     const [hasAddedChat, setHasAddedChat] = React.useState(false)
     const [lastUserInput, setLastUserInput] = React.useState<string | null>(null)
     const message = useSelector((state: RootState) => state.chat[buttonType])
-
+    const dispatch = useDispatch()
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
         if (isActive && value.trim()) {
