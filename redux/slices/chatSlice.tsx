@@ -1,7 +1,12 @@
 // chatSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-export type UserType = 'user' | 'assistant-animation' | 'assistant' | 'normal'
+export type UserType =
+  | 'user'
+  | 'assistant-animation'
+  | 'assistant-animation-html'
+  | 'assistant'
+  | 'normal'
 
 export interface Message {
   id: string
