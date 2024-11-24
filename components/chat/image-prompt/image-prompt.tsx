@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import CreateMessage from '@/components/chat/send-message/create-message'
 import { setText } from '@/redux/slices/createTextSlice'
+import CreateImagePrompt from './createimageprompt'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -28,7 +29,6 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       handleEnterPress: (value: string) => {
         ChatUtils.clearChat('send-message')
         ChatUtils.clearChat('create-message')
-        setText({text:''})
         if (isActive && value.trim()) {
           ChatUtils.addChat(buttonType, 'user', value.trim())
           setLastUserInput(value.trim())
@@ -56,7 +56,7 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         >
           프롬프트 생성
         </Button>
-        <CreateMessage buttonType={'create-image-prompt'} lastUserInput={lastUserInput} />
+        <CreateImagePrompt buttonType={'create-image-prompt'} lastUserInput={lastUserInput} />
       </>
     )
   }
