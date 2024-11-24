@@ -52,7 +52,7 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         >
           메시지 전송
         </Button>
-        <CreateMessage buttonType={buttonType} lastUserInput={lastUserInput} />
+        <CreateMessage buttonType={'send-message'} lastUserInput={lastUserInput} />
       </>
     )
   }
