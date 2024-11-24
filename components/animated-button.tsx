@@ -1,4 +1,6 @@
+'use client'
 import { cn } from '@/lib/utils'
+import { useRouter } from 'next/navigation'
 import React, { type CSSProperties } from 'react'
 
 interface ShimmerButtonProps {
@@ -21,8 +23,11 @@ const ShimmerButton = ({
   children,
   ...props
 }: ShimmerButtonProps) => {
+  const router = useRouter()
   return (
     <button
+      type="button" // 버튼 타입 추가
+      onClick={() => router.push('/login')}
       style={
         {
           '--spread': '90deg',

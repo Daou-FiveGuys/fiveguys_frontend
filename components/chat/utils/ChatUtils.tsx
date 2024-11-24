@@ -8,8 +8,10 @@ import {
   updateMessageUserType,
   UserType
 } from '@/redux/slices/chatSlice'
+import { RootState } from '@/redux/store'
 import { nanoid } from 'nanoid'
 import ReactDOMServer from 'react-dom/server'
+import { useSelector } from 'react-redux'
 
 /**
  * 채팅 기록 유지를 위한 static class

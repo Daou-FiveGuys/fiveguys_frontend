@@ -19,15 +19,27 @@ export default function UserOrLogin() {
           <div className="flex items-center">
             <IconSeparator className="size-6 text-muted-foreground/50" />
             <Button variant="link" asChild className="-ml-2">
-              <Link href="/mypage">My Page</Link>
+              <Link href="/mypage">마이페이지 🚀</Link>
             </Button>
+          </div>
+        )}
+      {!pathname.includes('/mypage') &&
+        !pathname.includes('/login') &&
+        !pathname.includes('/address') &&
+        !pathname.includes('/signup') && (
+          <div className="flex items-center">
+            <div className="flex items-center">
+              <Button variant="link" asChild className="-ml-2">
+                <Link href="/address">주소록 관리 📂</Link>
+              </Button>
+            </div>
           </div>
         )}
       {pathname.includes('/mypage') && (
         <div className="flex items-center">
           <IconSeparator className="size-6 text-muted-foreground/50" />
           <Button variant="link" asChild className="-ml-2">
-            <Link href="/logout">Logout</Link>
+            <Link href="/logout">로그아웃</Link>
           </Button>
         </div>
       )}
