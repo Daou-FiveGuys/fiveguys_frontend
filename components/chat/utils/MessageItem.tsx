@@ -66,6 +66,7 @@ const MessageItem: React.FC<MessageItemProps> = React.memo(
     }
 
     if (message.userType === 'assistant-animation-html') {
+      console.log(content)
       return (
         <div className="bot-message">
           <BotCard>
