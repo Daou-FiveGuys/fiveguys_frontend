@@ -32,28 +32,13 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       }
     }))
 
-    // useEffect(() => {
-    //   if (ChatUtils.dispatch && !hasAddedChat) {
-    //     if(buttonType === 'send-message'){
-    //       ChatUtils.addChat(
-    //         buttonType,
-    //         'assistant-animation',
-    //         '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
-    //       )
-    //     }
-    //     setHasAddedChat(true)
-    //   }
-    // }, [buttonType])
-
-    const [first, setFirst] = React.useState(true);
-    React.useMemo(() => {
-      if (ChatUtils.dispatch && !hasAddedChat && isActive && first) {
-                  setFirst(false)
+    React.useEffect(() => {
+      if (ChatUtils.dispatch && !hasAddedChat && isActive) {
           setHasAddedChat(true)
           ChatUtils.addChat(
             buttonType,
             'assistant-animation',
-            '안녕하세요 뿌리오 FAQ 챗봇입니다. 궁금하신 점이 있으신가요? 🙋🏻'
+            '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
           )
       }
     }, [isActive])
