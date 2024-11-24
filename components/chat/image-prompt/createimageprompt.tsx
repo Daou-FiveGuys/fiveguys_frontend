@@ -54,9 +54,9 @@ const CreateImagePrompt: React.FC<CreateMessageProps> = ({
     }
   }, [dispatch])
 
-//   useEffect(() => {
-//     setStage('generateImage')
-//   }, [lastUserInput, buttonType])
+  useEffect(() => {
+    setStage('generateImage')
+  }, [lastUserInput, buttonType])
 
   const message = useSelector((state: RootState) => state.createText)
 
