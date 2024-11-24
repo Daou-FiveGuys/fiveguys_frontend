@@ -4,7 +4,6 @@ import { ButtonType } from '@/components/prompt-form'
 import { useDispatch } from 'react-redux'
 import { setText } from '@/redux/slices/createTextSlice'
 import { useRouter } from 'next/navigation'
-import AddressBookModal from '@/app/address/modal/select-contact-modal'
 
 interface CreatingMessageProps {
   buttonType: ButtonType

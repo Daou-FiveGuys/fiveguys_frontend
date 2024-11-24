@@ -20,6 +20,7 @@ import HistoryButton from './chat/history/history'
 import SendMessageButton from './chat/send-message/send-message'
 import CreateMessageButton from './chat/create-message/create-message'
 import ImagePromptButton from './chat/image-prompt/image-prompt'
+import ReturnButton from './chat/ReturnButton'
 
 /**
  *
@@ -123,7 +124,6 @@ export function PromptForm({
     if (ImagePromptButtonRef.current && activeButton === 'create-image-prompt') {
       ImagePromptButtonRef.current.handleEnterPress(trimmedValue)
     }
-    
 
     setInput('')
   }
@@ -132,6 +132,8 @@ export function PromptForm({
     <>
       <div className="flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-2 px-4 md:px-8">
 
+  
+      <ReturnButton setActiveButton={setActiveButton}></ReturnButton>
       <FaqButton
           ref={FaqButtonRef}
           buttonType="faq"
@@ -144,13 +146,13 @@ export function PromptForm({
           activeButton={activeButton}
           setActiveButton={setActiveButton}
         />
-                <CreateMessageButton
+        <CreateMessageButton
           ref={CreateMessageButtonRef}
-          buttonType='create-message'
+          buttonType="create-message"
           activeButton={activeButton}
           setActiveButton={setActiveButton}
-        />
-                <ImagePromptButton
+          />
+        <ImagePromptButton
           ref={ImagePromptButtonRef}
           buttonType='create-image-prompt'
           activeButton={activeButton}
