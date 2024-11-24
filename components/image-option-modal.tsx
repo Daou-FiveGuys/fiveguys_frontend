@@ -37,32 +37,32 @@ import {
   setImageOption
 } from '@/redux/slices/imageOptionSlice'
 
-const styleOptions: { value: ImageStyle; label: string; image: string }[] = [
-  {
-    value: 'waterColor',
-    label: '수채화',
-    image: '1'
-      //'https://i.pinimg.com/736x/39/2d/a2/392da2ecea6c95f366c8df5ef461947e.jpg?height=200&width=200'
-  },
-  {
-    value: 'cityPop',
-    label: '시티팝',
-    image: '2'
-      //'https://i.pinimg.com/736x/21/74/8e/21748e848c22f6fdfea4fbc876e6261d.jpg?height=200&width=200'
-  },
-  {
-    value: 'mix',
-    label: '스타일 3',
-    image: '3'
-      //'https://i.pinimg.com/736x/da/7b/32/da7b323a28dda4755c5c5f15fd324880.jpg'
-  },
-  {
-    value: 'mix',
-    label: '스타일 4',
-    image: '4'
-      //'https://tjzk.replicate.delivery/models_organizations_avatar/01ed70be-0d47-4a4a-85fb-32c02cdd4ab5/bfl.png'
-  }
-]
+// const styleOptions: { value: ImageStyle; label: string; image: string }[] = [
+//   {
+//     value: 'waterColor',
+//     label: '수채화',
+//     image:
+//       'https://i.pinimg.com/736x/39/2d/a2/392da2ecea6c95f366c8df5ef461947e.jpg?height=200&width=200'
+//   },
+//   {
+//     value: 'cityPop',
+//     label: '시티팝',
+//     image:
+//       'https://i.pinimg.com/736x/21/74/8e/21748e848c22f6fdfea4fbc876e6261d.jpg?height=200&width=200'
+//   },
+//   {
+//     value: 'mix',
+//     label: '스타일 3',
+//     image:
+//       'https://i.pinimg.com/736x/da/7b/32/da7b323a28dda4755c5c5f15fd324880.jpg'
+//   },
+//   {
+//     value: 'mix',
+//     label: '스타일 4',
+//     image:
+//       'https://tjzk.replicate.delivery/models_organizations_avatar/01ed70be-0d47-4a4a-85fb-32c02cdd4ab5/bfl.png'
+//   }
+// ]
 
 const InfoPopover = ({ content }: { content: string }) => (
   <Popover>
@@ -149,7 +149,7 @@ export default function Component({ isOpen = true, onClose = ({}: any) => {} }) 
         </DialogHeader>
         {currentStep === 1 ? (
           <div className="grid grid-cols-2 gap-4 p-4">
-            {styleOptions.map(style => (
+            {/* {styleOptions.map(style => (
               <div
                 key={style.value+style.label}
                 className={`relative cursor-pointer rounded-lg overflow-hidden transition-all duration-200 border ${
@@ -174,7 +174,7 @@ export default function Component({ isOpen = true, onClose = ({}: any) => {} }) 
                   </span>
                 </div>
               </div>
-            ))}
+            ))} */}
           </div>
         ) : (
           <div className="space-y-4">
