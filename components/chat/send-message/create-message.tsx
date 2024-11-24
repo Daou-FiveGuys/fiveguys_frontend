@@ -61,7 +61,7 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
 
   const message = useSelector((state: RootState) => state.createText)
 
-  const processUserInput = (input: string) => {
+  const processUserInput = async (input: string) => {
     switch (stage) {
       case 'initial':
         if (input.toLowerCase() === '직접입력') {
@@ -98,7 +98,7 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
         )
         break
       case 'autoGenerate':
-        const generatedText = JSON.stringify(sampleData)
+        const generatedText = "문자자동생성필요";
         dispatch(setText({ text: generatedText }))
         ChatUtils.addChat(buttonType, 'user', input)
         ChatUtils.addChat(
@@ -121,7 +121,7 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
             'assistant',
             '이미지 생성을 시작합니다.'
           )
-          //setStage('generateImage') 로컬에선 오류떠서.
+          setStage('generateImage') //로컬에선 오류떠서.
         } else if (['이미지 업로드', '이미지 없이'].includes(input)) {
           ChatUtils.addChat(buttonType, 'user', input)
           ChatUtils.addChat(

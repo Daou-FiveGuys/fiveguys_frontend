@@ -33,7 +33,7 @@ export interface imgResponse {
   url: string
 }
 
-const CreateImagePrompt: React.FC<CreateMessageProps> = ({
+const ImageGenerateModal: React.FC<CreateMessageProps> = ({
   buttonType,
   lastUserInput
 }) => {
@@ -132,7 +132,6 @@ const CreateImagePrompt: React.FC<CreateMessageProps> = ({
 
   return (
     <div>
-        {/* <Component isOpen={true} onClose={handleGenerateImage} /> */}
       {stage === 'generateImage' ? (
         <Component isOpen={true} onClose={handleGenerateImage} />
       ) : null}
@@ -150,7 +149,7 @@ const CreateImagePrompt: React.FC<CreateMessageProps> = ({
   )
 }
 
-export default CreateImagePrompt
+export default ImageGenerateModal
 
 export function ImageLoader() {
   return (

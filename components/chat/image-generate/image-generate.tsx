@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import CreateMessage from '@/components/chat/send-message/create-message'
 import { setText } from '@/redux/slices/createTextSlice'
-import CreateImagePrompt from './createimageprompt'
+import ImageGenerateModal from './image-generate-modal'
 import { setImageOption } from '@/redux/slices/imageOptionSlice'
 import { clearMessages } from '@/redux/slices/chatSlice'
 
@@ -35,16 +35,6 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         dispatch(
           clearMessages({chatId:'send-message'})
         )
-        setImageOption(
-          {
-            imageStyle: 'mix',
-            width: 256,
-            height: 256,
-            guidanceScale: 3.5,
-            seed: -1,
-            numInferenceSteps: 28
-          }
-        );
         console.log(imageOption.imageStyle)
         if (isActive && value.trim()) {
           ChatUtils.addChat(buttonType, 'user', value.trim())
@@ -70,11 +60,11 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         <Button
           className="w-full md:w-28 h-8 mb-2 md:mb-0"
           variant={isActive ? 'default' : 'outline'}
-          onClick={() => setActiveButton('create-image-prompt')}
+          onClick={() => setActiveButton('image-generate')}
         >
           프롬프트 생성
         </Button>
-        <CreateImagePrompt buttonType={'create-image-prompt'} lastUserInput={lastUserInput} />
+        <ImageGenerateModal buttonType={'image-generate'} lastUserInput={lastUserInput} />
       </>
     )
   }
