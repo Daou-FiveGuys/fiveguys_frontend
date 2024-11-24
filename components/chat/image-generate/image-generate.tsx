@@ -36,7 +36,7 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
           clearMessages({chatId:'send-message'})
         )
         ChatUtils.addChat(
-          'create-image-prompt',
+          'send-message',
           'assistant-animation',
           '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
         )
@@ -54,7 +54,7 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         ChatUtils.addChat(
           buttonType,
           'assistant-animation',
-          '이미지를 추가하시겠습니까?'
+          '이미지를 추가하시겠습니까?(이미지 생성, 이미지 업로드, 이미지 없이)'
         )
         setHasAddedChat(true)
       }

@@ -58,8 +58,7 @@ const CreateImagePrompt: React.FC<CreateMessageProps> = ({
   useEffect(() => {
     if(lastUserInput === "이미지 생성"){
       console.log(lastUserInput)
-    setStage('generateImage')
-      return;
+      setStage('generateImage')
     }
     else if(lastUserInput === "이미지 업로드"){
       setStage('editImage')
@@ -69,10 +68,10 @@ const CreateImagePrompt: React.FC<CreateMessageProps> = ({
       setStage('end')
     }
     else{
-      return;
     }
     
   }, [lastUserInput, buttonType])
+
 
   const message = useSelector((state: RootState) => state.createText)
 
