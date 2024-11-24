@@ -1,5 +1,5 @@
 // ChatList.tsx
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Separator } from '@/components/ui/separator'
 import { setIsTyping, Message } from '@/redux/slices/chatSlice'
 import { useDispatch } from 'react-redux'
@@ -20,7 +20,9 @@ export const ChatList = ({
   chatId: ButtonType
   messages: Message[]
 }) => {
-  if (messages.length === 0) {
+  console.log(messages) 
+  const newMessage = messages.filter((m,i)=> i == 0 || (i>0 && messages[i-1].text) !== m.text);
+  if (newMessage.length === 0) {
     return null
   }
 
@@ -46,7 +48,8 @@ export const ChatList = ({
 
   return (
     <div className="relative mx-auto max-w-2xl px-4">
-      {messages.map((message, index) => {
+      {newMessage.map((message, index) => {
+        console.log(message)
         return (
           <React.Fragment key={message.id}>
             <div className="ml-2">
@@ -61,7 +64,6 @@ export const ChatList = ({
         )
       })}
       {isHistoryChat && <HistoryPanel />}
-      {/* {isSendMessageChat && <AddressBookModal/>} */}
     </div>
   )
 }

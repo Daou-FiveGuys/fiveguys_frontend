@@ -14,6 +14,7 @@ import { BotCard } from '@/components/stocks'
 import ImagePreviewModal from '@/components/image-preview-modal'
 import { useRouter } from 'next/navigation'
 import { RootState } from '@/redux/store'
+import { ImageGenerator } from '@/main/components/image-generator'
 
 interface CreateMessageProps {
   buttonType: ButtonType
@@ -32,7 +33,7 @@ export interface imgResponse {
   url: string
 }
 
-const CreateImagePrompt: React.FC<CreateMessageProps> = ({
+const ImageGenerateModal: React.FC<CreateMessageProps> = ({
   buttonType,
   lastUserInput
 }) => {
@@ -172,7 +173,7 @@ const CreateImagePrompt: React.FC<CreateMessageProps> = ({
   )
 }
 
-export default CreateImagePrompt
+export default ImageGenerateModal
 
 export function ImageLoader() {
   return (

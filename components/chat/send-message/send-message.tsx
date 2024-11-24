@@ -1,10 +1,11 @@
-import React, { forwardRef, useImperativeHandle, useEffect } from 'react'
+import React, { forwardRef, useImperativeHandle, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import CreateMessage from './create-message'
+import { clearMessages } from '@/redux/slices/chatSlice'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -22,7 +23,7 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     const [hasAddedChat, setHasAddedChat] = React.useState(false)
     const [lastUserInput, setLastUserInput] = React.useState<string | null>(null)
     const message = useSelector((state: RootState) => state.chat[buttonType])
-
+    const dispatch = useDispatch()
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
         if (isActive && value.trim()) {
@@ -32,16 +33,16 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       }
     }))
 
-    useEffect(() => {
-      if (ChatUtils.dispatch && !hasAddedChat) {
-        ChatUtils.addChat(
-          buttonType,
-          'assistant-animation',
-          '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
-        )
-        setHasAddedChat(true)
+    React.useEffect(() => {
+      if (ChatUtils.dispatch && !hasAddedChat && isActive) {
+          setHasAddedChat(true)
+          ChatUtils.addChat(
+            buttonType,
+            'assistant-animation',
+            '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
+          )
       }
-    }, [hasAddedChat, buttonType])
+    }, [isActive])
 
     return (
       <>

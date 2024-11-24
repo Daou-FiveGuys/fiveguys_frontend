@@ -6,9 +6,10 @@ import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import CreateMessage from '@/components/chat/send-message/create-message'
 import { setText } from '@/redux/slices/createTextSlice'
-import CreateImagePrompt from './createimageprompt'
+import ImageGenerateModal from './image-generate-modal'
 import { setImageOption } from '@/redux/slices/imageOptionSlice'
 import { clearMessages } from '@/redux/slices/chatSlice'
+import CreateImagePrompt from '../image-prompt/createimageprompt'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -29,11 +30,9 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     const imageOption = useSelector((state: RootState) => state.imageOption)
     const dispatch = useDispatch()
     const [openModeal, setOpenModal] = React.useState(false);
-    const [userInput, setUserInput] = React.useState('');
 
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
-        setUserInput(value)
         dispatch(
           clearMessages({chatId:'send-message'})
         )
@@ -42,26 +41,6 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
           'assistant-animation',
           '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
         )
-        // ChatUtils.addChat(
-        //   'image-generate',
-        //   'assistant-animation',
-        //   '이미지를 추가하시겠습니까?'
-        // )
-        // ChatUtils.addChat(
-        //   'create-image-prompt',
-        //   'assistant-animation',
-        //   '이미지를 추가하시겠습니까?'
-        // )
-        setImageOption(
-          {
-            imageStyle: 'mix',
-            width: 256,
-            height: 256,
-            guidanceScale: 3.5,
-            seed: -1,
-            numInferenceSteps: 28
-          }
-        );
         console.log(imageOption.imageStyle)
         if (isActive && value.trim()) {
           ChatUtils.addChat(buttonType, 'user', value.trim())
@@ -80,18 +59,18 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         )
         setHasAddedChat(true)
       }
-    },[lastUserInput])
+    }, [hasAddedChat, buttonType])
 
     return (
       <>
         <Button
           className="w-full md:w-28 h-8 mb-2 md:mb-0"
           variant={isActive ? 'default' : 'outline'}
-          onClick={() => setActiveButton('create-image-prompt')}
+          onClick={() => setActiveButton('image-generate')}
         >
-          프롬프트 생성
+          이미지 생성
         </Button>
-        <CreateImagePrompt buttonType={'create-image-prompt'} lastUserInput={lastUserInput} />
+        <ImageGenerateModal buttonType={'image-generate'} lastUserInput={lastUserInput} />
       </>
     )
   }

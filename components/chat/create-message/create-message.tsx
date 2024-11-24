@@ -2,11 +2,12 @@ import React, { forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import CreateMessage from '@/components/chat/send-message/create-message'
 import { setText, clearText } from '@/redux/slices/createTextSlice'
 import {setImageOption} from '@/redux/slices/imageOptionSlice'
+import { clearMessages, deleteMessage } from '@/redux/slices/chatSlice'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -27,11 +28,34 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     const message = useSelector((state: RootState) => state.chat[buttonType])
     const message2 = useSelector((state: RootState) => state.createText)
     const imageOption = useSelector((state: RootState) => state.imageOption)
-
+    const dispatch = useDispatch()
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
-        ChatUtils.clearChat('send-message')
-        ChatUtils.clearChat('create-image-prompt')
+        //ChatUtils.clearChat('send-message')
+         dispatch(
+          clearMessages({chatId:'send-message'})
+        )
+        ChatUtils.addChat(
+          'send-message',
+          'assistant-animation',
+          '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
+        )
+        dispatch(
+          clearMessages({chatId:'create-image-prompt'})
+        )
+        ChatUtils.addChat(
+          'create-image-prompt',
+          'assistant-animation',
+          '이미지를 생성하려면 아무 입력을 해주세요.'
+        )
+        dispatch(
+          clearMessages({chatId:'image-generate'})
+        )
+        ChatUtils.addChat(
+          'image-generate',
+          'assistant-animation',
+          '이미지를 생성하려면 아무 입력을 해주세요.'
+        )
         setText({text:''})
         setImageOption(
           {
