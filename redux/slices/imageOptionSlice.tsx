@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { random } from 'nanoid'
 
 export type ImageStyle = 'waterColor' | 'cityPop' | 'mix'
 

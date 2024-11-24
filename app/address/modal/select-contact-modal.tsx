@@ -10,11 +10,13 @@ import { api, Target } from './service'
 interface AddressBookModalProps {
   file: File // File passed from ParentComponent
   onClose: () => void // Close modal callback
+  method: string
 }
 
 const AddressBookModal: React.FC<AddressBookModalProps> = ({
   file,
-  onClose
+  onClose,
+  method
 }) => {
   const [selectedContacts, setSelectedContacts] = useState<Contact2[]>([])
   const [inputValue, setInputValue] = useState('') // Sender's phone number
@@ -92,7 +94,6 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
     const subject = '전송할 제목입니다.'
     const content = '안녕하세요 테스트중입니다.'
 
-    // Send the message via API
     api
       .sendMessage(
         {
@@ -102,6 +103,7 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
           targets,
           subject
         },
+        method,
         file
       )
       .then(() => {
