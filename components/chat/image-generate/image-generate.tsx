@@ -9,6 +9,7 @@ import { setText } from '@/redux/slices/createTextSlice'
 import ImageGenerateModal from './image-generate-modal'
 import { setImageOption } from '@/redux/slices/imageOptionSlice'
 import { clearMessages } from '@/redux/slices/chatSlice'
+import CreateImagePrompt from '../image-prompt/createimageprompt'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
