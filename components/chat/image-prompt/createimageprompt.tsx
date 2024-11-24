@@ -50,12 +50,16 @@ const CreateImagePrompt: React.FC<CreateMessageProps> = ({
   useEffect(() => {
     if (!ChatUtils.dispatch) {
       ChatUtils.initialize(dispatch)
-      setStage('generateImage')
     }
   }, [dispatch])
 
   useEffect(() => {
+    if(lastUserInput === "예"){
+      console.log(lastUserInput)
     setStage('generateImage')
+      return;
+    }
+    
   }, [lastUserInput, buttonType])
 
   const message = useSelector((state: RootState) => state.createText)

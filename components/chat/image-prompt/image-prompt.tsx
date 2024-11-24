@@ -28,6 +28,7 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     const message = useSelector((state: RootState) => state.chat[buttonType])
     const imageOption = useSelector((state: RootState) => state.imageOption)
     const dispatch = useDispatch()
+    const [openModeal, setOpenModal] = React.useState(false);
 
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
@@ -48,16 +49,17 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         if (isActive && value.trim()) {
           ChatUtils.addChat(buttonType, 'user', value.trim())
           setLastUserInput(value.trim())
+          if(lastUserInput === '예')setOpenModal(true)
         }
       }
     }))
 
-    useEffect(() => {
+    useEffect(() => { 
       if (ChatUtils.dispatch && !hasAddedChat) {
         ChatUtils.addChat(
           buttonType,
           'assistant',
-          '이미지를 생성하는 중입니다.'
+          '이미지를 추가하시겠습니까?'
         )
         setHasAddedChat(true)
       }
@@ -72,6 +74,9 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         >
           프롬프트 생성
         </Button>
+        {
+          openModeal && <CreateImagePrompt buttonType={'create-image-prompt'} lastUserInput={lastUserInput} />
+        }
         <CreateImagePrompt buttonType={'create-image-prompt'} lastUserInput={lastUserInput} />
       </>
     )
