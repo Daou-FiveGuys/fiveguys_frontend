@@ -21,6 +21,7 @@ import SendMessageButton from './chat/send-message/send-message'
 import CreateMessageButton from './chat/create-message/create-message'
 import ImagePromptButton from './chat/image-prompt/image-prompt'
 import ReturnButton from './chat/ReturnButton'
+import ImageGenerateButton from './chat/image-generate/image-generate'
 
 /**
  *
@@ -83,6 +84,7 @@ export function PromptForm({
   const CreateMessageButtonRef = React.useRef<CustomButtonHandle>(null)
   const SendMessageButtonRef = React.useRef<CustomButtonHandle>(null)
   const ImagePromptButtonRef = React.useRef<CustomButtonHandle>(null)
+  const ImageGenerateButtonRef = React.useRef<CustomButtonHandle>(null)
 
 
   const isTyping = useSelector(
@@ -124,6 +126,9 @@ export function PromptForm({
     if (ImagePromptButtonRef.current && activeButton === 'create-image-prompt') {
       ImagePromptButtonRef.current.handleEnterPress(trimmedValue)
     }
+    if (ImageGenerateButtonRef.current && activeButton === 'image-generate') {
+      ImageGenerateButtonRef.current.handleEnterPress(trimmedValue)
+    }
 
     setInput('')
   }
@@ -132,8 +137,40 @@ export function PromptForm({
     <>
       <div className="flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-2 px-4 md:px-8">
 
-  
+  {
+    activeButton !== 'faq'?
+    (
+      <>
       <ReturnButton setActiveButton={setActiveButton}></ReturnButton>
+        <CreateMessageButton
+          ref={CreateMessageButtonRef}
+          buttonType="create-message"
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
+          />
+        <ImagePromptButton
+          ref={ImagePromptButtonRef}
+          buttonType='create-image-prompt'
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
+          />
+        <ImageGenerateButton
+          ref={ImageGenerateButtonRef}
+          buttonType="image-generate"
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
+          />
+        <SendMessageButton
+          ref={SendMessageButtonRef}
+          buttonType='send-message'
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
+        />
+        </>
+    )
+    :
+    (
+      <>
       <FaqButton
           ref={FaqButtonRef}
           buttonType="faq"
@@ -146,24 +183,16 @@ export function PromptForm({
           activeButton={activeButton}
           setActiveButton={setActiveButton}
         />
-        <CreateMessageButton
-          ref={CreateMessageButtonRef}
-          buttonType="create-message"
-          activeButton={activeButton}
-          setActiveButton={setActiveButton}
-          />
-        <ImagePromptButton
-          ref={ImagePromptButtonRef}
-          buttonType='create-image-prompt'
-          activeButton={activeButton}
-          setActiveButton={setActiveButton}
-        />
         <SendMessageButton
           ref={SendMessageButtonRef}
           buttonType='send-message'
           activeButton={activeButton}
           setActiveButton={setActiveButton}
         />
+      </>
+    )
+  }
+    
       </div>
       <form>
         <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12 mt-4">

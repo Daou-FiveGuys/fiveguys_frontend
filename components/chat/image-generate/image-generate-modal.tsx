@@ -132,6 +132,7 @@ const ImageGenerateModal: React.FC<CreateMessageProps> = ({
 
   return (
     <div>
+        {/* <Component isOpen={true} onClose={handleGenerateImage} /> */}
       {stage === 'generateImage' ? (
         <Component isOpen={true} onClose={handleGenerateImage} />
       ) : null}

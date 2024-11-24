@@ -43,6 +43,7 @@ const chatSlice = createSlice({
         state[chatId] = { messages: [], isTyping: false }
       }
       state[chatId].messages.push(message)
+      console.log(state[chatId].messages)
     },
     clearMessages: (state, action: PayloadAction<{ chatId: string }>) => {
       const { chatId } = action.payload

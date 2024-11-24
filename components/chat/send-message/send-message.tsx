@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useEffect } from 'react'
+import React, { forwardRef, useImperativeHandle, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
@@ -32,16 +32,16 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       }
     }))
 
-    useEffect(() => {
-      if (ChatUtils.dispatch && !hasAddedChat) {
-        ChatUtils.addChat(
-          buttonType,
-          'assistant-animation',
-          '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
-        )
-        setHasAddedChat(true)
+    React.useEffect(() => {
+      if (ChatUtils.dispatch && !hasAddedChat && isActive) {
+          setHasAddedChat(true)
+          ChatUtils.addChat(
+            buttonType,
+            'assistant-animation',
+            '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
+          )
       }
-    }, [hasAddedChat, buttonType])
+    }, [isActive])
 
     return (
       <>
