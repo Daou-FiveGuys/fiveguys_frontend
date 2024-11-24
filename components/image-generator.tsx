@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { fetchImageSources, reFetchImageSources } from './image-generator-api'
+import { reFetchImageSources } from './image-generator-api'
 
 interface ImageGeneratorProps {
   selectedImage?: string
@@ -32,7 +32,7 @@ export function checkImageGenerationSuccess(
 
 export async function showExistingImages(prompt?: string, seed?: string): Promise<boolean> {
   try {
-    const result = seed ? await reFetchImageSources(seed, prompt || '') : await fetchImageSources(prompt || '');
+    const result = await reFetchImageSources(seed!!, prompt || '')
     if ('error' in result) {
       console.error(result.error);
       return false;
