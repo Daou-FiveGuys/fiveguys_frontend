@@ -71,7 +71,7 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       if (ChatUtils.dispatch && !hasAddedChat) {
         ChatUtils.addChat(
           buttonType,
-          'assistant',
+          'assistant-animation',
           '이미지를 추가하시겠습니까?'
         )
         setHasAddedChat(true)
