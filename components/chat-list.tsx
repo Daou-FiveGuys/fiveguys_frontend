@@ -41,10 +41,6 @@ export const ChatList = ({
     )
   }
 
-  React.useEffect(() => {
-    console.log('activeButton updated:', chatId)
-  }, [chatId])
-
   const isHistoryChat = chatId === 'history'
   const isSendMessageChat = chatId === 'send-message'
 

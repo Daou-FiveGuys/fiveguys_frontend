@@ -25,7 +25,6 @@ const HTMLTypingEffect: React.FC<HTMLTypingEffectProps> = ({
   const isTypingRef = useRef(false) // 현재 타이핑 중인지 확인
 
   useEffect(() => {
-    console.log('HTMLTypingEffect useEffect 실행')
     if (!containerRef.current) return
 
     // DOMParser로 HTML 파싱 및 명령어 생성
@@ -58,7 +57,6 @@ const HTMLTypingEffect: React.FC<HTMLTypingEffectProps> = ({
 
     elements.forEach(traverse)
     instructionsRef.current = instructions
-    console.log('타이핑 명령어 리스트:', instructionsRef.current)
 
     // 애니메이션 시작
     if (!isTypingRef.current) {
