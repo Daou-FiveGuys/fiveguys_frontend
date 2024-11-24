@@ -144,6 +144,18 @@ export function PromptForm({
           activeButton={activeButton}
           setActiveButton={setActiveButton}
         />
+                <CreateMessageButton
+          ref={CreateMessageButtonRef}
+          buttonType='create-message'
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
+        />
+                <ImagePromptButton
+          ref={ImagePromptButtonRef}
+          buttonType='create-image-prompt'
+          activeButton={activeButton}
+          setActiveButton={setActiveButton}
+        />
         <SendMessageButton
           ref={SendMessageButtonRef}
           buttonType='send-message'

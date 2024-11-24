@@ -5,6 +5,7 @@ import ChatUtils from './../utils/ChatUtils'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import CalendarComponent from './calendar'
+import { useIsMessagesEmpty } from '@/lib/hooks/use-message-is-empty'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -28,13 +29,16 @@ const HistoryButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       }
     }))
 
+    const isMessagesEmpty = useIsMessagesEmpty(buttonType)
     React.useEffect(() => {
       if (ChatUtils.dispatch && !hasAddedChat) {
-        ChatUtils.addChat(
-          buttonType,
-          'assistant-animation',
-          '원하는 날짜의 문자 발송 기록을 조회해보세요! 🗓️'
-        )
+        if (isMessagesEmpty) {
+          ChatUtils.addChat(
+            buttonType,
+            'assistant-animation',
+            '원하는 날짜의 문자 발송 기록을 조회해보세요! 🗓️'
+          )
+        }
       }
     }, [hasAddedChat])
 
