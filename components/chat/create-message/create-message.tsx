@@ -35,9 +35,19 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
          dispatch(
           clearMessages({chatId:'send-message'})
         )
+        // ChatUtils.addChat(
+        //   'send-message',
+        //   'assistant',
+        //   '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
+        // )
         dispatch(
           clearMessages({chatId:'create-image-prompt'})
         )
+        // ChatUtils.addChat(
+        //   'create-image-prompt',
+        //   'assistant',
+        //   '이미지를 생성하려면 아무 입력을 해주세요.'
+        // )
         setText({text:''})
         setImageOption(
           {
