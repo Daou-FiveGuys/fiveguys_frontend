@@ -17,10 +17,14 @@ module.exports = {
       }
     },
     extend: {
+      fontSize: {
+        base: '18px'
+      },
       fontFamily: {
-        sans: ['var(--font-geist-sans)'],
+        sans: ['"Noto Sans KR"', 'sans-serif'],
         mono: ['var(--font-geist-mono)'],
-        gothic: ['GothicA1-Light', 'GothicA1-Light']
+        gothic: ['GothicA1-Light', 'GothicA1-Light'],
+        saas: ['강원교육튼튼체', '강원교육튼튼체']
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -59,12 +63,31 @@ module.exports = {
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))'
-        }
+        },
+        'spotlight-light-pink': 'rgba(255, 182, 193, 0.3)', // 라이트 모드 핑크
+        'spotlight-light-purple': 'rgba(216, 191, 216, 0.3)', // 라이트 모드 보라색
+        'spotlight-dark': 'rgba(255, 255, 255, 0.3)' // 다크 모드 흰색
       },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)'
+      },
+      keyframes: {
+        moveSpotlightLeft: {
+          '0%': { transform: 'translate(0, 0)', opacity: '0.5' },
+          '50%': { transform: 'translate(150px, -100px)', opacity: '0.8' },
+          '100%': { transform: 'translate(300px, -200px)', opacity: '0.5' }
+        },
+        moveSpotlightRight: {
+          '0%': { transform: 'translate(0, 0)', opacity: '0.5' },
+          '50%': { transform: 'translate(-150px, -100px)', opacity: '0.8' },
+          '100%': { transform: 'translate(-300px, -200px)', opacity: '0.5' }
+        }
+      },
+      animation: {
+        moveSpotlightLeft: 'moveSpotlightLeft 3s infinite alternate',
+        moveSpotlightRight: 'moveSpotlightRight 3s infinite alternate'
       },
       typography: (theme: any) => ({
         DEFAULT: {

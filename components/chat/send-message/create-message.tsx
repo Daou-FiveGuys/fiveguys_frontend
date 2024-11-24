@@ -198,7 +198,7 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
   const handleEditImage = (isEdit: boolean) => {
     const editMessage = isEdit ? '편집을 시작합니다.' : '편집을 취소합니다.'
     ChatUtils.addChat(buttonType, 'assistant-animation', editMessage)
-    isEdit && router.push('/edit/1')
+    isEdit && router.push('/edit')
     setStage('initial')
   }
 
