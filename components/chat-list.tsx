@@ -1,5 +1,6 @@
+// ChatList.tsx
+import React, { useCallback } from 'react'
 import { Separator } from '@/components/ui/separator'
-import React from 'react'
 import { setIsTyping, Message } from '@/redux/slices/chatSlice'
 import { useDispatch } from 'react-redux'
 import MessageItem from './chat/utils/MessageItem'
@@ -10,7 +11,7 @@ import { MessageHistory } from './chat/history/message-history'
 import HistoryPanel from './chat/history/history-panel'
 import SendMessagePanel from './chat/send-message/send-message-panel'
 import { BotCard } from './stocks'
-import AddressBookModal from '@/app/address/modal/select-contact-modal';
+import AddressBookModal from '@/app/address/modal/select-contact-modal'
 
 export const ChatList = ({
   chatId,
@@ -25,9 +26,10 @@ export const ChatList = ({
 
   const dispatch = useDispatch()
 
-  const handleTypingComplete = () => {
+  // useCallback을 사용하여 handleTypingComplete 메모이제이션
+  const handleTypingComplete = useCallback(() => {
     dispatch(setIsTyping({ chatId: chatId, isTyping: false }))
-  }
+  }, [dispatch, chatId])
 
   const isSerializedReactNode = (
     content: string | React.ReactNode
@@ -38,40 +40,13 @@ export const ChatList = ({
       content.endsWith('>')
     )
   }
-  React.useEffect(() => {
-    console.log('activeButton updated:', chatId)
-  }, [chatId])
 
   const isHistoryChat = chatId === 'history'
   const isSendMessageChat = chatId === 'send-message'
+
   return (
     <div className="relative mx-auto max-w-2xl px-4">
       {messages.map((message, index) => {
-        const content = message.text
-
-        if (isSerializedReactNode(content)) {
-          try {
-            const reactNode = ChatUtils.stringToReactNode(content as string)
-            return (
-              <React.Fragment key={message.id}>
-                {chatId === 'faq' ? (
-                  <BotCard>
-                    <div
-                      className="relative mx-auto max-w-2xl prose"
-                      dangerouslySetInnerHTML={{ __html: content }} // HTML 태그 렌더링
-                    />
-                  </BotCard>
-                ) : (
-                  <div className="ml-2">{reactNode}</div>
-                )}
-                {index < messages.length - 1 && <Separator className="my-4" />}
-              </React.Fragment>
-            )
-          } catch (error) {
-            console.error('Failed to deserialize ReactNode:', error)
-          }
-        }
-
         return (
           <React.Fragment key={message.id}>
             <div className="ml-2">

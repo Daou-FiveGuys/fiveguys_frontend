@@ -5,6 +5,7 @@ import {
   deleteMessage,
   editMessage,
   setIsTyping,
+  updateMessageUserType,
   UserType
 } from '@/redux/slices/chatSlice'
 import { nanoid } from 'nanoid'
@@ -103,6 +104,34 @@ export default class ChatUtils {
     }
     ChatUtils.dispatch(
       editMessage({ chatId: chatId, newText: text, messageId: messageId })
+    )
+  }
+
+  static editUserType(chatId: string, messageId: string, userType: UserType) {
+    if (!ChatUtils.dispatch) {
+      throw new Error(
+        'Dispatch is not initialized. Call ChatUtils.initialize() first.'
+      )
+    }
+    ChatUtils.dispatch(
+      updateMessageUserType({
+        chatId: chatId,
+        userType: userType,
+        messageId: messageId
+      })
+    )
+  }
+  static editIsTyping(chatId: string, isTyping: boolean) {
+    if (!ChatUtils.dispatch) {
+      throw new Error(
+        'Dispatch is not initialized. Call ChatUtils.initialize() first.'
+      )
+    }
+    ChatUtils.dispatch(
+      setIsTyping({
+        chatId: chatId,
+        isTyping: isTyping
+      })
     )
   }
 
