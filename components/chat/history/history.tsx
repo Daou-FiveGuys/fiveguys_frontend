@@ -2,9 +2,6 @@ import React, { forwardRef, useImperativeHandle } from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
-import { useSelector } from 'react-redux'
-import { RootState } from '@/redux/store'
-import CalendarComponent from './calendar'
 import { useIsMessagesEmpty } from '@/lib/hooks/use-message-is-empty'
 
 export interface CustomButtonHandle {

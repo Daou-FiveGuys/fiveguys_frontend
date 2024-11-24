@@ -36,7 +36,7 @@ export function SiteHeader() {
           </div>
           <div className="flex flex-1 items-center justify-end space-x-4">
             <Button asChild variant="default">
-              <Link href="/signup">Sign In →</Link>
+              <Link href="/login">로그인</Link>
             </Button>
           </div>
         </div>

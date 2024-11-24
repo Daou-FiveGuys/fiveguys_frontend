@@ -8,7 +8,6 @@ import { RootState } from '@/redux/store'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { CSSTransition } from 'react-transition-group'
-import './HistoryPanel.css'
 
 export interface SentMessages {
   id: number
