@@ -14,8 +14,8 @@ import { BotCard } from '@/components/stocks'
 import ImagePreviewModal from '@/components/image-preview-modal'
 import { useRouter } from 'next/navigation'
 import { RootState } from '@/redux/store'
-import AddressBookModal from '@/app/address/modal/select-contact-modal'
-import SendAddressList from '../send-message/send-addresslist'
+import { ImageGenerator } from '@/main/components/image-generator'
+
 interface CreateMessageProps {
   buttonType: ButtonType
   lastUserInput: string | null
@@ -45,8 +45,7 @@ const ImageGenerateModal: React.FC<CreateMessageProps> = ({
     | 'generateImage'
     | 'loading'
     | 'editImage'
-    | 'end'
-  >('initial')
+  >('imageOption')
   const dispatch = useDispatch()
   const [prompt, setPrompt] = useState<string>('')
   useEffect(() => {
@@ -56,25 +55,52 @@ const ImageGenerateModal: React.FC<CreateMessageProps> = ({
   }, [dispatch])
 
   useEffect(() => {
-    if(lastUserInput === "이미지 생성"){
-      console.log(lastUserInput)
-    setStage('generateImage')
-      return;
+    if (lastUserInput) {
+      processUserInput(lastUserInput)
     }
-    else if(lastUserInput === "이미지 업로드"){
-      setStage('editImage')
-    }
-    else if(lastUserInput === "이미지 없이"){
-      //주소록
-      setStage('end')
-    }
-    else{
-      return;
-    }
-    
   }, [lastUserInput, buttonType])
 
   const message = useSelector((state: RootState) => state.createText)
+
+  const processUserInput = async (input: string) => {
+    switch (stage) {
+      case 'imageOption':
+        if (input === '이미지 생성') {
+          ChatUtils.addChat(buttonType, 'user', input)
+          ChatUtils.addChat(
+            buttonType,
+            'assistant',
+            '이미지 생성을 시작합니다.'
+          )
+          setStage('generateImage') //로컬에선 오류떠서.
+        } else if (['이미지 업로드', '이미지 없이'].includes(input)) {
+          ChatUtils.addChat(buttonType, 'user', input)
+          ChatUtils.addChat(
+            buttonType,
+            'assistant',
+            `선택하신 옵션 "${input}"이(가) 저장되었습니다.`
+          )
+          setText({text:input})
+          console.log(message);
+          setStage('initial')
+        } else {
+          ChatUtils.addChat(buttonType, 'user', input)
+          ChatUtils.addChat(
+            buttonType,
+            'assistant',
+            '올바른 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"'
+          )
+        }
+        break
+      case 'generateImage':
+        ChatUtils.addChat(
+          buttonType,
+          'assistant',
+          '이미지를 생성하는 중입니다.'
+        )
+        break
+    }
+  }
 
   const handleGenerateImage = async (imageOption: ImageOption) => {
     dispatch(setImageOption(imageOption))
@@ -117,6 +143,7 @@ const ImageGenerateModal: React.FC<CreateMessageProps> = ({
       )
       setImageUrls(imageUrl)
       setStage('editImage')
+      dispatch(clearText())
     } catch (error) {
       console.error('이미지 생성 실패:', error)
     }
@@ -132,7 +159,6 @@ const ImageGenerateModal: React.FC<CreateMessageProps> = ({
 
   return (
     <div>
-        {/* <Component isOpen={true} onClose={handleGenerateImage} /> */}
       {stage === 'generateImage' ? (
         <Component isOpen={true} onClose={handleGenerateImage} />
       ) : null}
@@ -142,9 +168,6 @@ const ImageGenerateModal: React.FC<CreateMessageProps> = ({
           isOpen={true}
           onClose={handleEditImage}
         />
-      ) : null}
-            {stage === 'end' ? (
-        null
       ) : null}
     </div>
   )
