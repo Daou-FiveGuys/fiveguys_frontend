@@ -46,6 +46,7 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import { Input } from './ui/input'
 import { ChangeEvent } from 'react'
+import AddressBookModal from '@/app/address/modal/select-contact-modal'
 
 type FrameOption = 'default' | '512x512' | 'landscape' | 'custom'
 
@@ -1409,6 +1410,20 @@ export default function ImageEditor() {
     canvas.renderAll()
   }
 
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const handleFileGenerated = (generatedFile: File) => {
+    setFile(generatedFile)
+    setIsModalOpen(true)
+  }
+
+  /**
+   * Handle closing the modal
+   */
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setFile(null)
+  }
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardContent className="p-6">
@@ -2191,7 +2206,11 @@ export default function ImageEditor() {
             canvas={canvas}
             isDone={isDone}
             setIsDone={setIsDone}
+            onFileGenerated={handleFileGenerated}
           />
+        )}
+        {isModalOpen && file && (
+          <AddressBookModal file={file} onClose={handleCloseModal} />
         )}
         {!available && (
           <ImageNotAvailableModal onConfirm={() => setAvailable(true)} />

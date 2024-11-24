@@ -52,6 +52,7 @@ export function Chat({ id, className }: ChatProps) {
       const startTime = performance.now()
 
       const animateScroll = (currentTime: number) => {
+        if (!scrollRef.current || !scrollRef.current.scrollTop) return
         const elapsed = currentTime - startTime
         const progress = Math.min(elapsed / duration, 1) // 진행 비율 (0~1)
 
