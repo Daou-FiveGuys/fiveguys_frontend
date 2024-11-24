@@ -2,12 +2,13 @@ import React, { forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import CreateMessage from '@/components/chat/send-message/create-message'
 import { setText } from '@/redux/slices/createTextSlice'
 import CreateImagePrompt from './createimageprompt'
 import { setImageOption } from '@/redux/slices/imageOptionSlice'
+import { clearMessages } from '@/redux/slices/chatSlice'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -26,10 +27,14 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     const [lastUserInput, setLastUserInput] = React.useState<string | null>(null)
     const message = useSelector((state: RootState) => state.chat[buttonType])
     const imageOption = useSelector((state: RootState) => state.imageOption)
+    const dispatch = useDispatch()
+    const [openModeal, setOpenModal] = React.useState(false);
 
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
-        ChatUtils.clearChat('send-message')
+        dispatch(
+          clearMessages({chatId:'send-message'})
+        )
         setImageOption(
           {
             imageStyle: 'mix',
@@ -44,16 +49,17 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         if (isActive && value.trim()) {
           ChatUtils.addChat(buttonType, 'user', value.trim())
           setLastUserInput(value.trim())
+          if(lastUserInput === '예')setOpenModal(true)
         }
       }
     }))
 
-    useEffect(() => {
+    useEffect(() => { 
       if (ChatUtils.dispatch && !hasAddedChat) {
         ChatUtils.addChat(
           buttonType,
           'assistant',
-          '이미지를 생성하는 중입니다.'
+          '이미지를 추가하시겠습니까?'
         )
         setHasAddedChat(true)
       }

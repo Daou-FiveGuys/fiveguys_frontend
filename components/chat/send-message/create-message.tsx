@@ -61,7 +61,7 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
 
   const message = useSelector((state: RootState) => state.createText)
 
-  const processUserInput = (input: string) => {
+  const processUserInput = async (input: string) => {
     switch (stage) {
       case 'initial':
         if (input.toLowerCase() === '직접입력') {
@@ -98,7 +98,7 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
         )
         break
       case 'autoGenerate':
-        const generatedText = JSON.stringify(sampleData)
+        const generatedText = "문자자동생성필요";
         dispatch(setText({ text: generatedText }))
         ChatUtils.addChat(buttonType, 'user', input)
         ChatUtils.addChat(
