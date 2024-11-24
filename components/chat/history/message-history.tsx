@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { MessageCard } from './message-card'
 import { SentMessages } from './history-panel'
+import MessageCardModal from './message-card-modal'
 
 export function MessageHistory({
   sentMessages: sentMessages
@@ -13,20 +14,23 @@ export function MessageHistory({
   sentMessages: SentMessages[]
 }) {
   const [selectedCardIndex, setSelectedCardIndex] = useState<number>(0)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedMessage, setSelectedMessage] = useState<SentMessages | null>(
+    null
+  )
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const cardWidth = 300 // 카드의 너비
-  const cardHeight = 400 // 카드의 높이
-  const gap = 20 // 카드 간 간격
-  const leftPadding = cardWidth / 2 // 첫 번째 카드 왼쪽 여백
-  const rightPadding = cardWidth / 2 // 마지막 카드 오른쪽 여백
+  const cardWidth = 300
+  const cardHeight = 400
+  const gap = 20
+  const leftPadding = cardWidth / 2
+  const rightPadding = cardWidth / 2
 
   useEffect(() => {
     const handleResize = () => {
       updateCardScales()
     }
-
-    handleResize() // 초기 설정
+    handleResize()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
@@ -47,16 +51,11 @@ export function MessageHistory({
       )
 
       setSelectedCardIndex(validIndex)
-
-      if (scrollLeft <= leftPadding) {
-        setSelectedCardIndex(0)
-      }
-
       updateCardScales()
     }
   }
 
-  const selectCard = (index: number) => {
+  const selectCard = (index: number, shouldOpenModal = false) => {
     if (containerRef.current) {
       const container = containerRef.current
       const containerWidth = container.clientWidth
@@ -71,6 +70,11 @@ export function MessageHistory({
         behavior: 'smooth'
       })
       setSelectedCardIndex(index)
+    }
+
+    if (shouldOpenModal) {
+      setSelectedMessage(sentMessages[index])
+      setIsModalOpen(true)
     }
   }
 
@@ -91,15 +95,17 @@ export function MessageHistory({
     }
   }
 
-  const handlePrevious = () => {
+  const handlePrevious = (event: React.MouseEvent) => {
+    event.stopPropagation()
     const newIndex = Math.max(selectedCardIndex - 1, 0)
-    selectCard(newIndex)
+    selectCard(newIndex) // 모달 열지 않음
   }
 
-  const handleNext = () => {
+  const handleNext = (event: React.MouseEvent) => {
+    event.stopPropagation()
     const maxIndex = sentMessages.length - 1
     const newIndex = Math.min(selectedCardIndex + 1, maxIndex)
-    selectCard(newIndex)
+    selectCard(newIndex) // 모달 열지 않음
   }
 
   useEffect(() => {
@@ -123,9 +129,7 @@ export function MessageHistory({
   return (
     <div
       className="flex flex-col items-center w-full"
-      style={{
-        height: '100%' // 화면의 전체 높이에 맞추기
-      }}
+      style={{ height: '100%' }}
     >
       <div
         ref={containerRef}
@@ -133,7 +137,7 @@ export function MessageHistory({
           isSingleCard ? 'justify-center' : 'justify-start'
         }`}
         style={{
-          height: `${cardHeight}px`, // 카드 높이에 맞추기
+          height: `${cardHeight}px`,
           display: 'flex',
           alignItems: 'center',
           paddingLeft: isSingleCard ? 0 : `${leftPadding}px`,
@@ -159,26 +163,21 @@ export function MessageHistory({
               className="flex-shrink-0 message-card"
               style={{
                 width: `${cardWidth}px`,
-                height: `${cardHeight}px`, // 카드 높이 설정
+                height: `${cardHeight}px`,
                 transition: 'transform 0.1s ease-out'
               }}
             >
               <MessageCard
                 message={message}
                 isSelected={index === selectedCardIndex}
-                onSelect={() => selectCard(index)}
+                onSelect={() => selectCard(index, true)} // 모달 열기
               />
             </div>
           ))}
         </div>
       </div>
       {!isSingleCard && (
-        <div
-          className="flex justify-center space-x-4"
-          style={{
-            marginTop: '10px' // 버튼 위쪽 간격만 추가
-          }}
-        >
+        <div className="flex justify-center space-x-4 mt-4">
           <Button
             onClick={handlePrevious}
             disabled={selectedCardIndex === 0}
@@ -196,6 +195,14 @@ export function MessageHistory({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
+      )}
+
+      {isModalOpen && selectedMessage && (
+        <MessageCardModal
+          message={selectedMessage}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
       )}
     </div>
   )

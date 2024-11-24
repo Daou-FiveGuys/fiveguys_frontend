@@ -609,12 +609,12 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
   }
 
   return (
-    <div className="p-8 flex flex-col h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className="p-4 flex flex-col h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex space-x-4 mb-8 z-20"
+        className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-8 z-20"
       >
         <CustomSelect
           value={searchFilter}
@@ -626,8 +626,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
           ]}
           className="w-48"
         />
-        <div className="relative flex-grow">
-          {/* 검색어를 작성하는 TextField*/}
+        <div className="relative w-full sm:w-2/3 flex-grow">
           <Input
             className="pl-12 pr-20 h-12 rounded-lg bg-white dark:bg-gray-800 shadow-sm focus:ring-2 focus:ring-blue-500 transition-all duration-300"
             placeholder="검색..."
@@ -636,8 +635,6 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
           />
 
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-
-          {/* 검색 버튼 및 초기화 버튼 */}
           <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
             <TooltipProvider>
               <Tooltip>
@@ -676,9 +673,9 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
           </div>
         </div>
       </motion.div>
-      <div className="flex flex-grow bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-        <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 p-4 max-h-[calc(100vh-8rem)] overflow-y-auto custom-scrollbar">
-          {/* 폴더 정보가 나타날 좌측 공간 */}
+      <div className="flex flex-col md:flex-row flex-grow bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+        {/* 폴더 영역 */}
+        <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 p-4 max-h-[calc(100vh-16rem)] overflow-y-auto custom-scrollbar">
           <FolderTree
             topFolder2s={topFolder2s}
             currentGroup2={currentGroup2}

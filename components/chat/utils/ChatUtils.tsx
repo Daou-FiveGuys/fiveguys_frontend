@@ -5,6 +5,7 @@ import {
   deleteMessage,
   editMessage,
   setIsTyping,
+  updateMessageUserType,
   UserType
 } from '@/redux/slices/chatSlice'
 import { nanoid } from 'nanoid'
@@ -104,6 +105,52 @@ export default class ChatUtils {
     ChatUtils.dispatch(
       editMessage({ chatId: chatId, newText: text, messageId: messageId })
     )
+  }
+
+  static editUserType(chatId: string, messageId: string, userType: UserType) {
+    if (!ChatUtils.dispatch) {
+      throw new Error(
+        'Dispatch is not initialized. Call ChatUtils.initialize() first.'
+      )
+    }
+    ChatUtils.dispatch(
+      updateMessageUserType({
+        chatId: chatId,
+        userType: userType,
+        messageId: messageId
+      })
+    )
+  }
+  static editIsTyping(chatId: string, isTyping: boolean) {
+    if (!ChatUtils.dispatch) {
+      throw new Error(
+        'Dispatch is not initialized. Call ChatUtils.initialize() first.'
+      )
+    }
+    ChatUtils.dispatch(
+      setIsTyping({
+        chatId: chatId,
+        isTyping: isTyping
+      })
+    )
+  }
+
+  static processHtmlContent = (html: string): string => {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
+    doc.querySelectorAll('br').forEach(br => br.remove())
+    doc.querySelectorAll('a').forEach(a => a.setAttribute('target', '_blank'))
+    const traverseAndRemoveNewlines = (node: Node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        node.textContent = node.textContent as string
+        node.textContent = node.textContent?.replace(/\n/g, '')
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        Array.from(node.childNodes).forEach(traverseAndRemoveNewlines)
+      }
+    }
+    traverseAndRemoveNewlines(doc.body)
+
+    return doc.body.innerHTML
   }
 
   /**

@@ -15,7 +15,6 @@ apiClient.interceptors.request.use(
       return config
     }
     let accessToken = getCookie('access_token')
-    console.log(accessToken)
     if (accessToken && isTokenExpired(accessToken)) {
       try {
         accessToken = await refreshAccessToken()
