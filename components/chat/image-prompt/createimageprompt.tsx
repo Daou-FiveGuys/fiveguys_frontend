@@ -50,6 +50,7 @@ const CreateImagePrompt: React.FC<CreateMessageProps> = ({
   useEffect(() => {
     if (!ChatUtils.dispatch) {
       ChatUtils.initialize(dispatch)
+      setStage('generateImage')
     }
   }, [dispatch])
 
