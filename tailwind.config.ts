@@ -30,7 +30,11 @@ module.exports = {
         foreground: 'hsl(var(--foreground))',
         primary: {
           DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))'
+          foreground: 'hsl(var(--primary-foreground))',
+          baseLight: 'hsl(220, 15%, 20%)',
+          hoverLight: 'hsl(220, 15%, 10%)',
+          baseDark: 'hsl(0, 0%, 85%)',
+          hoverDark: 'hsl(0, 0%, 100%)'
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -53,12 +57,6 @@ module.exports = {
             lineHeight: '1.6',
             fontWeight: '300',
             color: theme('colors.foreground'),
-            a: {
-              color: theme('colors.primary.DEFAULT'),
-              '&:hover': {
-                color: theme('colors.primary.foreground')
-              }
-            },
             h1: {
               fontFamily: theme('fontFamily.gothic'),
               fontSize: theme('fontSize.3xl'),
@@ -95,23 +93,29 @@ module.exports = {
               fontSize: '16px'
             },
             li: {
-              marginBottom: '0.1em', // 리스트 항목 간격 최소화
+              marginBottom: '0.1em',
               lineHeight: '1.5'
             },
             'p + p': {
-              marginTop: '0.2em' // 문단 간격 최소화
+              marginTop: '0.2em'
             },
             pre: {
               margin: 0
             },
             'p br': {
-              display: 'none' // \n 줄바꿈 제거
+              display: 'none'
             },
             'p + ol': {
-              marginTop: '0.2em' // 문단과 리스트 간 간격 조정
+              marginTop: '0.2em'
             },
             'p + ul': {
               marginTop: '0.2em'
+            },
+            a: {
+              color: theme('colors.primary.baseLight'),
+              '&:hover': {
+                color: theme('colors.primary.hoverLight')
+              }
             }
           }
         },
@@ -120,9 +124,9 @@ module.exports = {
             color: theme('colors.foreground'),
             fontWeight: '300',
             a: {
-              color: theme('colors.primary.DEFAULT'),
+              color: theme('colors.primary.baseDark'),
               '&:hover': {
-                color: theme('colors.primary.foreground')
+                color: theme('colors.primary.hoverDark')
               }
             },
             ul: {

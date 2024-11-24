@@ -1,18 +1,18 @@
-'use client' // 클라이언트 컴포넌트로 선언
+'use client'
 
 import React, { useEffect, useRef } from 'react'
-import classNames from 'classnames'
 
 interface HTMLTypingEffectProps {
-  htmlContent: string // HTML 콘텐츠
-  speed?: number // 한 글자당 출력 속도(ms)
-  onComplete?: () => void // 타이핑 완료 시 호출될 콜백 함수
+  htmlContent: string
+  speed?: number
+  onComplete?: () => void
 }
 
 interface Instruction {
   type: 'open' | 'text' | 'close'
   char?: string
   tagName?: string
+  attributes?: { [key: string]: string }
 }
 
 const HTMLTypingEffect: React.FC<HTMLTypingEffectProps> = ({
@@ -20,9 +20,9 @@ const HTMLTypingEffect: React.FC<HTMLTypingEffectProps> = ({
   speed = 50,
   onComplete
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null) // 콘텐츠를 렌더링할 Ref
-  const instructionsRef = useRef<Instruction[]>([]) // 명령어 리스트 캐싱
-  const isTypingRef = useRef(false) // 현재 타이핑 중인지 확인
+  const containerRef = useRef<HTMLDivElement>(null)
+  const instructionsRef = useRef<Instruction[]>([])
+  const isTypingRef = useRef(false)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -35,19 +35,28 @@ const HTMLTypingEffect: React.FC<HTMLTypingEffectProps> = ({
     const instructions: Instruction[] = []
     const traverse = (node: Node) => {
       if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement
+        const attributes: { [key: string]: string } = {}
+        Array.from(element.attributes).forEach(attr => {
+          attributes[attr.name] = attr.value
+        })
+        // <a> 태그인 경우 target="_blank" 추가
+        if (element.tagName.toLowerCase() === 'a') {
+          attributes['target'] = '_blank'
+        }
         instructions.push({
           type: 'open',
-          tagName: (node as HTMLElement).tagName.toLowerCase()
+          tagName: element.tagName.toLowerCase(),
+          attributes
         })
         Array.from(node.childNodes).forEach(traverse)
         instructions.push({
           type: 'close',
-          tagName: (node as HTMLElement).tagName.toLowerCase()
+          tagName: element.tagName.toLowerCase()
         })
       } else if (node.nodeType === Node.TEXT_NODE) {
         const textContent = node.textContent || ''
         for (const char of textContent) {
-          // 개행 문자 제거
           if (char !== '\n') {
             instructions.push({ type: 'text', char })
           }
@@ -58,7 +67,6 @@ const HTMLTypingEffect: React.FC<HTMLTypingEffectProps> = ({
     elements.forEach(traverse)
     instructionsRef.current = instructions
 
-    // 애니메이션 시작
     if (!isTypingRef.current) {
       isTypingRef.current = true
       startTyping()
@@ -73,7 +81,7 @@ const HTMLTypingEffect: React.FC<HTMLTypingEffectProps> = ({
 
     const typeEffect = () => {
       if (currentInstructionIndex >= instructionsRef.current.length) {
-        isTypingRef.current = false // 타이핑 완료
+        isTypingRef.current = false
         if (onComplete) onComplete()
         return
       }
@@ -85,6 +93,11 @@ const HTMLTypingEffect: React.FC<HTMLTypingEffectProps> = ({
 
       if (instruction.type === 'open' && instruction.tagName) {
         const element = document.createElement(instruction.tagName)
+        if (instruction.attributes) {
+          Object.entries(instruction.attributes).forEach(([key, value]) => {
+            element.setAttribute(key, value)
+          })
+        }
         parent.appendChild(element)
         stack.push(element)
       } else if (instruction.type === 'text' && instruction.char) {
@@ -107,7 +120,7 @@ const HTMLTypingEffect: React.FC<HTMLTypingEffectProps> = ({
   return (
     <div
       ref={containerRef}
-      className={classNames('relative mx-auto max-w-2xl prose dark:prose-dark')}
+      className="relative mx-auto max-w-2xl prose dark:prose-dark"
       style={{ whiteSpace: 'pre-wrap' }}
     />
   )
