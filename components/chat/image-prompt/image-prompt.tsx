@@ -21,34 +21,38 @@ interface CustomButtonProps {
   setActiveButton: (value: ButtonType) => void
 }
 
-const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
-  ({ buttonType, activeButton, setActiveButton }, ref) => {
-    const isActive = buttonType === activeButton
-    const [hasAddedChat, setHasAddedChat] = React.useState(false)
-    const [lastUserInput, setLastUserInput] = React.useState<string | null>(
-      null
-    )
-    useImperativeHandle(ref, () => ({
-      handleEnterPress: (value: string) => {
-        if (isActive && value.trim()) {
-          ChatUtils.addChat(buttonType, 'user', value.trim())
-          setLastUserInput(value.trim())
-        }
+const CreateImagePromptButton = forwardRef<
+  CustomButtonHandle,
+  CustomButtonProps
+>(({ buttonType, activeButton, setActiveButton }, ref) => {
+  const isActive = buttonType === activeButton
+  const messageOption = useSelector((root: RootState) => root.messageOption)
+  const [lastUserInput, setLastUserInput] = React.useState<string | null>(null)
+  useImperativeHandle(ref, () => ({
+    handleEnterPress: (value: string) => {
+      if (isActive && value.trim()) {
+        ChatUtils.addChat(buttonType, 'user', value.trim())
+        setLastUserInput(value.trim())
       }
-    }))
+    }
+  }))
 
-    return (
-      <>
-        <Button
-          className="w-full md:w-28 h-8 mb-2 md:mb-0"
-          variant={isActive ? 'default' : 'outline'}
-          onClick={() => setActiveButton('create-image-prompt')}
-        >
-          문자 전송
-        </Button>
-      </>
-    )
-  }
-)
+  return (
+    <Button
+      className="w-full md:w-28 h-8 mb-2 md:mb-0"
+      variant={
+        messageOption.content === null
+          ? 'outline'
+          : isActive
+            ? 'default'
+            : 'outline'
+      }
+      disabled={messageOption.content === null}
+      onClick={() => setActiveButton('image-generate')}
+    >
+      프롬프트 생성
+    </Button>
+  )
+})
 
-export default SendMessageButton
+export default CreateImagePromptButton

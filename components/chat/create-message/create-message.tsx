@@ -42,7 +42,7 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
 
         setTimeout(() => {
           handleCreateMessage(value, buttonType)
-        }, 300)
+        }, 100)
       }
     }))
 
