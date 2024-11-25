@@ -52,6 +52,7 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         //   'assistant-animation',
         //   '이미지를 추가하시겠습니까?'
         // )
+        dispatch(
         setImageOption(
           {
             imageStyle: 'mix',
@@ -61,7 +62,8 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
             seed: -1,
             numInferenceSteps: 28
           }
-        );
+        )
+      )
         console.log(imageOption.imageStyle)
         if (isActive && value.trim()) {
           ChatUtils.addChat(buttonType, 'user', value.trim())
@@ -76,12 +78,13 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         ChatUtils.addChat(
           buttonType,
           'assistant-animation',
-          '이미지를 추가하시겠습니까?(이미지 생성, 이미지 업로드, 이미지 없이)'
+          '이미지를 생성하시겠습니까?(예, 아니오)'
         )
         setHasAddedChat(true)
       }
     },[lastUserInput])
 
+    
     return (
       <>
         <Button
