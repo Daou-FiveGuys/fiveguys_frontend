@@ -59,7 +59,11 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     }))
 
     useEffect(() => {
-      if (ChatUtils.dispatch && !hasAddedChat) {
+      if (
+        ChatUtils.dispatch &&
+        !hasAddedChat &&
+        activeButton === 'image-generate'
+      ) {
         ChatUtils.addChat(
           buttonType,
           'assistant-animation',

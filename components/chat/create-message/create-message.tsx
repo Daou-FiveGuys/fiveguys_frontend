@@ -2,7 +2,7 @@ import React, { forwardRef, useImperativeHandle, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
-
+import { handleCreateMessage } from './handle-create-message'
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
 }
@@ -34,10 +34,12 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
 
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
-        if (value.trim()) {
-          ChatUtils.addChat(buttonType, 'user', value.trim())
-          setLastUserInput(value.trim())
+        value = value.trim()
+        if (value) {
+          ChatUtils.addChat(buttonType, 'user', value)
+          setLastUserInput(value)
         }
+        handleCreateMessage(value)
       }
     }))
 
