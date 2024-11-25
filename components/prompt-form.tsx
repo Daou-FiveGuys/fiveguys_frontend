@@ -138,7 +138,7 @@ export function PromptForm({
       <div className="flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-2 px-4 md:px-8">
 
   {
-    activeButton !== 'faq'?
+    (activeButton === 'send-message')?
     (
       <>
       <ReturnButton setActiveButton={setActiveButton}></ReturnButton>
