@@ -34,10 +34,6 @@ const ReturnButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         variant="outline"
         onClick={() => {
           setActiveButton('faq')
-          dispatch(clearMessages({ chatId: 'send-message' }))
-          dispatch(clearMessages({ chatId: 'create-message' }))
-          dispatch(clearMessages({ chatId: 'create-image-prompt' }))
-          dispatch(clearMessages({ chatId: 'image-generate' }))
         }}
       >
         돌아가기

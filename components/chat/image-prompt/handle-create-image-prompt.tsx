@@ -5,26 +5,25 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import { MessageOptionState } from '@/redux/slices/messageOptionSlice'
 import apiClient from '@/services/apiClient'
-import { CreateMessageProcessType } from './create-message'
+import { CreateImagePromptProcessType } from './image-prompt'
 
-const buttonType: ButtonType = 'create-message'
-
-export const handleCreateMessage = (
+const buttonType: ButtonType = 'create-image-prompt'
+export const handleCreateImagePrompt = (
   value: string,
   setActiveButton: (value: ButtonType) => void,
   messageOption: MessageOptionState,
-  currentProcess: CreateMessageProcessType,
-  setCurrentProcess: (currentProcess: CreateMessageProcessType) => void
+  currentProcess: CreateImagePromptProcessType,
+  setCurrentProcess: (currentProcess: CreateImagePromptProcessType) => void
 ) => {
   switch (currentProcess) {
     case 'welcome':
       handleWelcome()
       break
-    case 'message-input':
-      handleMessageInput()
+    case 'prompt-input':
+      handleImagePromptInput()
       break
-    case 'message-generate':
-      handleMessageGenerate()
+    case 'prompt-generate':
+      handleImagePromptGenerate()
       break
     case 'edit':
       handleEdit()
@@ -37,19 +36,15 @@ export const handleCreateMessage = (
     switch (value) {
       case '직접':
         ChatUtils.addChat(
-          'create-message',
+          'create-image-prompt',
           'assistant-animation-html',
-          `직접 입력을 선택하셨습니다 메시지 입력해라`
+          `직접 입력을 선택하셨습니다. 생성하고자 하는 이미지를 묘사해주세요 🎨`
         )
-        setCurrentProcess('message-input')
+        setCurrentProcess('prompt-input')
         break
       case '자동':
-        ChatUtils.addChat(
-          'create-message',
-          'assistant-animation-html',
-          `자동 입력을 선택하셨습니다 문장을 입력해주세요`
-        )
-        setCurrentProcess('message-generate')
+        handleImagePromptGenerate()
+        setCurrentProcess('prompt-generate')
         break
       default:
         exceptionHandler('다시 시도해주세요')
@@ -57,13 +52,13 @@ export const handleCreateMessage = (
     }
   }
 
-  function handleMessageInput() {
+  function handleImagePromptInput() {
     switch (value) {
       case '수정':
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>입력하신 문자는 다음과 같습니다<div><strong>${messageOption.content}</strong>수정하고자 하는 메시지를 입력해주세요</div></div>`
+          `<div>입력하신 프롬프트는 다음과 같습니다<div><strong>${messageOption.content}</strong>수정하고자 하는 메시지를 입력해주세요</div></div>`
         )
         setCurrentProcess('edit')
         break
@@ -71,38 +66,38 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           buttonType,
           'assistant',
-          `<div>문자 생성이 완료되었습니다 👏🏻</div>`
+          `<div>프롬프트 생성이 완료되었습니다. 👏🏻</div>`
         )
         setCurrentProcess('welcome')
         setActiveButton('create-image-prompt')
         break
       default:
-        MessageOptionUtils.addContent(value)
+        MessageOptionUtils.addPrompt(value)
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>입력하신 문자는 다음과 같습니다<div><strong>${value}</strong></div><div/>수정을 원하시면 <span style="color: #f838a8">수정</span>, 다음 단계는<span style="color: #34d399">다음</span>을 입력해주세요.</div></div>`
+          `<div>입력하신 프롬프트는 다음과 같습니다<div><strong>${value}</strong></div><div/>수정을 원하시면 <span style="color: #f838a8">수정</span>, 다음 단계는<span style="color: #34d399">다음</span>을 입력해주세요.</div></div>`
         )
         break
     }
   }
 
-  function callGenerateMessage() {
+  function callGeneratePrompt() {
     const id = ChatUtils.addChat(
       buttonType,
       'assistant-animation',
-      '문자를 생성하고 있어요! 💭'
+      '프롬프트 생성하고 있어요! 💭'
     )
     apiClient
-      .post('/ai/gpt/generate-text', { text: value })
+      .post('/ai/gpt/generate-image-prompt', { text: messageOption.content })
       .then(res => {
         if (res.data.code === 200) {
-          MessageOptionUtils.addContent(res.data.data)
+          MessageOptionUtils.addPrompt(res.data.data)
           ChatUtils.editUserType(buttonType, id, 'assistant-animation-html')
           ChatUtils.editChat(
             buttonType,
             id,
-            `<div>오래 기다리셨어요 생성된 문자는 다음과 같아요!<div><strong>${res.data.data}</strong></div><div/>추가 수정을 원하시면 <span style="color: #f838a8">수정</span>, 다음 단계는<span style="color: #34d399">다음</span>을 입력해주세요.</div></div>`
+            `<div>오래 기다리셨어요 생성된 프롬프트는 다음과 같아요!<div><strong>${res.data.data}</strong></div><div/>추가 수정을 원하시면 <span style="color: #f838a8">수정</span>, 다음 단계는<span style="color: #34d399">다음</span>을 입력해주세요.</div></div>`
           )
           ChatUtils.editIsTyping(id, true)
         } else {
@@ -110,7 +105,7 @@ export const handleCreateMessage = (
         }
       })
       .catch(err => {
-        MessageOptionUtils.addContent(null)
+        MessageOptionUtils.addPrompt(null)
         ChatUtils.editIsTyping(buttonType, true)
         ChatUtils.editChat(
           buttonType,
@@ -120,7 +115,7 @@ export const handleCreateMessage = (
       })
   }
 
-  function handleMessageGenerate() {
+  function handleImagePromptGenerate() {
     switch (value) {
       case '재생성':
         ChatUtils.addChat(
@@ -133,21 +128,21 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>입력하신 문자는 다음과 같습니다<div><strong>${messageOption.content}</strong>수정하고자 하는 메시지를 입력해주세요</div></div>`
+          `<div>입력하신 프롬프트는 다음과 같습니다<div><strong>${messageOption.content}</strong>수정하고자 하는 메시지를 입력해주세요</div></div>`
         )
         setCurrentProcess('edit')
         break
       case '다음':
         ChatUtils.addChat(
           buttonType,
-          'assistant',
-          `<div>문자 생성이 완료되었습니다</div>`
+          'assistant-animation-html',
+          `<div>프롬프트 생성이 완료되었습니다. 👏🏻</div>`
         )
         setCurrentProcess('welcome')
         setActiveButton('create-image-prompt')
         break
       default:
-        callGenerateMessage()
+        callGeneratePrompt()
         break
     }
   }
@@ -158,20 +153,20 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>입력하신 문자는 다음과 같습니다<div><strong>${messageOption.content}</strong>수정하고자 하는 메시지를 입력해주세요</div></div>`
+          `<div>입력하신 프롬프트는 다음과 같습니다<div><strong>${messageOption.content}</strong>수정하고자 하는 메시지를 입력해주세요</div></div>`
         )
         break
       case '다음':
         ChatUtils.addChat(
           buttonType,
-          'assistant',
-          `<div>문자 생성이 완료되었습니다</div>`
+          'assistant-animation-html',
+          `<div>프롬프트 생성이 완료되었습니다. 👏🏻</div>`
         )
         setCurrentProcess('welcome')
-        setActiveButton('create-image-prompt')
+        setActiveButton('image-generate')
         break
       default:
-        MessageOptionUtils.addContent(value)
+        MessageOptionUtils.addPrompt(value)
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
@@ -182,6 +177,6 @@ export const handleCreateMessage = (
   }
 
   function exceptionHandler(value: string) {
-    ChatUtils.addChat('create-message', 'assistant-animation', `${value}`)
+    ChatUtils.addChat('create-image-prompt', 'assistant-animation', `${value}`)
   }
 }

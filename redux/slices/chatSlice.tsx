@@ -28,7 +28,10 @@ const initialState: ChatState = {
   ['history']: { messages: [], isTyping: false },
   ['usage']: { messages: [], isTyping: false },
   ['send-message']: { messages: [], isTyping: false },
-  ['amount-used']: {messages: [], isTyping: false}
+  ['amount-used']: { messages: [], isTyping: false },
+  ['create-message']: { messages: [], isTyping: false },
+  ['create-image-prompt']: { messages: [], isTyping: false },
+  ['image-generate']: { messages: [], isTyping: false }
 }
 
 const chatSlice = createSlice({
