@@ -22,14 +22,21 @@ export interface DailyAmount {
     date: string;              // 일자 (ISO Date String)
   }
 
+export interface CommonResponse<T> {
+  code: number
+  message: string
+  data: T
+}
+
 export const api = { 
     readAmountUsed : async (setAmountUsed: Dispatch<SetStateAction<AmountUsed | undefined>>
 
     ) => {
         try {
-            const response = await apiClient.get(`/amountUsed/`)
+            const response = await apiClient.get<CommonResponse<AmountUsed>>(`/amountUsed/`)
             
             let amountUsed = response.data.data;
+            console.log(amountUsed) // TODO: 삭제할 것
             if(response.data.code == 200) {
               setAmountUsed(amountUsed)
             }
@@ -48,16 +55,16 @@ export const api = {
     ) => {
         try {
           const formattedDate = format(date, 'yyyy-MM-dd', { locale: ko })
-          const response = await apiClient.get(`/amountUsed/day/${formattedDate}`)
-          
+          const response = await apiClient.get<CommonResponse<DailyAmount>>(`/amountUsed/day/${formattedDate}`)
           let dailyAmount = response.data.data;
+          console.log(dailyAmount) // TODO: 삭제할 것
           if(response.data.code == 200) {
               setTodayInfo(dailyAmount)
           }
   
-          throw new Error('AmountUsed Not Found')
+          throw new Error('DailyAmount Not Found')
         } catch (error) {
-          console.error('AmountUsed Not Found:', error)
+          console.error('DailyAmount Not Found:', error)
         }
     }
 }
