@@ -39,6 +39,7 @@ export const api = {
             console.log(amountUsed) // TODO: 삭제할 것
             if(response.data.code == 200) {
               setAmountUsed(amountUsed)
+              return
             }
 
             throw new Error('AmountUsed Not Found')
@@ -60,6 +61,7 @@ export const api = {
           console.log(dailyAmount) // TODO: 삭제할 것
           if(response.data.code == 200) {
               setTodayInfo(dailyAmount)
+              return
           }
   
           throw new Error('DailyAmount Not Found')
