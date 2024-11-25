@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import ChatUtils from './../utils/ChatUtils'
 import { ButtonType } from '@/components/prompt-form'
 import { useDispatch, useSelector } from 'react-redux'
-import { clearText, setText } from '@/redux/slices/createTextSlice'
+// import { clearText, setText } from '@/redux/slices/createTextSlice' 🚨 삭제 🚨
 import Component from '@/components/image-option-modal'
 import { ImageOption, setImageOption } from '@/redux/slices/imageOptionSlice'
 import { postImageGenerate } from '@/components/image-generator-api'
@@ -59,7 +59,7 @@ const ImageGenerateModal: React.FC<CreateMessageProps> = ({
     }
   }, [lastUserInput, buttonType])
 
-  const message = useSelector((state: RootState) => state.createText)
+  // const message = useSelector((state: RootState) => state.createText) 🚨 삭제
 
   const processUserInput = async (input: string) => {
     switch (stage) {
@@ -79,8 +79,8 @@ const ImageGenerateModal: React.FC<CreateMessageProps> = ({
             'assistant',
             `선택하신 옵션 "${input}"이(가) 저장되었습니다.`
           )
-          setText({text:input})
-          console.log(message);
+          // import { clearText, setText } from '@/redux/slices/createTextSlice' 🚨 삭제 🚨
+          // console.log(message)
           setStage('initial')
         } else {
           ChatUtils.addChat(buttonType, 'user', input)
@@ -142,7 +142,7 @@ const ImageGenerateModal: React.FC<CreateMessageProps> = ({
       )
       setImageUrls(imageUrl)
       setStage('editImage')
-      dispatch(clearText())
+      // import { clearText, setText } from '@/redux/slices/createTextSlice' 🚨 삭제 🚨
     } catch (error) {
       console.error('이미지 생성 실패:', error)
     }

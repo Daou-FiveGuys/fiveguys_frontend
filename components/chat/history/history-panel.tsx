@@ -32,7 +32,7 @@ export default function HistoryPanel() {
     if (!isTyping) {
       setTimeout(() => {
         setVisiable(true)
-      }, 60)
+      }, 150)
     }
   }, [isTyping])
 

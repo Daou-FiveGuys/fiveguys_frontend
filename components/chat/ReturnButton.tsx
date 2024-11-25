@@ -1,8 +1,7 @@
-import React, { forwardRef, useImperativeHandle, useEffect } from 'react'
+import React, { forwardRef, useImperativeHandle } from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
-import { useDispatch, useSelector } from 'react-redux'
-import { RootState } from '@/redux/store'
+import { useDispatch } from 'react-redux'
 import { clearMessages } from '@/redux/slices/chatSlice'
 
 export interface CustomButtonHandle {
@@ -14,31 +13,35 @@ interface CustomButtonProps {
 }
 
 const ReturnButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
-  ({setActiveButton }) => {
+  ({ setActiveButton }, ref) => {
     const dispatch = useDispatch()
 
+    useImperativeHandle(ref, () => ({
+      handleEnterPress: (value: string) => {
+        if (value.trim()) {
+          setActiveButton('faq')
+          dispatch(clearMessages({ chatId: 'send-message' }))
+          dispatch(clearMessages({ chatId: 'create-message' }))
+          dispatch(clearMessages({ chatId: 'create-image-prompt' }))
+          dispatch(clearMessages({ chatId: 'image-generate' }))
+        }
+      }
+    }))
+
     return (
-      <>
-        <Button
-          className="w-full md:w-28 h-8 mb-2 md:mb-0"
-          onClick={()=> {    
-            setActiveButton("faq")
-            dispatch(
-            clearMessages({chatId:'send-message'})
-          )
-          dispatch(
-            clearMessages({chatId:'create-message'})
-          )
-          dispatch(
-            clearMessages({chatId:'create-image-prompt'})
-          )
-          dispatch(
-            clearMessages({chatId:'image-generate'})
-          )}}
-        >
-          Return
-        </Button>
-      </>
+      <Button
+        className="w-full md:w-28 h-8 mb-2 md:mb-0"
+        variant="outline"
+        onClick={() => {
+          setActiveButton('faq')
+          dispatch(clearMessages({ chatId: 'send-message' }))
+          dispatch(clearMessages({ chatId: 'create-message' }))
+          dispatch(clearMessages({ chatId: 'create-image-prompt' }))
+          dispatch(clearMessages({ chatId: 'image-generate' }))
+        }}
+      >
+        돌아가기
+      </Button>
     )
   }
 )
