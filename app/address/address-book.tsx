@@ -227,13 +227,13 @@ export const CustomSelect = ({
     <div className={`relative ${className}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-2 text-left bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-nvar1 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+        className="w-full px-4 py-2 text-left bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded-lg shadow-sm focus:outline-nvar1 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
       >
         {options.find((opt: any) => opt.value === value)?.label}
         <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
       </button>
       {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg">
+        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded-lg shadow-lg">
           {options.map((option: any) => (
             <button
               key={option.value}
@@ -241,7 +241,7 @@ export const CustomSelect = ({
                 onChange(option.value)
                 setIsOpen(false)
               }}
-              className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+              className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors duration-200"
             >
               {option.label}
             </button>
@@ -609,7 +609,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
   }
 
   return (
-    <div className="p-4 flex flex-col h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className="p-4 flex flex-col h-screen bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-zinc-100">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -628,7 +628,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
         />
         <div className="relative w-full sm:w-2/3 flex-grow">
           <Input
-            className="pl-12 pr-20 h-12 rounded-lg bg-white dark:bg-gray-800 shadow-sm focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+            className="pl-12 pr-20 h-12 rounded-lg bg-white dark:bg-zinc-800 shadow-sm focus:ring-2 focus:ring-blue-500 transition-all duration-300"
             placeholder="검색..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
@@ -643,7 +643,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
                     variant="ghost"
                     size="icon"
                     onClick={handleSearch}
-                    className="hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-300"
+                    className="hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-full transition-colors duration-300"
                   >
                     <Search className="h-5 w-5" />
                   </Button>
@@ -660,7 +660,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
                     variant="ghost"
                     size="icon"
                     onClick={handleReset}
-                    className="hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-300"
+                    className="hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-full transition-colors duration-300"
                   >
                     <X className="h-5 w-5" />
                   </Button>
@@ -673,9 +673,9 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
           </div>
         </div>
       </motion.div>
-      <div className="flex flex-col md:flex-row flex-grow bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-grow bg-white dark:bg-zinc-800 rounded-2xl shadow-lg overflow-hidden">
         {/* 폴더 영역 */}
-        <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 p-4 max-h-[calc(100vh-16rem)] overflow-y-auto custom-scrollbar">
+        <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-gray-200 dark:border-zinc-700 p-4 max-h-[calc(100vh-16rem)] overflow-y-auto custom-scrollbar">
           <FolderTree
             topFolder2s={topFolder2s}
             currentGroup2={currentGroup2}
@@ -735,7 +735,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
       </div>
       {/* 새 주소 추가 버튼을 누를 시 나오는 다이얼로그 */}
       <Dialog open={isAddingContact2} onOpenChange={setIsAddingContact2}>
-        <DialogContent className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl">
+        <DialogContent className="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">
               새 주소 추가
@@ -748,7 +748,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
               onChange={e =>
                 setNewContact2({ ...newContact2, name: e.target.value })
               }
-              className="rounded-lg bg-gray-100 dark:bg-gray-700"
+              className="rounded-lg bg-gray-100 dark:bg-zinc-700"
             />
             <Input
               placeholder="전화번호"
@@ -756,7 +756,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
               onChange={e =>
                 setNewContact2({ ...newContact2, telNum: e.target.value })
               }
-              className="rounded-lg bg-gray-100 dark:bg-gray-700"
+              className="rounded-lg bg-gray-100 dark:bg-zinc-700"
             />
             <Input
               placeholder="변수 1"
@@ -764,7 +764,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
               onChange={e =>
                 setNewContact2({ ...newContact2, one: e.target.value })
               }
-              className="rounded-lg bg-gray-100 dark:bg-gray-700"
+              className="rounded-lg bg-gray-100 dark:bg-zinc-700"
             />
             <Input
               placeholder="변수 2"
@@ -772,7 +772,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
               onChange={e =>
                 setNewContact2({ ...newContact2, two: e.target.value })
               }
-              className="rounded-lg bg-gray-100 dark:bg-gray-700"
+              className="rounded-lg bg-gray-100 dark:bg-zinc-700"
             />
             <Input
               placeholder="변수 3"
@@ -780,7 +780,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
               onChange={e =>
                 setNewContact2({ ...newContact2, three: e.target.value })
               }
-              className="rounded-lg bg-gray-100 dark:bg-gray-700"
+              className="rounded-lg bg-gray-100 dark:bg-zinc-700"
             />
             <Input
               placeholder="변수 4"
@@ -788,7 +788,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
               onChange={e =>
                 setNewContact2({ ...newContact2, four: e.target.value })
               }
-              className="rounded-lg bg-gray-100 dark:bg-gray-700"
+              className="rounded-lg bg-gray-100 dark:bg-zinc-700"
             />
             <div className="flex justify-end space-x-2 mt-6">
               <Button

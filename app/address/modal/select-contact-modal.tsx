@@ -119,7 +119,7 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent
-        className="fixed bg-white dark:bg-gray-800 rounded-2xl shadow-lg w-full max-w-[95vw] md:max-w-[1000px] z-[99999]"
+        className="fixed bg-white dark:bg-zinc-800 rounded-2xl shadow-lg w-full max-w-[95vw] md:max-w-[1000px] z-[99999]"
         style={{
           top: '50%',
           left: '50%',
