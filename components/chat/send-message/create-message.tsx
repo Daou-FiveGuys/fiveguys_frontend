@@ -45,6 +45,10 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
     | 'generateImage'
     | 'loading'
     | 'editImage'
+    | 'showMessage1'
+    | 'showMessage1-1'
+    | 'showMessage2'
+    | 'showMessage2-1'    
   >('initial')
   const dispatch = useDispatch()
   const [prompt, setPrompt] = useState<string>('')
@@ -87,15 +91,81 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
           )
         }
         break
-      case 'directInput':
-        dispatch(setText({ text: input }))
-        setPrompt(input)
-        ChatUtils.addChat(buttonType, 'user', input)
+      case 'showMessage1':
+          if (input.toLowerCase() === '수정') {
+            setStage('showMessage1-1')
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              "최근 생성 메시지: "+message.text+"입니다. 메시지를 다시 입력해 주세요."
+            )
+          } else if (input.toLowerCase() === '저장') {
+            setStage('imageOption')
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              '이미지 생성, 이미지 업로드, 이미지 없이를 입력해주세요.'
+            )
+          } else {
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              '다시 입력해주세요. "수정" 또는 "저장"을 선택해주세요.'
+            )
+          }
+          break
+      case 'showMessage1-1':
+        setText({text:input})
         setStage('imageOption')
         ChatUtils.addChat(
           buttonType,
           'assistant',
-          '입력하신 내용이 저장되었습니다. 이미지 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"'
+          input+'으로 저장되었습니디. 이미지 생성, 이미지 업로드, 이미지 없이를 입력해주세요.'
+        )
+        break
+        case 'showMessage2':
+          if (input.toLowerCase() === '수정') {
+            setStage('showMessage2-1')
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              "최근 생성 메시지: "+message.text+"입니다. 주제를 다시 입력해 주세요."
+            )
+          } else if (input.toLowerCase() === '저장') {
+            setStage('imageOption')
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              '이미지 생성, 이미지 업로드, 이미지 없이를 입력해주세요.'
+            )
+          } else {
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              '다시 입력해주세요. "수정" 또는 "저장"을 선택해주세요.'
+            )
+          }
+          break
+        case 'showMessage2-1':
+          const reGeneratedText = await postTextGenerate(input);
+          //이부분이 잘 안나옴
+          dispatch(setText({ text: reGeneratedText }))
+          setStage('imageOption')
+          ChatUtils.addChat(
+            buttonType,
+            'assistant',
+            reGeneratedText+'으로 저장되었습니디. 이미지 생성, 이미지 업로드, 이미지 없이를 입력해주세요.'
+          )
+        break
+      case 'directInput':
+        dispatch(setText({ text: input }))
+        setPrompt(input)
+        ChatUtils.addChat(buttonType, 'user', input)
+        setStage('showMessage1')
+        ChatUtils.addChat(
+          buttonType,
+          'assistant',
+          input+'으로 메시지가 저장되었습니다. 수정을 원하시면 "수정", 저장을 원하시면 "저장"을 입력해주세요.'
         )
         break
       case 'autoGenerate':
@@ -112,9 +182,9 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
         ChatUtils.addChat(
           buttonType,
           'assistant',
-          '이미지 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"'
+          generatedText+'으로 메시지가 저장되었습니다. 수정을 원하시면 "수정", 저장을 원하시면 "저장"을 입력해주세요.'
         )
-        setStage('imageOption')
+        setStage('showMessage2')
         break
       case 'imageOption':
         if (input === '이미지 생성') {
