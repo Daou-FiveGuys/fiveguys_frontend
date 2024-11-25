@@ -38,41 +38,27 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { api, AmountUsed, DailyAmount } from './service'
 
 const AmountChart: React.FC = () => {
-  const [amountUsed, setAmountUsed] = useState<AmountUsed | undefined>()
   const [weeklyData, setWeeklyData] = useState<DailyAmount[]>([])
   const [selectedMonth, setSelectedMonth] = useState<string>(
     format(new Date(), 'yyyy-MM')
   )
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(
-    startOfWeek(new Date(), { weekStartsOn: 1 })
+    startOfWeek(subDays(new Date(), 6), { weekStartsOn: 1 })
   )
 
   useEffect(() => {
-    api.readAmountUsed(setAmountUsed)
-  }, [])
+    fetchWeeklyData(currentWeekStart)
+  }, [currentWeekStart])
 
-  useEffect(() => {
-    if (amountUsed) {
-      const weekData = Array.from({ length: 7 }, (_, i) => {
-        const date = format(addDays(currentWeekStart, i), 'yyyy-MM-dd')
-        return (
-          amountUsed.dailyAmounts.find(day => day.date === date) || {
-            dailyAmountId: 0,
-            msgScnt: 0,
-            msgGcnt: 0,
-            imgScnt: 0,
-            imgGcnt: 0,
-            date
-          }
-        )
-      })
-      setWeeklyData(weekData)
-    }
-  }, [amountUsed, currentWeekStart])
+  const fetchWeeklyData = (startDate: Date) => {
+    api.readDailyAmountWeek(startDate, setWeeklyData)
+  }
 
   const handleMonthChange = (value: string) => {
     setSelectedMonth(value)
-    setCurrentWeekStart(startOfWeek(new Date(value), { weekStartsOn: 1 }))
+    const newDate = new Date(value)
+    const newWeekStart = startOfWeek(endOfMonth(newDate), { weekStartsOn: 1 })
+    setCurrentWeekStart(newWeekStart)
   }
 
   const handlePreviousWeek = () => {
@@ -193,3 +179,4 @@ const AmountChart: React.FC = () => {
 }
 
 export default AmountChart
+

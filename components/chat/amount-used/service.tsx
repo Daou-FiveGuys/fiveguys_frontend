@@ -1,4 +1,5 @@
 import apiClient from "@/services/apiClient"
+import { addDays } from "date-fns";
 import { format } from "date-fns/format"
 import { ko } from "date-fns/locale/ko"
 import { Dispatch, SetStateAction } from "react";
@@ -68,5 +69,43 @@ export const api = {
         } catch (error) {
           console.error('DailyAmount Not Found:', error)
         }
-    }
+    },
+
+    readDailyAmountWeek: async (
+      date: Date,
+      setWeeklyData: Dispatch<SetStateAction<DailyAmount[]>>
+    ) => {
+      try {
+        const dailyAmounts: DailyAmount[] = [];
+        const formattedDate = format(date, 'yyyy-MM-dd', { locale: ko });
+    
+        for (let i = 0; i < 7; i++) {
+          // 날짜를 하루씩 증가
+          const currentDate = addDays(new Date(formattedDate), i);
+          const currentFormattedDate = format(currentDate, 'yyyy-MM-dd', { locale: ko });
+    
+          // API 호출
+          const response = await apiClient.get<CommonResponse<DailyAmount>>(`/amountUsed/day/${currentFormattedDate}`);
+          
+          // DailyAmount 객체 생성
+          const dailyAmount = response.data.data || {
+            dailyAmountId: -1,
+            msgScnt: 0,
+            msgGcnt: 0,
+            imgScnt: 0,
+            imgGcnt: 0,
+            date: currentFormattedDate,
+          };
+    
+          // 결과 배열에 추가
+          dailyAmounts.push(dailyAmount);
+        }
+    
+        // 최종 결과 업데이트
+        setWeeklyData(dailyAmounts);
+      } catch (error) {
+        console.error('Error fetching weekly daily amounts:', error);
+        setWeeklyData([]); // 에러가 발생하면 데이터 초기화
+      }
+    }    
 }
