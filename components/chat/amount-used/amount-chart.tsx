@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { format, subDays, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addWeeks, isSameMonth } from 'date-fns'
+import { format, subDays, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addWeeks, isSameMonth, subMonths } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { Line, Area, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -14,7 +14,7 @@ const AmountChart: React.FC = () => {
   const [amountUsed, setAmountUsed] = useState<AmountUsed | undefined>()
   const [weeklyData, setWeeklyData] = useState<DailyAmount[]>([])
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'))
-  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfWeek(new Date(selectedMonth)))
+  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 1 }))
 
   useEffect(() => {
     api.readAmountUsed(setAmountUsed)
@@ -39,7 +39,7 @@ const AmountChart: React.FC = () => {
 
   const handleMonthChange = (value: string) => {
     setSelectedMonth(value)
-    setCurrentWeekStart(startOfWeek(new Date(value)))
+    setCurrentWeekStart(startOfWeek(new Date(value), { weekStartsOn: 1 }))
   }
 
   const handlePreviousWeek = () => {
@@ -49,7 +49,7 @@ const AmountChart: React.FC = () => {
     } else {
       const prevMonth = addDays(startOfMonth(new Date(selectedMonth)), -1)
       setSelectedMonth(format(prevMonth, 'yyyy-MM'))
-      setCurrentWeekStart(startOfWeek(endOfMonth(prevMonth)))
+      setCurrentWeekStart(startOfWeek(endOfMonth(prevMonth), { weekStartsOn: 1 }))
     }
   }
 
@@ -60,17 +60,16 @@ const AmountChart: React.FC = () => {
     } else {
       const nextMonth = addDays(endOfMonth(new Date(selectedMonth)), 1)
       setSelectedMonth(format(nextMonth, 'yyyy-MM'))
-      setCurrentWeekStart(startOfWeek(startOfMonth(nextMonth)))
+      setCurrentWeekStart(startOfWeek(startOfMonth(nextMonth), { weekStartsOn: 1 }))
     }
   }
 
   const getMonthOptions = () => {
-    if (!amountUsed) return []
     const months = []
-    let currentDate = new Date(amountUsed.lastDate)
-    for (let i = 0; i < 3; i++) {
+    let currentDate = new Date()
+    for (let i = 0; i < 4; i++) {
       months.push(format(currentDate, 'yyyy-MM'))
-      currentDate = addWeeks(currentDate, -4)
+      currentDate = subMonths(currentDate, 1)
     }
     return months
   }
