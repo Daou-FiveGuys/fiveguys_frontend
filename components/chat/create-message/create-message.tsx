@@ -3,6 +3,9 @@ import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
 import { handleCreateMessage } from './handle-create-message'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/redux/store'
+import MessageOptionUtils from '../utils/MessageOptionUtils'
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
 }
@@ -21,6 +24,7 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       null
     )
 
+    const messageOption = useSelector((state: RootState) => state.messageOption)
     React.useEffect(() => {
       if (ChatUtils.dispatch && !hasAddedChat) {
         setHasAddedChat(true)
@@ -41,10 +45,14 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         }
 
         setTimeout(() => {
-          handleCreateMessage(value, buttonType)
+          handleCreateMessage(value, setActiveButton, messageOption)
         }, 100)
       }
     }))
+
+    function setContent(content: string) {
+      MessageOptionUtils.addContent(content)
+    }
 
     return (
       <>

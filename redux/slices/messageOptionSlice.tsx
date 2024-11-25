@@ -1,12 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-interface MessageOptionState {
+export interface MessageOptionState {
   title: string | null
   content: string | null
   prompt: string | null
 }
 
-const initialState: MessageOptionState = {
+export const initialState: MessageOptionState = {
   title: null,
   content: null,
   prompt: null
@@ -21,6 +21,12 @@ const messageOption = createSlice({
       state.content = action.payload.content
       state.prompt = action.payload.prompt
     },
+    setPrompt(state, action: PayloadAction<string | null>) {
+      state.prompt = action.payload
+    },
+    setContent(state, action: PayloadAction<string | null>) {
+      state.content = action.payload
+    },
     clearTitle(state) {
       state.title = null
     },
@@ -33,6 +39,12 @@ const messageOption = createSlice({
   }
 })
 
-export const { setMessage, clearTitle, clearContent, clearPrompt } =
-  messageOption.actions
+export const {
+  setMessage,
+  clearTitle,
+  clearContent,
+  clearPrompt,
+  setContent,
+  setPrompt
+} = messageOption.actions
 export default messageOption.reducer

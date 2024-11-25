@@ -23,6 +23,7 @@ import ImagePromptButton from './chat/image-prompt/image-prompt'
 import ReturnButton from './chat/ReturnButton'
 import ImageGenerateButton from './chat/image-generate/image-generate'
 import AmountUsedButton from './chat/amount-used/amount-used'
+import MessageOptionUtils from './chat/utils/MessageOptionUtils'
 
 /**
  *
@@ -98,6 +99,7 @@ export function PromptForm({
       inputRef.current.focus()
     }
     ChatUtils.initialize(dispatch)
+    MessageOptionUtils.initialize(dispatch)
   }, [])
 
   const handleFormSubmit = (
