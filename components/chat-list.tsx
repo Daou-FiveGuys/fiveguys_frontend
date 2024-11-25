@@ -5,12 +5,7 @@ import { setIsTyping, Message } from '@/redux/slices/chatSlice'
 import { useDispatch } from 'react-redux'
 import MessageItem from './chat/utils/MessageItem'
 import { ButtonType } from './prompt-form'
-import ChatUtils from './chat/utils/ChatUtils'
-import CalendarComponent from './chat/history/calendar'
-import { MessageHistory } from './chat/history/message-history'
 import HistoryPanel from './chat/history/history-panel'
-import { BotCard } from './stocks'
-import AddressBookModal from '@/app/address/modal/select-contact-modal'
 import AmountUsedPanel from './chat/amount-used/amount-used-panel'
 
 export const ChatList = ({
