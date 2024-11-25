@@ -86,7 +86,7 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       <>
         <Button
           className="w-full md:w-28 h-8 mb-2 md:mb-0"
-          variant={isActive ? 'default' : 'outline'}
+          variant={isActive? 'default' : 'outline'}
           onClick={() => setActiveButton('create-image-prompt')}
         >
           프롬프트 생성

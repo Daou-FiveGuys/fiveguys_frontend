@@ -100,12 +100,14 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
         break
       case 'autoGenerate':
         const generatedText = await postTextGenerate(input);
+        //이부분이 잘 안나옴
         dispatch(setText({ text: generatedText }))
+        console.log(generatedText)
         ChatUtils.addChat(buttonType, 'user', input)
         ChatUtils.addChat(
           buttonType,
           'assistant',
-          '샘플 데이터가 생성되었습니다: ' + generatedText
+          generatedText
         )
         ChatUtils.addChat(
           buttonType,
