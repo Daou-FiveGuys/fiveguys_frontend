@@ -85,13 +85,13 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         <Button
           className="w-full md:w-28 h-8 mb-2 md:mb-0"
           variant={
-            messageOption.content !== null
+            messageOption.content === null
               ? 'outline'
               : isActive
                 ? 'default'
                 : 'outline'
           }
-          disabled={messageOption.prompt !== null}
+          disabled={messageOption.prompt === null}
           onClick={() => setActiveButton('image-generate')}
         >
           이미지 생성
