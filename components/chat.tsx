@@ -24,7 +24,8 @@ export function Chat({ id, className }: ChatProps) {
     if (
       activeButton === 'create-message' ||
       activeButton === 'create-image-prompt' ||
-      activeButton === 'image-generate'
+      activeButton === 'image-generate' ||
+        activeButton === 'select-image'
     ) {
       // 조건에 맞는 상태의 메시지 배열을 병합
       return [

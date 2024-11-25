@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Dispatch, useEffect, useState } from 'react'
 import Image from 'next/image'
 import {
   Dialog,
@@ -34,8 +34,10 @@ import { RootState } from '@/redux/store'
 import {
   ImageOption,
   ImageStyle,
+  initialState,
   setImageOption
 } from '@/redux/slices/imageOptionSlice'
+import { UnknownAction } from 'redux'
 
 const styleOptions: { value: ImageStyle; label: string; image: string }[] = [
   {
@@ -75,9 +77,19 @@ const InfoPopover = ({ content }: { content: string }) => (
   </Popover>
 )
 
-export default function Component({ isOpen = true, onClose = ({}: any) => {} }) {
-  const imageOption = useSelector((state: RootState) => state.imageOption)
-  const dispatch = useDispatch()
+export default function Component({
+  isOpen = true,
+  onClose = ({}) => {},
+  imageOption = initialState,
+  dispatch
+}: {
+  isOpen?: boolean
+  onClose?: ({}: ImageOption) => void
+  imageOption: ImageOption
+  dispatch: Dispatch<UnknownAction>
+}) {
+  //const imageOption = useSelector((state: RootState) => state.imageOption)
+  //const dispatch = useDispatch()
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedStyle, setSelectedStyle] = useState<ImageStyle>(
     imageOption.imageStyle
@@ -128,14 +140,12 @@ export default function Component({ isOpen = true, onClose = ({}: any) => {} }) 
 
   const handleSubmit = () => {
     onClose({
-      step: currentStep,
       imageStyle: selectedStyle,
       width: imageSize.width,
       height: imageSize.height,
       numInferenceSteps: numInferenceSteps,
       seed: seed,
       guidanceScale: guidanceScale,
-      safetyChecker
     })
   }
 
@@ -151,7 +161,7 @@ export default function Component({ isOpen = true, onClose = ({}: any) => {} }) 
           <div className="grid grid-cols-2 gap-4 p-4">
             {styleOptions.map(style => (
               <div
-                key={style.value+style.label}
+                key={style.value + style.label}
                 className={`relative cursor-pointer rounded-lg overflow-hidden transition-all duration-200 border ${
                   selectedStyle === style.value
                     ? 'border-primary border-2'

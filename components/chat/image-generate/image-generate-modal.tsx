@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { Dispatch, useEffect, useState } from 'react'
 import ChatUtils from './../utils/ChatUtils'
 import { ButtonType } from '@/components/prompt-form'
 import { useDispatch, useSelector } from 'react-redux'
@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import Component from '@/components/image-option-modal'
 import { ImageOption, setImageOption } from '@/redux/slices/imageOptionSlice'
 import { postImageGenerate } from '@/components/image-generator-api'
-import { setImageData } from '@/redux/slices/imageSlice'
+import {ImageState, setImageData} from '@/redux/slices/imageSlice'
 import Image from 'next/image'
 import ReactDOMServer from 'react-dom/server'
 import { ImageSkeleton } from '@/components/ui/image-skeleton'
@@ -14,6 +14,9 @@ import { BotCard } from '@/components/stocks'
 import ImagePreviewModal from '@/components/image-preview-modal'
 import { useRouter } from 'next/navigation'
 import { RootState } from '@/redux/store'
+import { UnknownAction } from 'redux'
+import {MessageOptionState, setContent} from '@/redux/slices/messageOptionSlice'
+import { sleep } from '@/lib/utils'
 
 interface CreateMessageProps {
   buttonType: ButtonType
@@ -142,7 +145,6 @@ const ImageGenerateModal: React.FC<CreateMessageProps> = ({
       )
       setImageUrls(imageUrl)
       setStage('editImage')
-      // import { clearText, setText } from '@/redux/slices/createTextSlice' 🚨 삭제 🚨
     } catch (error) {
       console.error('이미지 생성 실패:', error)
     }
@@ -158,9 +160,6 @@ const ImageGenerateModal: React.FC<CreateMessageProps> = ({
 
   return (
     <div>
-      {stage === 'generateImage' ? (
-        <Component isOpen={true} onClose={handleGenerateImage} />
-      ) : null}
       {stage === 'editImage' ? (
         <ImagePreviewModal
           imageUrl={imageUrls}
@@ -183,3 +182,126 @@ export function ImageLoader() {
     </div>
   )
 }
+
+export const handleLoadingImage = (buttonType: ButtonType) => {
+  const skeletons = Array(4)
+    .fill(null)
+    .map((_, index) => <ImageSkeleton key={`skeleton-${index}`} />)
+  ChatUtils.addChat(
+    buttonType,
+    'assistant-animation-html',
+    ReactDOMServer.renderToString(<>{skeletons}</>)
+  )
+}
+
+export const handleGenerateImage = async (
+  imageOption: ImageOption,
+  messageOption: MessageOptionState,
+  dispatch: Dispatch<any>,
+  buttonType: ButtonType
+) => {
+  try {
+    const skeletonIds: string[] = []
+
+    // 로딩 상태 추가 (가로 4개로 배치)
+    const skeletonContainerId = ChatUtils.addChat(
+      buttonType,
+      'assistant-animation-html',
+      ReactDOMServer.renderToString(
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {Array(4)
+            .fill(null)
+            .map((_, i) => (
+              <ImageSkeleton key={`skeleton-${i}`} />
+            ))}
+        </div>
+      )
+    )
+
+    // 각각의 이미지 생성 요청을 비동기적으로 처리
+    const imagePromises = Array(4)
+      .fill(null)
+      .map(async () =>
+        postImageGenerate(imageOption, messageOption.prompt || '')
+      )
+    const imageUrls: string[] = []
+    const imageList: ImageState[] = []
+    for (const [index, imagePromise] of imagePromises.entries()) {
+      try {
+        const result = await imagePromise
+
+        // 이미지 데이터 저장
+        dispatch(
+            setImageData({
+              requestId: result.requestId,
+              url: result.url
+            })
+        )
+        imageList[index] = {
+          requestId: result.requestId,
+          url: result.url
+        }
+        imageUrls[index] = result.url
+      } catch (error) {
+        console.error(`이미지 생성 실패 (Index: ${index}):`, error)
+        imageUrls[index] = '' // 실패한 경우 빈 값으로 설정
+      }
+    }
+
+    // 로딩 상태를 실제 이미지로 교체
+    ChatUtils.deleteChat(buttonType, skeletonContainerId)
+
+    ChatUtils.addChat(
+      buttonType,
+      'assistant',
+      ReactDOMServer.renderToString(
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {imageUrls.map((url, idx) =>
+            url ? (
+              <button
+                key={`image-${idx}`}
+                onClick={() => alert(`클릭한 이미지 URL: ${url}`)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer'
+                }}
+              >
+                <img
+                  src={url}
+                  alt={`Generated Image ${idx + 1}`}
+                  width={200}
+                  height={200}
+                  style={{ borderRadius: '8px' }}
+                />
+              </button>
+            ) : (
+                <button
+                    key={`image-${idx}`}
+                    onClick={() => console.log(idx)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: 'pointer'
+                    }}
+                >
+                  <img
+                      src={'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'}
+                      alt={`Generated Image ${idx + 1}`}
+                      width={200}
+                      height={200}
+                      style={{borderRadius: '8px'}}
+                  />
+                </button>
+            )
+          )}
+        </div>
+      )
+    )
+  } catch (error) {
+    console.error('이미지 생성 실패:', error)
+  }
+}
+

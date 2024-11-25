@@ -7,6 +7,8 @@ import MessageItem from './chat/utils/MessageItem'
 import { ButtonType } from './prompt-form'
 import HistoryPanel from './chat/history/history-panel'
 import AmountUsedPanel from './chat/amount-used/amount-used-panel'
+import Component from "@/components/image-option-modal";
+import {handleGenerateImage} from "@/components/chat/image-generate/image-generate-modal";
 
 export const ChatList = ({
   chatId,
@@ -42,6 +44,7 @@ export const ChatList = ({
   const isHistoryChat = chatId === 'history'
   const isSendMessageChat = chatId === 'send-message'
   const isAmountUsed = chatId === 'amount-used'
+  const isImageGenerate = chatId === 'select-image'
 
   return (
     <div className="relative mx-auto max-w-2xl px-4">
@@ -61,6 +64,7 @@ export const ChatList = ({
       })}
       {isHistoryChat && <HistoryPanel />}
       {isAmountUsed && <AmountUsedPanel />}
+      {/*{isImageGenerate && <Component isOpen={true} onClose={handleGenerateImage} />}*/}
     </div>
   )
 }
