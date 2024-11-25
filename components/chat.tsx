@@ -20,9 +20,23 @@ export interface ChatProps extends React.ComponentProps<'div'> {
 export function Chat({ id, className }: ChatProps) {
   const [input, setInput] = useState<string>('')
   const [activeButton, setActiveButton] = useState<ButtonType>('faq')
-  const messages = useSelector((state: RootState) =>
-    state.chat[activeButton] ? state.chat[activeButton].messages : []
-  )
+  const messages = useSelector((state: RootState) => {
+    if (
+      activeButton === 'create-message' ||
+      activeButton === 'create-image-prompt' ||
+      activeButton === 'image-generate'
+    ) {
+      // 조건에 맞는 상태의 메시지 배열을 병합
+      return [
+        ...(state.chat['create-message']?.messages || []),
+        ...(state.chat['create-image-prompt']?.messages || []),
+        ...(state.chat['image-generate']?.messages || [])
+      ]
+    } else {
+      // 조건이 맞지 않을 경우, 선택된 버튼의 상태를 반환
+      return state.chat[activeButton]?.messages || []
+    }
+  })
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
