@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import Component from '@/components/image-option-modal'
 import { ImageOption, setImageOption } from '@/redux/slices/imageOptionSlice'
 import { postImageGenerate } from '@/components/image-generator-api'
-import {ImageState, setImageData} from '@/redux/slices/imageSlice'
+import { ImageState, setImageData } from '@/redux/slices/imageSlice'
 import Image from 'next/image'
 import ReactDOMServer from 'react-dom/server'
 import { ImageSkeleton } from '@/components/ui/image-skeleton'
@@ -15,7 +15,11 @@ import ImagePreviewModal from '@/components/image-preview-modal'
 import { useRouter } from 'next/navigation'
 import { RootState } from '@/redux/store'
 import { UnknownAction } from 'redux'
-import {MessageOptionState, setContent} from '@/redux/slices/messageOptionSlice'
+import {
+  MessageOptionState,
+  setContent,
+  setMessage
+} from '@/redux/slices/messageOptionSlice'
 import { sleep } from '@/lib/utils'
 
 interface CreateMessageProps {
@@ -196,97 +200,229 @@ export const handleLoadingImage = (buttonType: ButtonType) => {
 
 export default function HandleGenerateImage({
   imageOption,
-  messageOption
+  messageOption,
+  setActiveButton
 }: {
   imageOption: ImageOption
   messageOption: MessageOptionState
+  setActiveButton: (value: ButtonType) => void
 }) {
   const skeletonIds: string[] = []
   const buttonType = ''
-  // 로딩 상태 추가 (가로 4개로 배치)
-  return (
-    <BotCard>
-      {Array(4)
+
+  const [isDone, setDone] = useState<boolean>(false)
+  let imageUrls: string[] = []
+  const imageList: ImageState[] = []
+
+  const a = async () => {
+    try {
+      const imagePromises = Array(4)
         .fill(null)
-        .map((_, i) => (
-          <ImageSkeleton key={`skeleton-${i}`} />
-        ))}
+        .map(async () => {
+          try {
+            // postImageGenerate 결과 확인
+            const result = await postImageGenerate(
+              imageOption,
+              messageOption.prompt || ''
+            )
+            return {
+              requestId: result?.requestId || '',
+              url: result?.url || ''
+            }
+          } catch (error) {
+            console.error('이미지 생성 실패:', error)
+            return null // 실패한 경우 null 반환
+          }
+        })
+
+      const imageResults = await Promise.all(imagePromises) // 모든 이미지 Promise 처리
+      const imageUrls: string[] = []
+      const imageList: Array<{ requestId: string; url: string }> = []
+
+      imageResults.forEach((result, index) => {
+        if (result) {
+          imageList[index] = {
+            requestId: result.requestId,
+            url: result.url
+          }
+          imageUrls[index] = result.url
+        } else {
+          imageList[index] = {
+            requestId: '',
+            url: ''
+          }
+          // 실패한 경우 기본값 설정
+          imageUrls[index] = 'a'
+        }
+      })
+
+      setDone(true) // 완료 상태 업데이트
+    } catch (error) {
+      console.error('전체 이미지 생성 실패:', error)
+    } finally {
+      console.log(imageUrls)
+    }
+  }
+
+  useEffect(() => {
+    a().then(r => r)
+  }, [])
+
+  // 로딩 상태 추가 (가로 4개로 배치)
+  return !isDone ? (
+    <BotCard>
+      <div className="flex gap-2">
+        {Array(4)
+          .fill(null)
+          .map((_, i) => (
+            <ImageSkeleton key={`skeleton-${i}`} />
+          ))}
+      </div>
+    </BotCard>
+  ) : (
+    <BotCard>
+      {['a', 'b', 'c', 'd']?.map((url, idx) =>
+        url ? (
+          <button
+            key={`image-${idx}`}
+            onClick={() => {
+              setImageData({
+                requestId: '',
+                url: ''
+              })
+              console.log('Saved : ', imageList[idx])
+              ChatUtils.addChat(
+                'image-generate',
+                'assistant-animation-html',
+                ReactDOMServer.renderToString(
+                  <img
+                    src={
+                      'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'
+                    }
+                    alt={`Generated Image ${idx + 1}`}
+                    width={200}
+                    height={200}
+                    style={{ borderRadius: '8px' }}
+                  />
+                )
+              )
+              setActiveButton('image-generate')
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer'
+            }}
+          >
+            <img
+              src={
+                'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'
+              }
+              alt={`Generated Image ${idx + 1}`}
+              width={200}
+              height={200}
+              style={{ borderRadius: '8px' }}
+            />
+          </button>
+        ) : (
+          <button
+            key={`image-${idx}`}
+            onClick={() => console.log(idx)}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer'
+            }}
+          >
+            <img
+              src={
+                'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'
+              }
+              alt={`Generated Image ${idx + 1}`}
+              width={200}
+              height={200}
+              style={{ borderRadius: '8px' }}
+            />
+          </button>
+        )
+      )}
     </BotCard>
   )
 
   // 각각의 이미지 생성 요청을 비동기적으로 처리
   /*const imagePromises = Array(4)
-      .fill(null)
-      .map(async () =>
-        postImageGenerate(imageOption, messageOption.prompt || '')
-      )
-    const imageUrls: string[] = []
-    const imageList: ImageState[] = []
-    for (const [index, imagePromise] of imagePromises.entries()) {
-      try {
-        const result = await imagePromise
-        imageList[index] = {
-          requestId: result.requestId,
-          url: result.url
-        }
-        imageUrls[index] = result.url
-      } catch (error) {
-        console.error(`이미지 생성 실패 (Index: ${index}):`, error)
-        imageUrls[index] = '' // 실패한 경우 빈 값으로 설정
-      }
-    }*/
-  /*
-    ChatUtils.addChat(
-      buttonType,
-      'assistant',
-      ReactDOMServer.renderToString(
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {imageUrls.map((url, idx) =>
-            url ? (
-              <button
-                key={`image-${idx}`}
-                onClick={() => alert(`클릭한 이미지 URL: ${url}`)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer'
-                }}
-              >
-                <img
-                  src={url}
-                  alt={`Generated Image ${idx + 1}`}
-                  width={200}
-                  height={200}
-                  style={{ borderRadius: '8px' }}
-                />
-              </button>
-            ) : (
-                <button
-                    key={`image-${idx}`}
-                    onClick={() => console.log(idx)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      cursor: 'pointer'
-                    }}
-                >
-                  <img
-                      src={'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'}
-                      alt={`Generated Image ${idx + 1}`}
-                      width={200}
-                      height={200}
-                      style={{borderRadius: '8px'}}
-                  />
-                </button>
+            .fill(null)
+            .map(async () =>
+              postImageGenerate(imageOption, messageOption.prompt || '')
             )
-          )}
-        </div>
-      )
-    )*/
+          const imageUrls: string[] = []
+          const imageList: ImageState[] = []
+          for (const [index, imagePromise] of imagePromises.entries()) {
+            try {
+              const result = await imagePromise
+              imageList[index] = {
+                requestId: result.requestId,
+                url: result.url
+              }
+              imageUrls[index] = result.url
+            } catch (error) {
+              console.error(`이미지 생성 실패 (Index: ${index}):`, error)
+              imageUrls[index] = '' // 실패한 경우 빈 값으로 설정
+            }
+          }*/
+  /*
+          ChatUtils.addChat(
+            buttonType,
+            'assistant',
+            ReactDOMServer.renderToString(
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {imageUrls.map((url, idx) =>
+                  url ? (
+                    <button
+                      key={`image-${idx}`}
+                      onClick={() => alert(`클릭한 이미지 URL: ${url}`)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <img
+                        src={url}
+                        alt={`Generated Image ${idx + 1}`}
+                        width={200}
+                        height={200}
+                        style={{ borderRadius: '8px' }}
+                      />
+                    </button>
+                  ) : (
+                      <button
+                          key={`image-${idx}`}
+                          onClick={() => console.log(idx)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            cursor: 'pointer'
+                          }}
+                      >
+                        <img
+                            src={'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'}
+                            alt={`Generated Image ${idx + 1}`}
+                            width={200}
+                            height={200}
+                            style={{borderRadius: '8px'}}
+                        />
+                      </button>
+                  )
+                )}
+              </div>
+            )
+          )*/
   /*  } catch (error) {
-    console.error('이미지 생성 실패:', error)
-  }*/
+          console.error('이미지 생성 실패:', error)
+        }*/
 }
-

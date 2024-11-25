@@ -82,7 +82,7 @@ export const ChatList = ({
           setActiveButton={setActiveButton}
         />
       )}
-      {isImageOption && <HandleGenerateImage imageOption={imageOption} messageOption={messageOption} />}
+      {isImageOption && <HandleGenerateImage imageOption={imageOption} messageOption={messageOption} setActiveButton={setActiveButton}/>}
     </div>
   )
 }
