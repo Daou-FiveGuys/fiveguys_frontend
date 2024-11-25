@@ -14,7 +14,6 @@ import { BotCard } from '@/components/stocks'
 import ImagePreviewModal from '@/components/image-preview-modal'
 import { useRouter } from 'next/navigation'
 import { RootState } from '@/redux/store'
-import { ImageGenerator } from '@/main/components/image-generator'
 
 interface CreateMessageProps {
   buttonType: ButtonType
