@@ -198,8 +198,6 @@ export default function ImageEditor() {
           frameOptions.default.width = canvasWidth
           frameOptions.default.height = canvasHeight
 
-          console.log(canvasWidth * scale, canvasHeight * scale)
-
           // 이미지 배경 설정 (캔버스 중앙에 배치)
           img.set({
             left: (canvasWidth - img.width * scale) / 2,
@@ -793,7 +791,7 @@ export default function ImageEditor() {
   }
 
   const disableAll = () => {
-    setFramePopoverOpen(false)
+    setIsFramePopover(false)
     setSelectedShape(null)
     disableMasking()
     disableDrawing()
@@ -1019,7 +1017,6 @@ export default function ImageEditor() {
         })
       })
       canvas.backgroundImage.visible = true
-      console.log(originalImgDimensions)
       canvas.setDimensions(originalImgDimensions)
       originImgObject.visible = false
     } else {
@@ -1075,8 +1072,7 @@ export default function ImageEditor() {
         triggerFileInput()
         break
       case 'frameSize':
-        console.log('dd')
-        setFramePopoverOpen(true)
+        setIsFramePopover(true)
         break
       default:
         console.warn(`Unknown tool: ${tool}`)
@@ -1384,7 +1380,8 @@ export default function ImageEditor() {
     }
   }
 
-  const [framePopoverOpen, setFramePopoverOpen] = useState(false)
+  const [isFramePopover, setIsFramePopover] = useState(false)
+  const [isframePopoverOpen, setIsFramePopoverOpen] = useState(false)
 
   const [selectedOption, setSelectedOption] = useState<FrameOption>('default')
   const [width, setWidth] = useState(canvasDimensions.width)
@@ -2046,12 +2043,13 @@ export default function ImageEditor() {
             )}
           </Popover>
 
-          <Popover open={framePopoverOpen}>
+          <Popover open={isframePopoverOpen}>
             <PopoverTrigger asChild>
               <Button
-                variant={framePopoverOpen ? 'default' : 'outline'}
+                variant={isFramePopover ? 'default' : 'outline'}
                 onClick={() => {
-                  if (!framePopoverOpen) handleToolSwitch('frameSize')
+                  if (!isFramePopover) handleToolSwitch('frameSize')
+                  setIsFramePopoverOpen(!isframePopoverOpen)
                 }}
               >
                 <FrameIcon className="mr-2 h-4 w-4" />

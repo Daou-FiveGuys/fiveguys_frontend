@@ -54,25 +54,27 @@ export default function EmailVerify() {
     if (!isSent) setIsSent(true)
 
     if (!isButtonDisabled) {
-      apiClient.get(`/email`, {
-        headers: {
-          Authorization: `Bearer ${access_token}`
-        },
-        withCredentials: true
-      })
-      setIsButtonDisabled(true)
-      setTimer(180)
-
-      const countdown = setInterval(() => {
-        setTimer(prev => {
-          if (prev <= 1) {
-            clearInterval(countdown)
-            setIsButtonDisabled(false)
-            return 0
-          }
-          return prev - 1
+      try {
+        apiClient.get(`/email`, {
+          headers: {
+            Authorization: `Bearer ${access_token}`
+          },
+          withCredentials: true
         })
-      }, 1000)
+        setIsButtonDisabled(true)
+        setTimer(180)
+
+        const countdown = setInterval(() => {
+          setTimer(prev => {
+            if (prev <= 1) {
+              clearInterval(countdown)
+              setIsButtonDisabled(false)
+              return 0
+            }
+            return prev - 1
+          })
+        }, 1000)
+      } catch (err) {}
     }
   }
 

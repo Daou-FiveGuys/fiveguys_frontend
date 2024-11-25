@@ -50,7 +50,6 @@ export default function LoginForm() {
           if (res.data.code === 200) {
             const accessToken = res.data.data.accessToken
             if (accessToken) {
-              console.log(accessToken)
               setCookie('access_token', accessToken, {
                 httpOnly: false,
                 secure: process.env.NODE_ENV === 'production',
