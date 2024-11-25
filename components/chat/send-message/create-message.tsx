@@ -14,6 +14,7 @@ import { BotCard } from '@/components/stocks'
 import ImagePreviewModal from '@/components/image-preview-modal'
 import { useRouter } from 'next/navigation'
 import { RootState } from '@/redux/store'
+import { postTextGenerate } from '../create-message/text-generator'
 
 interface CreateMessageProps {
   buttonType: ButtonType
@@ -44,6 +45,12 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
     | 'generateImage'
     | 'loading'
     | 'editImage'
+    | 'showMessage1'
+    | 'showMessage1-1'
+    | 'showMessage2'
+    | 'showMessage2-1'    
+    | 'reGenerateImage'
+    | 'changeimageOption'
   >('initial')
   const dispatch = useDispatch()
   const [prompt, setPrompt] = useState<string>('')
@@ -86,81 +93,185 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
           )
         }
         break
+      case 'showMessage1':
+          if (input.toLowerCase() === '수정') {
+            setStage('showMessage1-1')
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              "최근 생성 메시지: "+message.text+"입니다. 메시지를 다시 입력해 주세요."
+            )
+          } else if (input.toLowerCase() === '저장') {
+            setStage('imageOption')
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              '이미지 생성, 이미지 업로드, 이미지 없이를 입력해주세요.'
+            )
+          } else {
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              '다시 입력해주세요. "수정" 또는 "저장"을 선택해주세요.'
+            )
+          }
+          break
+      case 'showMessage1-1':
+        setText({text:input})
+        setStage('imageOption')
+        ChatUtils.addChat(
+          buttonType,
+          'assistant',
+          input+'으로 저장되었습니디. 이미지 생성, 이미지 업로드, 이미지 없이를 입력해주세요.'
+        )
+        break
+        case 'showMessage2':
+          if (input.toLowerCase() === '수정') {
+            setStage('showMessage2-1')
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              "최근 생성 메시지: "+message.text+"입니다. 주제를 다시 입력해 주세요."
+            )
+          } else if (input.toLowerCase() === '저장') {
+            setStage('imageOption')
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              '이미지 생성, 이미지 업로드, 이미지 없이를 입력해주세요.'
+            )
+          } else {
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              '다시 입력해주세요. "수정" 또는 "저장"을 선택해주세요.'
+            )
+          }
+          break
+        case 'showMessage2-1':
+          const reGeneratedText = await postTextGenerate(input);
+          //이부분이 잘 안나옴
+          dispatch(setText({ text: reGeneratedText }))
+          setStage('imageOption')
+          ChatUtils.addChat(
+            buttonType,
+            'assistant',
+            reGeneratedText+'으로 저장되었습니디. 이미지 생성, 이미지 업로드, 이미지 없이를 입력해주세요.'
+          )
+        break
       case 'directInput':
         dispatch(setText({ text: input }))
         setPrompt(input)
         ChatUtils.addChat(buttonType, 'user', input)
-        setStage('imageOption')
+        setStage('showMessage1')
         ChatUtils.addChat(
           buttonType,
           'assistant',
-          '입력하신 내용이 저장되었습니다. 이미지 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"'
+          input+'으로 메시지가 저장되었습니다. 수정을 원하시면 "수정", 저장을 원하시면 "저장"을 입력해주세요.'
         )
         break
       case 'autoGenerate':
-        const generatedText = "문자자동생성필요";
+        const generatedText = await postTextGenerate(input);
+        //이부분이 잘 안나옴
         dispatch(setText({ text: generatedText }))
+        console.log(generatedText)
         ChatUtils.addChat(buttonType, 'user', input)
         ChatUtils.addChat(
           buttonType,
           'assistant',
-          '샘플 데이터가 생성되었습니다: ' + generatedText
+          generatedText
         )
         ChatUtils.addChat(
           buttonType,
           'assistant',
-          '이미지 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"'
+          generatedText+'으로 메시지가 저장되었습니다. 수정을 원하시면 "수정", 저장을 원하시면 "저장"을 입력해주세요.'
         )
-        setStage('imageOption')
+        setStage('showMessage2')
         break
-      case 'imageOption':
-        if (input === '이미지 생성') {
-          ChatUtils.addChat(buttonType, 'user', input)
+        case 'imageOption':
+          if (input === '이미지 생성') {
+            ChatUtils.addChat(buttonType, 'user', input)
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              '이미지 생성을 시작합니다.'
+            )
+            setStage('generateImage') //로컬에선 오류떠서.
+          } else if (input === '이미지 업로드') {
+            ChatUtils.addChat(buttonType, 'user', input)
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              `선택하신 옵션 "${input}"이(가) 저장되었습니다.`
+            )
+            setText({text:input})
+            console.log(message);
+            setStage('editImage')
+          }
+          else if (input === '이미지 없이') {
+            ChatUtils.addChat(buttonType, 'user', input)
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              `선택하신 옵션 "${input}"이(가) 저장되었습니다.`
+            )
+            setText({text:input})
+            console.log(message);
+            setStage('initial')
+          }
+          else {
+            ChatUtils.addChat(buttonType, 'user', input)
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              '올바른 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"'
+            )
+          }
+          break
+        case 'generateImage':
           ChatUtils.addChat(
             buttonType,
             'assistant',
-            '이미지 생성을 시작합니다.'
+            '이미지를 생성하는 중입니다.'
           )
-          setStage('generateImage')
-        } else if (['이미지 업로드', '이미지 없이'].includes(input)) {
-          ChatUtils.addChat(buttonType, 'user', input)
+          break
+        case 'changeimageOption':
+          if (input === '수정') {
+            ChatUtils.addChat(buttonType, 'user', input)
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              '이미지를 다시 생성을 시작합니다.'
+            )
+            setStage('reGenerateImage') //로컬에선 오류떠서.
+          } else if (input === '저장') {
+            ChatUtils.addChat(buttonType, 'user', input)
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              `선택하신 옵션 "${input}"이(가) 저장되었습니다.`
+            )
+            setText({text:input})
+            console.log(message);
+            setStage('editImage')
+          } else {
+            ChatUtils.addChat(buttonType, 'user', input)
+            ChatUtils.addChat(
+              buttonType,
+              'assistant',
+              '올바른 옵션을 선택해주세요: "수정", "저장"'
+            )
+          }
+            break
+        case 'reGenerateImage':
           ChatUtils.addChat(
             buttonType,
             'assistant',
-            `선택하신 옵션 "${input}"이(가) 저장되었습니다.`
-          )
-          setText({text:input})
-          console.log(message);
-          setStage('initial')
-        } else {
-          ChatUtils.addChat(buttonType, 'user', input)
-          ChatUtils.addChat(
-            buttonType,
-            'assistant',
-            '올바른 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"'
-          )
-          ChatUtils.addChat(
-            buttonType,
-            'assistant',
-            '올바른 옵션을 선택해주세요: "이미지 생성", "이미지 업로드", "이미지 없이"'
-          )
-        }
-        break
-      case 'generateImage':
-        ChatUtils.addChat(
-          buttonType,
-          'assistant',
-          '이미지를 생성하는 중입니다.'
+            '이미지를 생성하는 중입니다.'
         )
         break
-      case 'generateImage':
-        ChatUtils.addChat(
-          buttonType,
-          'assistant',
-          '이미지를 생성하는 중입니다.'
-        )
-        break
-    }
+             
+      }
   }
 
   const handleGenerateImage = async (imageOption: ImageOption) => {
@@ -203,8 +314,58 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
         ReactDOMServer.renderToString(imageComp)
       )
       setImageUrls(imageUrl)
+      setStage('changeimageOption')
+      //dispatch(clearText())
+      ChatUtils.addChat(
+        buttonType,
+        'assistant',
+        "이미지를 저장하시겠습니까? 수정을 원하시면 '수정', 저장을 원하시면 '저장'을 입력해주세요."
+      )
+    } catch (error) {
+      console.error('이미지 생성 실패:', error)
+    }
+  }
+  const handlereGenerateImage = async (imageOption: ImageOption) => {
+    dispatch(setImageOption(imageOption))
+    setStage('loading') // 로딩 상태로 변경
+    const imageSkeleton = ImageLoader()
+    const imageSkeletonId = ChatUtils.addChat(
+      buttonType,
+      'assistant',
+      ReactDOMServer.renderToString(imageSkeleton)
+    )
+    try {
+      // 이미지 생성 API 호출
+      const result = await postImageGenerate(imageOption, prompt)
+      // 이미지 생성 완료 후 데이터 저장
+      dispatch(
+        setImageData({
+          requestId: result.requestId,
+          url: result.url
+        })
+      )
+      const imageUrl = result.url // 이미지 URL
+      // 이미지 메시지 추가
+      const imageComp = (
+        <BotCard>
+          <Image
+            src={imageUrl}
+            alt="Message image"
+            width={200}
+            height={200}
+            className="rounded-md"
+          />
+        </BotCard>
+      )
+
+      ChatUtils.deleteChat(buttonType, imageSkeletonId) // 로딩창 삭제
+      ChatUtils.addChat(
+        buttonType,
+        'assistant',
+        ReactDOMServer.renderToString(imageComp)
+      )
+      setImageUrls(imageUrl)
       setStage('editImage')
-      dispatch(clearText())
     } catch (error) {
       console.error('이미지 생성 실패:', error)
     }
@@ -223,6 +384,11 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
       {stage === 'generateImage' ? (
         <Component isOpen={true} onClose={handleGenerateImage} />
       ) : null}
+      {
+        stage === 'reGenerateImage'?(
+          <Component isOpen={true} onClose={handlereGenerateImage} />
+        ):null
+      }
       {stage === 'editImage' ? (
         <ImagePreviewModal
           imageUrl={imageUrls}

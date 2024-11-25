@@ -1,13 +1,13 @@
 'use client'
 
-import {Dispatch, SetStateAction, useState} from 'react'
-import {AnimatePresence, motion} from 'framer-motion'
-import {Button} from '@/components/ui/button'
-import {ChevronDown, ChevronUp, Edit, FolderPlus, Trash2} from 'lucide-react'
-import {Input} from '@/components/ui/input'
-import {CustomSelect} from '@/app/address/address-book'
-import {Folder2, Group2} from '@/app/address/entity'
-import {api} from '@/app/address/service'
+import { Dispatch, SetStateAction, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Button } from '@/components/ui/button'
+import { ChevronDown, ChevronUp, Edit, FolderPlus, Trash2 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { CustomSelect } from '@/app/address/address-book'
+import { Folder2, Group2 } from '@/app/address/entity'
+import { api } from '@/app/address/service'
 
 /**
  * 폴더 및 그룹의 재귀 트리를 렌더링하는 컴포넌트
@@ -366,7 +366,7 @@ function AddFolderForm({ addFolder }: { addFolder: (name: string) => void }) {
         value={newFolderName}
         onChange={e => setNewFolderName(e.target.value)}
         placeholder="새 폴더 이름"
-        className="rounded-lg bg-gray-100 dark:bg-gray-700"
+        className="rounded-lg bg-gray-100 dark:bg-zinc-700"
       />
       <Button
         type="submit"

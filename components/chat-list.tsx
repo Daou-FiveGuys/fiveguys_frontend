@@ -21,8 +21,9 @@ export const ChatList = ({
   chatId: ButtonType
   messages: Message[]
 }) => {
-  console.log(messages) 
-  const newMessage = messages.filter((m,i)=> i == 0 || (i>0 && messages[i-1].text) !== m.text);
+  const newMessage = messages.filter(
+    (m, i) => i == 0 || (i > 0 && messages[i - 1].text) !== m.text
+  )
   if (newMessage.length === 0) {
     return null
   }
@@ -51,7 +52,6 @@ export const ChatList = ({
   return (
     <div className="relative mx-auto max-w-2xl px-4">
       {newMessage.map((message, index) => {
-        console.log(message)
         return (
           <React.Fragment key={message.id}>
             <div className="ml-2">

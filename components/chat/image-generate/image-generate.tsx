@@ -21,7 +21,7 @@ interface CustomButtonProps {
   setActiveButton: (value: ButtonType) => void
 }
 
-const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
+const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
   ({ buttonType, activeButton, setActiveButton }, ref) => {
     const isActive = buttonType === activeButton
     const [hasAddedChat, setHasAddedChat] = React.useState(false)
@@ -55,7 +55,7 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         ChatUtils.addChat(
           buttonType,
           'assistant-animation',
-          '이미지를 추가하시겠습니까?(이미지 생성, 이미지 업로드, 이미지 없이)'
+          '이미지를 생성하시겠습니까?(예, 아니오)'
         )
         setHasAddedChat(true)
       }
@@ -70,10 +70,10 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         >
           이미지 생성
         </Button>
-        <ImageGenerateModal buttonType={'image-generate'} lastUserInput={lastUserInput} />
+        <CreateImagePrompt buttonType={'image-generate'} lastUserInput={lastUserInput} />
       </>
     )
   }
 )
 
-export default ImagePromptButton
+export default ImageGenerateButton

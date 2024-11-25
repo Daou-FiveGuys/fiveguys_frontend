@@ -87,6 +87,7 @@ export function PromptForm({
   const SendMessageButtonRef = React.useRef<CustomButtonHandle>(null)
   const ImagePromptButtonRef = React.useRef<CustomButtonHandle>(null)
   const ImageGenerateButtonRef = React.useRef<CustomButtonHandle>(null)
+  const createText = useSelector((state: RootState) => state.createText)
   const AmountUsedButtonRef = React.useRef<CustomButtonHandle>(null)
 
 
@@ -143,7 +144,10 @@ export function PromptForm({
       <div className="flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-2 px-4 md:px-8">
 
   {
-    activeButton !== 'faq'?
+    (activeButton === 'send-message' 
+      || activeButton === 'create-message'
+      ||activeButton === "create-image-prompt"
+      ||activeButton === "image-generate")?
     (
       <>
       <ReturnButton setActiveButton={setActiveButton}></ReturnButton>
@@ -153,18 +157,25 @@ export function PromptForm({
           activeButton={activeButton}
           setActiveButton={setActiveButton}
           />
-        <ImagePromptButton
-          ref={ImagePromptButtonRef}
-          buttonType='create-image-prompt'
-          activeButton={activeButton}
-          setActiveButton={setActiveButton}
-          />
-        <ImageGenerateButton
-          ref={ImageGenerateButtonRef}
-          buttonType="image-generate"
-          activeButton={activeButton}
-          setActiveButton={setActiveButton}
-          />
+          {
+            (createText.text === '')?
+            null
+            :
+            <>
+            <ImagePromptButton
+            ref={ImagePromptButtonRef}
+            buttonType="create-image-prompt"
+            activeButton={activeButton}
+            setActiveButton={setActiveButton}
+            />        
+            <ImageGenerateButton
+            ref={ImageGenerateButtonRef}
+            buttonType="image-generate"
+            activeButton={activeButton}
+            setActiveButton={setActiveButton}
+            />
+            </>
+          }
         <SendMessageButton
           ref={SendMessageButtonRef}
           buttonType='send-message'
