@@ -85,9 +85,6 @@ const SaveEditedImageWithModal: React.FC<SaveEditedImageProps> = ({
       // JPEG로 변환하여 크기 축소
       const resizedDataURL = canvas.toDataURL('image/jpeg', quality)
       blob = dataURLToBlob(resizedDataURL)
-
-      // Blob 크기 로그 출력
-      console.log(`Current Blob Size: ${(blob.size / 1024).toFixed(2)} KB`)
     }
 
     return blob
