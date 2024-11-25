@@ -27,7 +27,8 @@ const initialState: ChatState = {
   ['faq']: { messages: [], isTyping: false },
   ['history']: { messages: [], isTyping: false },
   ['usage']: { messages: [], isTyping: false },
-  ['send-message']: { messages: [], isTyping: false }
+  ['send-message']: { messages: [], isTyping: false },
+  ['amount-used']: {messages: [], isTyping: false}
 }
 
 const chatSlice = createSlice({
