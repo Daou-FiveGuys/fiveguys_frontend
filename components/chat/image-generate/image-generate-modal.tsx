@@ -171,7 +171,7 @@ const ImageGenerateModal: React.FC<CreateMessageProps> = ({
   )
 }
 
-export default ImageGenerateModal
+// export default ImageGenerateModal
 
 export function ImageLoader() {
   return (
@@ -194,32 +194,28 @@ export const handleLoadingImage = (buttonType: ButtonType) => {
   )
 }
 
-export const handleGenerateImage = async (
-  imageOption: ImageOption,
-  messageOption: MessageOptionState,
-  dispatch: Dispatch<any>,
-  buttonType: ButtonType
-) => {
-  try {
-    const skeletonIds: string[] = []
+export default function HandleGenerateImage({
+  imageOption,
+  messageOption
+}: {
+  imageOption: ImageOption
+  messageOption: MessageOptionState
+}) {
+  const skeletonIds: string[] = []
+  const buttonType = ''
+  // 로딩 상태 추가 (가로 4개로 배치)
+  return (
+    <BotCard>
+      {Array(4)
+        .fill(null)
+        .map((_, i) => (
+          <ImageSkeleton key={`skeleton-${i}`} />
+        ))}
+    </BotCard>
+  )
 
-    // 로딩 상태 추가 (가로 4개로 배치)
-    const skeletonContainerId = ChatUtils.addChat(
-      buttonType,
-      'assistant-animation-html',
-      ReactDOMServer.renderToString(
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {Array(4)
-            .fill(null)
-            .map((_, i) => (
-              <ImageSkeleton key={`skeleton-${i}`} />
-            ))}
-        </div>
-      )
-    )
-
-    // 각각의 이미지 생성 요청을 비동기적으로 처리
-    const imagePromises = Array(4)
+  // 각각의 이미지 생성 요청을 비동기적으로 처리
+  /*const imagePromises = Array(4)
       .fill(null)
       .map(async () =>
         postImageGenerate(imageOption, messageOption.prompt || '')
@@ -229,14 +225,6 @@ export const handleGenerateImage = async (
     for (const [index, imagePromise] of imagePromises.entries()) {
       try {
         const result = await imagePromise
-
-        // 이미지 데이터 저장
-        dispatch(
-            setImageData({
-              requestId: result.requestId,
-              url: result.url
-            })
-        )
         imageList[index] = {
           requestId: result.requestId,
           url: result.url
@@ -246,11 +234,8 @@ export const handleGenerateImage = async (
         console.error(`이미지 생성 실패 (Index: ${index}):`, error)
         imageUrls[index] = '' // 실패한 경우 빈 값으로 설정
       }
-    }
-
-    // 로딩 상태를 실제 이미지로 교체
-    ChatUtils.deleteChat(buttonType, skeletonContainerId)
-
+    }*/
+  /*
     ChatUtils.addChat(
       buttonType,
       'assistant',
@@ -299,9 +284,9 @@ export const handleGenerateImage = async (
           )}
         </div>
       )
-    )
-  } catch (error) {
+    )*/
+  /*  } catch (error) {
     console.error('이미지 생성 실패:', error)
-  }
+  }*/
 }
 

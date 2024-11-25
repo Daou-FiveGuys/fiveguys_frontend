@@ -38,6 +38,7 @@ import {
   setImageOption
 } from '@/redux/slices/imageOptionSlice'
 import { UnknownAction } from 'redux'
+import {ButtonType} from "@/components/prompt-form";
 
 const styleOptions: { value: ImageStyle; label: string; image: string }[] = [
   {
@@ -79,17 +80,15 @@ const InfoPopover = ({ content }: { content: string }) => (
 
 export default function Component({
   isOpen = true,
-  onClose = ({}) => {},
-  imageOption = initialState,
-  dispatch
+  imageOption,
+  setImageOption,
+  setActiveButton
 }: {
   isOpen?: boolean
-  onClose?: ({}: ImageOption) => void
   imageOption: ImageOption
-  dispatch: Dispatch<UnknownAction>
+  setImageOption: (imageOption: ImageOption) => void
+  setActiveButton: (value: ButtonType) => void
 }) {
-  //const imageOption = useSelector((state: RootState) => state.imageOption)
-  //const dispatch = useDispatch()
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedStyle, setSelectedStyle] = useState<ImageStyle>(
     imageOption.imageStyle
@@ -116,7 +115,6 @@ export default function Component({
       seed: seed,
       numInferenceSteps: numInferenceSteps
     }
-    dispatch(setImageOption(newImageOption))
   }, [
     selectedStyle,
     imageSize.width,
@@ -139,14 +137,9 @@ export default function Component({
   }
 
   const handleSubmit = () => {
-    onClose({
-      imageStyle: selectedStyle,
-      width: imageSize.width,
-      height: imageSize.height,
-      numInferenceSteps: numInferenceSteps,
-      seed: seed,
-      guidanceScale: guidanceScale,
-    })
+    isOpen = false
+    setImageOption(imageOption)
+    setActiveButton('select-image')
   }
 
   return (

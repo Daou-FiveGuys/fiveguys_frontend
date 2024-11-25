@@ -1,19 +1,11 @@
-import React, { forwardRef, useImperativeHandle, useEffect } from 'react'
+import React, { forwardRef, useEffect, useImperativeHandle } from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
-import { handleGenerateImage, handleLoadingImage } from './image-generate-modal'
-import {
-  ImageOption,
-  initialState,
-  setImageOption
-} from '@/redux/slices/imageOptionSlice'
+import { ImageOption } from '@/redux/slices/imageOptionSlice'
 import { clearMessages } from '@/redux/slices/chatSlice'
-import { setMessage } from '@/redux/slices/messageOptionSlice'
-import Component from '@/components/image-option-modal'
-import { setImageData } from '@/redux/slices/imageSlice'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -46,15 +38,13 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
         dispatch(clearMessages({ chatId: 'send-message' }))
-        ChatUtils.addChat(
-          'send-message',
-          'assistant-animation',
-          '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
-        )
         value = value.trim()
         if (value) {
           ChatUtils.addChat(buttonType, 'user', value)
           setLastUserInput(value)
+        }
+        if (value === '예') {
+          setActiveButton('select-image-options')
         }
         /**
          * 🚨 함수 만들고 input 넘겨서 작업해주세요 🚨
@@ -80,26 +70,18 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     }, [hasAddedChat, buttonType, activeButton, ChatUtils.dispatch])
 
     const handleGenerateImage2 = (imageOption: ImageOption) => {
-      setLastUserInput(null)
+      /*setLastUserInput(null)
       handleGenerateImage(
         imageOption,
         messageOption,
         dispatch,
         buttonType
       ).then(r => r)
-        setOpenModal(true)
+      setOpenModal(true)*/
     }
 
     return (
       <div>
-        {lastUserInput === '예' && (
-          <Component
-            isOpen={true}
-            onClose={handleGenerateImage2}
-            imageOption={initialState}
-            dispatch={dispatch}
-          />
-        )}
         <Button
           className="w-full md:w-28 h-8 mb-2 md:mb-0"
           variant={
