@@ -12,6 +12,7 @@ import HistoryPanel from './chat/history/history-panel'
 import SendMessagePanel from './chat/send-message/send-message-panel'
 import { BotCard } from './stocks'
 import AddressBookModal from '@/app/address/modal/select-contact-modal'
+import AmountUsedPanel from './chat/amount-used/amount-used-panel'
 
 export const ChatList = ({
   chatId,
@@ -46,6 +47,7 @@ export const ChatList = ({
 
   const isHistoryChat = chatId === 'history'
   const isSendMessageChat = chatId === 'send-message'
+  const isAmountUsed = chatId === 'amount-used'
 
   return (
     <div className="relative mx-auto max-w-2xl px-4">
@@ -64,6 +66,7 @@ export const ChatList = ({
         )
       })}
       {isHistoryChat && <HistoryPanel />}
+      {isAmountUsed && <AmountUsedPanel />}
     </div>
   )
 }
