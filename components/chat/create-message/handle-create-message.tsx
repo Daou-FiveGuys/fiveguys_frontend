@@ -1,8 +1,9 @@
+import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from '../utils/ChatUtils'
 
-export const handleCreateMessage = (value: string) => {
+export const handleCreateMessage = (value: string, buttonType: ButtonType) => {
   ChatUtils.addChat(
-    'create-message',
+    buttonType,
     'assistant-animation-html',
     `<span style="color:blue">재호 화이팅</span>`
   )

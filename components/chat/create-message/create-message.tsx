@@ -39,7 +39,10 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
           ChatUtils.addChat(buttonType, 'user', value)
           setLastUserInput(value)
         }
-        handleCreateMessage(value)
+
+        setTimeout(() => {
+          handleCreateMessage(value, buttonType)
+        }, 300)
       }
     }))
 

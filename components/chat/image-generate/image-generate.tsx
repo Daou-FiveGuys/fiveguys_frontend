@@ -40,10 +40,6 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
         dispatch(clearMessages({ chatId: 'send-message' }))
-        /**
-         * 🚨 함수 만들고 input 넘겨서 작업해주세요 🚨
-         *
-         */
         ChatUtils.addChat(
           'send-message',
           'assistant-animation',
@@ -55,6 +51,12 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
           setLastUserInput(value.trim())
           if (lastUserInput === '예') setOpenModal(true)
         }
+
+        /**
+         * 🚨 함수 만들고 input 넘겨서 작업해주세요 🚨
+         *
+         */
+        // setTimeout(() => { 여기서 },100)
       }
     }))
 
