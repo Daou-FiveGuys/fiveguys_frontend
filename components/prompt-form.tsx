@@ -66,6 +66,8 @@ export type ButtonType =
   | 'create-image-prompt' //-------- 이미지 프롬프트 생성 (입력 또는 생성) : 여기서 이미지 생성할건지 먼저 물어봐주세요 이미지 생성 안하면 이미지 추가하는 할건지에 따라 분기
   | 'image-generate' //------------- 이미지 생성 : 이미지 생성하기 전에 image-option-modal에서 ImageOptionSlice(redux)에 값을 저장 시키고 값을 토대로 생성 요청
   | 'amount-used'
+  | 'select-image'
+  | 'select-image-options'
 //---------------------------------- 여기서 선택까지 수행하고 이미지 편집으로 넘기든가 이미지 추가 안했으면 주소록 고르는 모달으로 넘겨주세요 flux랑 flux lora랑 생성하는 api 달라요
 
 export function PromptForm({
@@ -148,7 +150,9 @@ export function PromptForm({
         {activeButton === 'send-message' ||
         activeButton === 'create-message' ||
         activeButton === 'create-image-prompt' ||
-        activeButton === 'image-generate' ? (
+        activeButton === 'image-generate' ||
+        activeButton === 'select-image' ||
+        activeButton === 'select-image-options' ? (
           <>
             <ReturnButton setActiveButton={setActiveButton} />
             <CreateMessageButton

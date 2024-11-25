@@ -24,7 +24,9 @@ export function Chat({ id, className }: ChatProps) {
     if (
       activeButton === 'create-message' ||
       activeButton === 'create-image-prompt' ||
-      activeButton === 'image-generate'
+      activeButton === 'image-generate' ||
+        activeButton === 'select-image' ||
+        activeButton === 'select-image-options'
     ) {
       // 조건에 맞는 상태의 메시지 배열을 병합
       return [
@@ -153,7 +155,7 @@ export function Chat({ id, className }: ChatProps) {
         ref={messagesContainerRef}
       >
         {messages.length ? (
-          <ChatList chatId={activeButton} messages={messages} />
+          <ChatList chatId={activeButton} messages={messages} setActiveButton={setActiveButton}/>
         ) : (
           <EmptyScreen />
         )}

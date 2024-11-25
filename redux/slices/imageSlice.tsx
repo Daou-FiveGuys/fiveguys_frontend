@@ -1,7 +1,7 @@
 // store/imageSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-interface ImageState {
+export interface ImageState {
   requestId: string | null
   url: string | null
 }

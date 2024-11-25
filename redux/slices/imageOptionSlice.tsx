@@ -11,7 +11,7 @@ export interface ImageOption {
   guidanceScale: number
 }
 
-const initialState: ImageOption = {
+export const initialState: ImageOption = {
   imageStyle: 'mix',
   width: 256,
   height: 256,
