@@ -1,10 +1,14 @@
-import React, { forwardRef, useImperativeHandle, useEffect, useMemo } from 'react'
+import React, {
+  forwardRef,
+  useImperativeHandle,
+  useEffect,
+  useMemo
+} from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
-import CreateMessage from './create-message'
 import { clearMessages } from '@/redux/slices/chatSlice'
 
 export interface CustomButtonHandle {
@@ -21,9 +25,9 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
   ({ buttonType, activeButton, setActiveButton }, ref) => {
     const isActive = buttonType === activeButton
     const [hasAddedChat, setHasAddedChat] = React.useState(false)
-    const [lastUserInput, setLastUserInput] = React.useState<string | null>(null)
-    const message = useSelector((state: RootState) => state.chat[buttonType])
-    const dispatch = useDispatch()
+    const [lastUserInput, setLastUserInput] = React.useState<string | null>(
+      null
+    )
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
         if (isActive && value.trim()) {
@@ -33,27 +37,15 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       }
     }))
 
-    React.useEffect(() => {
-      if (ChatUtils.dispatch && !hasAddedChat && isActive) {
-          setHasAddedChat(true)
-          ChatUtils.addChat(
-            buttonType,
-            'assistant-animation',
-            '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
-          )
-      }
-    }, [isActive])
-
     return (
       <>
         <Button
           className="w-full md:w-28 h-8 mb-2 md:mb-0"
           variant={isActive ? 'default' : 'outline'}
-          onClick={() => setActiveButton(buttonType)}
+          onClick={() => setActiveButton('create-message')}
         >
-          메시지 전송
+          문자 전송
         </Button>
-        <CreateMessage buttonType={'send-message'} lastUserInput={lastUserInput} />
       </>
     )
   }

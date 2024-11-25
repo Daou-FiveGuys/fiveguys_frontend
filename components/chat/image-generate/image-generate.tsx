@@ -4,12 +4,9 @@ import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
-import CreateMessage from '@/components/chat/send-message/create-message'
-import { setText } from '@/redux/slices/createTextSlice'
 import ImageGenerateModal from './image-generate-modal'
 import { setImageOption } from '@/redux/slices/imageOptionSlice'
 import { clearMessages } from '@/redux/slices/chatSlice'
-import CreateImagePrompt from '../image-prompt/createimageprompt'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -21,21 +18,32 @@ interface CustomButtonProps {
   setActiveButton: (value: ButtonType) => void
 }
 
+/**
+ * 🚨 messageOptionSlice 사용해주세요
+ *
+ *
+ *
+ * */
 const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
   ({ buttonType, activeButton, setActiveButton }, ref) => {
     const isActive = buttonType === activeButton
     const [hasAddedChat, setHasAddedChat] = React.useState(false)
-    const [lastUserInput, setLastUserInput] = React.useState<string | null>(null)
+    const [lastUserInput, setLastUserInput] = React.useState<string | null>(
+      null
+    )
     const message = useSelector((state: RootState) => state.chat[buttonType])
     const imageOption = useSelector((state: RootState) => state.imageOption)
     const dispatch = useDispatch()
-    const [openModeal, setOpenModal] = React.useState(false);
+    const [openModeal, setOpenModal] = React.useState(false)
+    const messageOption = useSelector((root: RootState) => root.messageOption)
 
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
-        dispatch(
-          clearMessages({chatId:'send-message'})
-        )
+        dispatch(clearMessages({ chatId: 'send-message' }))
+        /**
+         * 🚨 함수 만들고 input 넘겨서 작업해주세요 🚨
+         *
+         */
         ChatUtils.addChat(
           'send-message',
           'assistant-animation',
@@ -45,12 +53,12 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         if (isActive && value.trim()) {
           ChatUtils.addChat(buttonType, 'user', value.trim())
           setLastUserInput(value.trim())
-          if(lastUserInput === '예')setOpenModal(true)
+          if (lastUserInput === '예') setOpenModal(true)
         }
       }
     }))
 
-    useEffect(() => { 
+    useEffect(() => {
       if (ChatUtils.dispatch && !hasAddedChat) {
         ChatUtils.addChat(
           buttonType,
@@ -65,12 +73,22 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       <>
         <Button
           className="w-full md:w-28 h-8 mb-2 md:mb-0"
-          variant={isActive ? 'default' : 'outline'}
+          variant={
+            messageOption.content === null
+              ? 'outline'
+              : isActive
+                ? 'default'
+                : 'outline'
+          }
+          disabled={messageOption.prompt === null}
           onClick={() => setActiveButton('image-generate')}
         >
           이미지 생성
         </Button>
-        <CreateImagePrompt buttonType={'image-generate'} lastUserInput={lastUserInput} />
+        {/* <CreateImagePrompt 🚨 삭제 🚨
+          buttonType={'image-generate'}
+          lastUserInput={lastUserInput} 
+        /> */}
       </>
     )
   }

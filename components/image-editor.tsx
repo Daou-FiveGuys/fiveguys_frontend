@@ -239,22 +239,23 @@ export default function ImageEditor() {
         var objWidth = obj.getScaledWidth()
         var objHeight = obj.getScaledHeight()
 
-        // 객체가 캔버스 밖으로 나가지 않도록 제한
-        if (obj.left < 0) {
-          obj.left = 0
-        }
-        if (obj.top < 0) {
-          obj.top = 0
-        }
-        if (obj.left + objWidth > canvasWidth) {
-          obj.left = canvasWidth - objWidth
-        }
-        if (obj.top + objHeight > canvasHeight) {
-          obj.top = canvasHeight - objHeight
-        }
+        if (objWidth <= canvasWidth && objHeight <= canvasHeight) {
+          if (obj.left < 0) {
+            obj.left = 0
+          }
+          if (obj.top < 0) {
+            obj.top = 0
+          }
+          if (obj.left + objWidth > canvasWidth) {
+            obj.left = canvasWidth - objWidth
+          }
+          if (obj.top + objHeight > canvasHeight) {
+            obj.top = canvasHeight - objHeight
+          }
 
-        // 객체 위치 업데이트
-        obj.setCoords()
+          // 객체 위치 업데이트
+          obj.setCoords()
+        }
       })
 
       const handleResize = () => {
@@ -792,6 +793,7 @@ export default function ImageEditor() {
 
   const disableAll = () => {
     setIsFramePopover(false)
+    setIsFramePopoverOpen(false)
     setSelectedShape(null)
     disableMasking()
     disableDrawing()
@@ -1073,6 +1075,7 @@ export default function ImageEditor() {
         break
       case 'frameSize':
         setIsFramePopover(true)
+        setIsFramePopoverOpen(true)
         break
       default:
         console.warn(`Unknown tool: ${tool}`)
@@ -1363,23 +1366,6 @@ export default function ImageEditor() {
     }
   }, [originImgObject, canvas])
 
-  const handleFrameSize = (e: ChangeEvent<HTMLInputElement>, loc: string) => {
-    switch (loc) {
-      case 'width':
-        setCanvasDimensions({
-          width: parseInt(e.target.value),
-          height: canvasDimensions.height
-        })
-        break
-      case 'height':
-        setCanvasDimensions({
-          width: canvasDimensions.width,
-          height: parseInt(e.target.value)
-        })
-        break
-    }
-  }
-
   const [isFramePopover, setIsFramePopover] = useState(false)
   const [isframePopoverOpen, setIsFramePopoverOpen] = useState(false)
 
@@ -1402,6 +1388,8 @@ export default function ImageEditor() {
   const applyCanvasSize = () => {
     if (!canvas) return
     setCanvasDimensions({ width: width, height: height })
+    if (width > 1024) setWidth(1024)
+    if (height > 1024) setHeight(1024)
     canvas.width = width
     canvas.height = height
     canvas.renderAll()
@@ -1424,7 +1412,7 @@ export default function ImageEditor() {
     setFile(null)
   }
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-5xl mx-auto overflow-auto">
       <CardContent className="p-6">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 mb-4">
           <Button
@@ -2049,7 +2037,7 @@ export default function ImageEditor() {
                 variant={isFramePopover ? 'default' : 'outline'}
                 onClick={() => {
                   if (!isFramePopover) handleToolSwitch('frameSize')
-                  setIsFramePopoverOpen(!isframePopoverOpen)
+                  if (!isMasking) setIsFramePopoverOpen(!isframePopoverOpen)
                 }}
               >
                 <FrameIcon className="mr-2 h-4 w-4" />
@@ -2079,8 +2067,12 @@ export default function ImageEditor() {
                     <span className="text-sm font-medium">Width:</span>
                     <Input
                       type="number"
-                      value={Math.floor(width)}
-                      onChange={e => setWidth(Number(e.target.value))}
+                      value={width === 0 ? 0 : Math.floor(width)}
+                      onChange={e => {
+                        const value = parseInt(e.target.value)
+                        value === 0 ? 0 : Math.floor(value)
+                        setWidth(value)
+                      }}
                       disabled={selectedOption !== 'custom'}
                     />
                   </label>
@@ -2088,8 +2080,12 @@ export default function ImageEditor() {
                     <span className="text-sm font-medium">Height:</span>
                     <Input
                       type="number"
-                      value={Math.floor(height)}
-                      onChange={e => setHeight(Number(e.target.value))}
+                      value={height === 0 ? 0 : Math.floor(height)}
+                      onChange={e => {
+                        const value = parseInt(e.target.value)
+                        value === 0 ? 0 : Math.floor(value)
+                        setHeight(value)
+                      }}
                       disabled={selectedOption !== 'custom'}
                     />
                   </label>
@@ -2108,10 +2104,10 @@ export default function ImageEditor() {
             onCancel={cancelToolSwitch}
           />
         )}
+
         <div
           className="flex items-center justify-center bg-black" // Flexbox 설정
           style={{
-            width: '100%', // 부모 div 너비를 화면 전체로 설정
             position: 'relative' // 화면 중앙 정렬을 위한 position 설정
           }}
         >

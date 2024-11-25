@@ -4,7 +4,6 @@ import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
-import CreateMessage from './create-message'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -20,7 +19,9 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
   ({ buttonType, activeButton, setActiveButton }, ref) => {
     const isActive = buttonType === activeButton
     const [hasAddedChat, setHasAddedChat] = React.useState(false)
-    const [lastUserInput, setLastUserInput] = React.useState<string | null>(null)
+    const [lastUserInput, setLastUserInput] = React.useState<string | null>(
+      null
+    )
     const message = useSelector((state: RootState) => state.chat[buttonType])
 
     useImperativeHandle(ref, () => ({
@@ -52,7 +53,6 @@ const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         >
           메시지 전송
         </Button>
-        <CreateMessage buttonType={'send-message'} lastUserInput={lastUserInput} />
       </>
     )
   }

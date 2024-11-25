@@ -36,10 +36,10 @@ export function Chat({ id, className }: ChatProps) {
   const scrollTimeoutRef = useRef<number | null>(null) // 스크롤 타임아웃 레퍼런스
 
   const easeCustom = (progress: number) => {
-    // sine 기반 부드러운 가속/감속
-    return Math.sin((progress * Math.PI) / 2)
+    return progress < 0.5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2
   }
-
   const scrollToBottomWithAnimation = () => {
     if (
       !scrollRef.current ||

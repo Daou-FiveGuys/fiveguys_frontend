@@ -87,9 +87,7 @@ export function PromptForm({
   const SendMessageButtonRef = React.useRef<CustomButtonHandle>(null)
   const ImagePromptButtonRef = React.useRef<CustomButtonHandle>(null)
   const ImageGenerateButtonRef = React.useRef<CustomButtonHandle>(null)
-  const createText = useSelector((state: RootState) => state.createText)
   const AmountUsedButtonRef = React.useRef<CustomButtonHandle>(null)
-
 
   const isTyping = useSelector(
     (state: RootState) => state.chat[activeButton]?.isTyping || false
@@ -127,7 +125,10 @@ export function PromptForm({
     if (SendMessageButtonRef.current && activeButton === 'send-message') {
       SendMessageButtonRef.current.handleEnterPress(trimmedValue)
     }
-    if (ImagePromptButtonRef.current && activeButton === 'create-image-prompt') {
+    if (
+      ImagePromptButtonRef.current &&
+      activeButton === 'create-image-prompt'
+    ) {
       ImagePromptButtonRef.current.handleEnterPress(trimmedValue)
     }
     if (ImageGenerateButtonRef.current && activeButton === 'image-generate') {
@@ -142,79 +143,59 @@ export function PromptForm({
   return (
     <>
       <div className="flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-2 px-4 md:px-8">
-
-  {
-    (activeButton === 'send-message' 
-      || activeButton === 'create-message'
-      ||activeButton === "create-image-prompt"
-      ||activeButton === "image-generate")?
-    (
-      <>
-      <ReturnButton setActiveButton={setActiveButton}></ReturnButton>
-        <CreateMessageButton
-          ref={CreateMessageButtonRef}
-          buttonType="create-message"
-          activeButton={activeButton}
-          setActiveButton={setActiveButton}
-          />
-          {
-            (createText.text === '')?
-            null
-            :
-            <>
-            <ImagePromptButton
-            ref={ImagePromptButtonRef}
-            buttonType="create-image-prompt"
-            activeButton={activeButton}
-            setActiveButton={setActiveButton}
-            />        
-            <ImageGenerateButton
-            ref={ImageGenerateButtonRef}
-            buttonType="image-generate"
-            activeButton={activeButton}
-            setActiveButton={setActiveButton}
+        {activeButton === 'send-message' ||
+        activeButton === 'create-message' ||
+        activeButton === 'create-image-prompt' ||
+        activeButton === 'image-generate' ? (
+          <>
+            <ReturnButton setActiveButton={setActiveButton} />
+            <CreateMessageButton
+              ref={CreateMessageButtonRef}
+              buttonType="create-message"
+              activeButton={activeButton}
+              setActiveButton={setActiveButton}
             />
-            </>
-          }
-        <SendMessageButton
-          ref={SendMessageButtonRef}
-          buttonType='send-message'
-          activeButton={activeButton}
-          setActiveButton={setActiveButton}
-        />
-        </>
-    )
-    :
-    (
-      <>
-      <FaqButton
-          ref={FaqButtonRef}
-          buttonType="faq"
-          activeButton={activeButton}
-          setActiveButton={setActiveButton}
-        />
-        <HistoryButton
-          ref={HistoryButtonRef}
-          buttonType="history"
-          activeButton={activeButton}
-          setActiveButton={setActiveButton}
-        />
-        <SendMessageButton
-          ref={SendMessageButtonRef}
-          buttonType='send-message'
-          activeButton={activeButton}
-          setActiveButton={setActiveButton}
-        />
-        <AmountUsedButton // TODO: 1. 배치 위치 잘 모르겠음(해결) 2. 이후 이동될 버튼 조작할 것
-          ref={AmountUsedButtonRef}
-          buttonType = 'amount-used'
-          activeButton={activeButton}
-          setActiveButton={setActiveButton}
-        />
-      </>
-    )
-  }
-    
+            <ImagePromptButton
+              ref={ImagePromptButtonRef}
+              buttonType="create-image-prompt"
+              activeButton={activeButton}
+              setActiveButton={setActiveButton}
+            />
+            <ImageGenerateButton
+              ref={ImageGenerateButtonRef}
+              buttonType="image-generate"
+              activeButton={activeButton}
+              setActiveButton={setActiveButton}
+            />
+          </>
+        ) : (
+          <>
+            <FaqButton
+              ref={FaqButtonRef}
+              buttonType="faq"
+              activeButton={activeButton}
+              setActiveButton={setActiveButton}
+            />
+            <HistoryButton
+              ref={HistoryButtonRef}
+              buttonType="history"
+              activeButton={activeButton}
+              setActiveButton={setActiveButton}
+            />
+            <AmountUsedButton // TODO: 1. 배치 위치 잘 모르겠음(해결) 2. 이후 이동될 버튼 조작할 것
+              ref={AmountUsedButtonRef}
+              buttonType="amount-used"
+              activeButton={activeButton}
+              setActiveButton={setActiveButton}
+            />
+            <SendMessageButton
+              ref={SendMessageButtonRef}
+              buttonType="send-message"
+              activeButton={activeButton}
+              setActiveButton={setActiveButton}
+            />
+          </>
+        )}
       </div>
       <form>
         <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12 mt-4">
