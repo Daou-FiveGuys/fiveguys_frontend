@@ -14,6 +14,7 @@ import { BotCard } from '@/components/stocks'
 import ImagePreviewModal from '@/components/image-preview-modal'
 import { useRouter } from 'next/navigation'
 import { RootState } from '@/redux/store'
+import { postTextGenerate } from '../create-message/text-generator'
 
 interface CreateMessageProps {
   buttonType: ButtonType
@@ -98,13 +99,15 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
         )
         break
       case 'autoGenerate':
-        const generatedText = "문자자동생성필요";
+        const generatedText = await postTextGenerate(input);
+        //이부분이 잘 안나옴
         dispatch(setText({ text: generatedText }))
+        console.log(generatedText)
         ChatUtils.addChat(buttonType, 'user', input)
         ChatUtils.addChat(
           buttonType,
           'assistant',
-          '샘플 데이터가 생성되었습니다: ' + generatedText
+          generatedText
         )
         ChatUtils.addChat(
           buttonType,
