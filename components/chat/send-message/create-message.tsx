@@ -14,6 +14,7 @@ import { BotCard } from '@/components/stocks'
 import ImagePreviewModal from '@/components/image-preview-modal'
 import { useRouter } from 'next/navigation'
 import { RootState } from '@/redux/store'
+import { postTextGenerate } from '../create-message/text-generator'
 
 interface CreateMessageProps {
   buttonType: ButtonType
@@ -98,7 +99,7 @@ const CreateMessage: React.FC<CreateMessageProps> = ({
         )
         break
       case 'autoGenerate':
-        const generatedText = "문자자동생성필요";
+        const generatedText = await postTextGenerate(input);
         dispatch(setText({ text: generatedText }))
         ChatUtils.addChat(buttonType, 'user', input)
         ChatUtils.addChat(
