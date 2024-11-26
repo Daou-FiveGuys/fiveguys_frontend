@@ -221,11 +221,6 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
       enableRetinaScaling: false
     })
 
-    const link = document.createElement('a')
-    link.href = imageData
-    link.download = 'canvas_image.png' // 다운로드할 파일 이름 설정
-    link.click() // 링크 클릭하여 다운로드 시작
-
     // 배경 이미지와 색상, 객체의 원래 색상 복원
     canvas.backgroundImage = originalBackgroundImage
     canvas.backgroundColor = originalBackgroundColor
