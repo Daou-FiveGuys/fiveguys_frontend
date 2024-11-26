@@ -71,41 +71,45 @@ export const api = {
         }
     },
 
-    readDailyAmountWeek: async (
+    readDailyAmountWeek : async (
       date: Date,
       setWeeklyData: Dispatch<SetStateAction<DailyAmount[]>>
     ) => {
       try {
         const dailyAmounts: DailyAmount[] = [];
-        const formattedDate = format(date, 'yyyy-MM-dd', { locale: ko });
+        const formattedDate = format(date, 'yyyy-MM-dd'); // 요청 날짜를 포맷팅
+        const response = await apiClient.get<CommonResponse<DailyAmount[]>>(
+          `/amountUsed/week/${formattedDate}`
+        );
     
-        for (let i = 0; i < 7; i++) {
-          // 날짜를 하루씩 증가
-          const currentDate = addDays(new Date(formattedDate), i);
-          const currentFormattedDate = format(currentDate, 'yyyy-MM-dd', { locale: ko });
+        // 반환된 데이터
+        const fetchedData = response.data.data;
     
-          // API 호출
-          const response = await apiClient.get<CommonResponse<DailyAmount>>(`/amountUsed/day/${currentFormattedDate}`);
-          
-          // DailyAmount 객체 생성
-          const dailyAmount = response.data.data || {
-            dailyAmountId: -1,
-            msgScnt: 0,
-            msgGcnt: 0,
-            imgScnt: 0,
-            imgGcnt: 0,
-            date: currentFormattedDate,
-          };
+        // 요청 날짜 기준 일주일 날짜 리스트 생성
+        const weekDates = Array.from({ length: 7 }, (_, i) => {
+          const currentDate = addDays(date, i);
+          return format(currentDate, 'yyyy-MM-dd');
+        });
     
-          // 결과 배열에 추가
-          dailyAmounts.push(dailyAmount);
-        }
+        // 누락된 날짜를 기본값으로 채움
+        const filledData = weekDates.map(date => {
+          const existingData = fetchedData.find(item => item.date === date);
+          return (
+            existingData || {
+              dailyAmountId: -1,
+              msgScnt: 0,
+              msgGcnt: 0,
+              imgScnt: 0,
+              imgGcnt: 0,
+              date,
+            }
+          );
+        });
     
-        // 최종 결과 업데이트
-        setWeeklyData(dailyAmounts);
+        setWeeklyData(filledData);
       } catch (error) {
         console.error('Error fetching weekly daily amounts:', error);
-        setWeeklyData([]); // 에러가 발생하면 데이터 초기화
+        setWeeklyData([]); // 에러 발생 시 빈 배열로 초기화
       }
-    }    
+    }
 }
