@@ -47,6 +47,7 @@ import { RootState } from '@/redux/store'
 import { Input } from './ui/input'
 import { ChangeEvent } from 'react'
 import AddressBookModal from '@/app/address/modal/select-contact-modal'
+import apiClient from '@/services/apiClient'
 
 type FrameOption = 'default' | '512x512' | 'landscape' | 'custom'
 
@@ -543,15 +544,20 @@ export default function ImageEditor() {
   const [isMovingObject, setIsMovingObject] = useState<boolean>(false)
   const textRef = useRef<fabric.IText | null>(null) // text 객체를 추적하는 ref
 
-  const [apiTextData, setApiTextData] = useState([
-    '안녕하세요! 😊',
-    '방학을 맞이하여 한성대학교에서 코딩 캠프를 진행합니다!',
-    '일시는 2024년 12월 3일 (화요일)이며, 시간은 10:00 - 12:00입니다',
-    '장소는 한성대학교 상상관 6층입니다',
-    '코딩에 관심이 있는 학생들의 많은 참여 부탁드립니다!',
-    '함께 재미있는 시간을 보내요! 🖥️💻',
-    '감사합니다!'
-  ])
+  const content = useSelector((state: RootState) => state.messageOption.content)
+  if (content) {
+    apiClient
+      .post('/ai/gpt/extract-key-points', { text: content })
+      .then(res => {
+        if (res.data.code === 200) {
+          setApiTextData(res.data.data)
+        }
+      })
+      .catch(err => {
+        setApiTextData([])
+      })
+  }
+  const [apiTextData, setApiTextData] = useState([])
 
   const fontOptions = [
     { value: 'Arial', label: 'Arial' },

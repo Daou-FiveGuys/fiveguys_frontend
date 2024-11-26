@@ -102,7 +102,7 @@ export const handleCreateMessage = (
           ChatUtils.editChat(
             buttonType,
             id,
-            `<div>생성된 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${res.data.data}</div><ul><li><div><strong>수정</strong>을 원하시면 <span style="color: #f838a8"><strong>수정</strong></span>을 입력해주세요</div></li><li><div><strong>다음</strong> 단계는<span style="color: #34d399"> <strong>다음</strong></span>을 입력해주세요.</div></li></ul></div>`
+            `<div>생성된 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${res.data.data}</div><ul><li><div><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</div></li><li><div><strong>다시 생성</strong>은<strong><span style="color: #38bdf8"> 재생성</span></strong>을 입력해주세요.</div></li><li><div><strong>다음</strong> 단계는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요.</div></li></ul></div>`
           )
           ChatUtils.editIsTyping(id, true)
         } else {
@@ -126,7 +126,7 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `다시 입력해줘잉`
+          `전송하고자 하는 문자의 내용을 간략히 입력해주세요! 🧙🏿‍♂️`
         )
         break
       case '수정':
@@ -175,7 +175,7 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>수정된 내용은 다음과 같습니다<div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><div/><ul><li>추가 수정을 원하시면 <span style="color: #f838a8">수정</span>을 입력해주세요</div></li><div>다음 단계는<span style="color: #34d399">다음</span>을 입력해주세요.</div></li></div>`
+          `<div>수정된 내용은 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li><div><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</div></li><li><div><strong>다음</strong> 단계는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요.</div></li></ul></div>`
         )
         break
     }
