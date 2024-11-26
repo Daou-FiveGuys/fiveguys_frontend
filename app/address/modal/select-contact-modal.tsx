@@ -127,7 +127,7 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
           maxHeight: '90vh',
           overflowY: 'auto'
         }}
-        onClick={e => e.stopPropagation()} // Prevent background click propagation
+        onClick={e => e.stopPropagation()}
       >
         {/* AddressBook Component */}
         <div className="mt-4">
@@ -137,7 +137,12 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
         <div className="mt-4 flex justify-end">
           <Button
             onClick={handleSend}
-            className="bg-blue-500 hover:bg-blue-600 text-white"
+            disabled={selectedContacts.length === 0}
+            className={`text-white ${
+              selectedContacts.length === 0
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-blue-500 hover:bg-blue-600'
+            }`}
           >
             전송하기 ({selectedContacts.length})
           </Button>

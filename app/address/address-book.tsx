@@ -289,10 +289,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
     const fetchFolders = async () => {
       setIsLoading(true)
       try {
-        const userData = await api.readFolder() // 비동기 호출
-        if (userData) {
-          setTopFolder2s(userData) // API 데이터로 상태 업데이트
-        }
+        await api.readFolder(setTopFolder2s) // 비동기 호출
       } catch (error) {
         console.error('Failed to fetch folders:', error)
       } finally {
@@ -389,13 +386,7 @@ export default function AddressBook({ onSelectContacts }: AddressBookProps) {
           const newGroup = await api.createGroup(name, parentFolder2)
           if (newGroup == undefined) return
 
-          const updatedFolders = topFolder2s.map(folder =>
-            folder.folderId === parentFolder2.folderId
-              ? { ...folder, group2s: [...folder.group2s, newGroup] }
-              : folder
-          )
-
-          setTopFolder2s(updatedFolders)
+          await api.readFolder(setTopFolder2s)
         } else {
           // 부모 폴더가 없는 경우 (새 폴더 생성)
           const newFolder = await api.createFolder(name)
