@@ -57,7 +57,12 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       (state: RootState) => state.chat[buttonType].messages
     )
     React.useEffect(() => {
-      if (ChatUtils.dispatch && !hasAddedChat && messages.length === 0) {
+      if (
+        ChatUtils.dispatch &&
+        !isActive &&
+        !hasAddedChat &&
+        messages.length === 0
+      ) {
         setHasAddedChat(true)
         ChatUtils.addChat(
           buttonType,
