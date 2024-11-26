@@ -58,8 +58,7 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       if (
         ChatUtils.dispatch &&
         !hasAddedChat &&
-        activeButton === 'image-generate' &&
-        isActive
+        activeButton === 'image-generate'
       ) {
         ChatUtils.addChat(
           buttonType,
@@ -92,7 +91,7 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
                 ? 'default'
                 : 'outline'
           }
-          disabled={messageOption.prompt === null}
+          disabled={messageOption.prompt === null || !isActive}
           onClick={() => setActiveButton('image-generate')}
         >
           이미지 생성
