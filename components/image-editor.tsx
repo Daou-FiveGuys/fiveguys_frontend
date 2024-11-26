@@ -544,19 +544,23 @@ export default function ImageEditor() {
   const [isMovingObject, setIsMovingObject] = useState<boolean>(false)
   const textRef = useRef<fabric.IText | null>(null) // text 객체를 추적하는 ref
 
-  const content = useSelector((state: RootState) => state.messageOption.content)
-  if (content) {
-    apiClient
-      .post('/ai/gpt/extract-key-points', { text: content })
-      .then(res => {
-        if (res.data.code === 200) {
-          setApiTextData(res.data.data)
-        }
-      })
-      .catch(err => {
-        setApiTextData([])
-      })
-  }
+  const [content, setContet] = useState(
+    useSelector((state: RootState) => state.messageOption.content)
+  )
+  useEffect(() => {
+    if (!content) {
+      apiClient
+        .post('/ai/gpt/extract-key-points', { text: content })
+        .then(res => {
+          if (res.data.code === 200) {
+            setApiTextData(res.data.data)
+          }
+        })
+        .catch(err => {
+          setApiTextData([])
+        })
+    }
+  }, [content])
   const [apiTextData, setApiTextData] = useState([])
 
   const fontOptions = [
