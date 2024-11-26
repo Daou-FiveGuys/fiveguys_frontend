@@ -112,7 +112,10 @@ const SaveEditedImageWithModal: React.FC<SaveEditedImageProps> = ({
         <CustomImageModal
           onLinkSend={() => handleOptionSelect('link')}
           onImageSend={() => handleOptionSelect('image')}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false)
+            setIsDone(false)
+          }}
         />
       )}
     </>

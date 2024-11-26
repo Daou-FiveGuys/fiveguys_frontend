@@ -6,7 +6,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { setImageData } from '@/redux/slices/imageSlice'
 import { RootState } from '@/redux/store'
 import apiClient from '@/services/apiClient'
-import { isVisible } from 'handsontable/helpers/dom'
 
 interface YourComponentProps {
   canvas: fabric.Canvas | null
@@ -26,6 +25,7 @@ interface YourComponentProps {
       fabric.ObjectEvents
     > | null>
   >
+  isMasking: boolean
 }
 
 const ImageAIEdit: React.FC<YourComponentProps> = ({
@@ -34,7 +34,8 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
   setIsProcessing,
   mode,
   option,
-  originImgObject
+  originImgObject,
+  isMasking
 }) => {
   const dispatch = useDispatch()
   const image = useSelector((state: RootState) => state.image)
@@ -108,7 +109,9 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
         img.left = 0 // 이미지를 캔버스 왼쪽 위로 정렬
         img.top = 0
         canvas.backgroundImage = img
-        if (mode === 'removeText') canvas.backgroundImage.visible = false
+        // canvas.backgroundImage.visible = false
+        // if (mode === 'removeText') canvas.backgroundImage.visible = false
+        if (!isMasking) canvas.backgroundImage.visible = false
         originImgObject.setSrc(newImageUrl, { crossOrigin: 'anonymous' })
         canvas.renderAll.bind(canvas)
         img.canvas = canvas
@@ -249,7 +252,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
 
     const imageInpaintDTO = {
       requestId: image.requestId, // 실제 요청 ID로 설정
-      prompt: option, // 사용자가 입력한 프롬프트,
+      prompt: option, // z사용자가 입력한 프롬프트,
       width: canvas.backgroundImage?.width,
       height: canvas.backgroundImage?.height
     }

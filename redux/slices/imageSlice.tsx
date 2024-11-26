@@ -7,8 +7,8 @@ export interface ImageState {
 }
 
 const initialState: ImageState = {
-  requestId: '33e08131-2b76-4787-b006-142e852f176d',
-  url: 'https://fal.media/files/zebra/Qexi745cDCdp_A9dItfGA.png'
+  requestId: 'd63c7405-15c8-4eda-9939-f124afe3cb74',
+  url: 'https://fal.media/files/panda/sWvbZ_f4jJjUGrV1sKf7g_ff1709e838fd41c6b018d68bc33f2ef9.jpg'
 }
 
 const imageSlice = createSlice({
