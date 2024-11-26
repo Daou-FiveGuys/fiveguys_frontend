@@ -67,7 +67,7 @@ export const handleCreateImagePrompt = (
           `<div>프롬프트 생성이 완료되었습니다. 👏🏻</div>`
         )
         setCurrentProcess('welcome')
-        setActiveButton('create-image-prompt')
+        setActiveButton('image-generate')
         break
       default:
         MessageOptionUtils.addPrompt(value)
