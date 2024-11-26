@@ -39,7 +39,7 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           'create-message',
           'assistant-animation-html',
-          `직접 입력을 선택하셨습니다 메시지 입력해라`
+          `전송하고자 하는 문자 내용을 입력해주세요!`
         )
         setCurrentProcess('message-input')
         break
@@ -47,7 +47,7 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           'create-message',
           'assistant-animation-html',
-          `자동 입력을 선택하셨습니다 문장을 입력해주세요`
+          `전송하고자 하는 문자의 내용을 간략히 입력해주세요! 🧙🏿‍♂️`
         )
         setCurrentProcess('message-generate')
         break
@@ -63,7 +63,7 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>입력하신 문자는 다음과 같습니다<div><strong>${messageOption.content}</strong>수정하고자 하는 메시지를 입력해주세요</div></div>`
+          `<div>수정하고자 하는 메시지를 입력해주세요</div>`
         )
         setCurrentProcess('edit')
         break
@@ -81,7 +81,7 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>입력하신 문자는 다음과 같습니다<div><strong>${value}</strong></div><div/>수정을 원하시면 <span style="color: #f838a8">수정</span>, 다음 단계는<span style="color: #34d399">다음</span>을 입력해주세요.</div></div>`
+          `<div>입력하신 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li>수정을 원하시면 <span style="color: #f838a8;">수정</span>을 입력해주세요</li><li>다음 단계는 <span style="color: #34d399;">다음</span>을 입력해주세요.</li></ul></div>`
         )
         break
     }
@@ -102,7 +102,7 @@ export const handleCreateMessage = (
           ChatUtils.editChat(
             buttonType,
             id,
-            `<div>오래 기다리셨어요 생성된 문자는 다음과 같아요!<div><strong>${res.data.data}</strong></div><div/>추가 수정을 원하시면 <span style="color: #f838a8">수정</span>, 다음 단계는<span style="color: #34d399">다음</span>을 입력해주세요.</div></div>`
+            `<div>생성된 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${res.data.data}</div><ul><li><div><strong>수정</strong>을 원하시면 <span style="color: #f838a8"><strong>수정</strong></span>을 입력해주세요</div></li><li><div><strong>다음</strong> 단계는<span style="color: #34d399"> <strong>다음</strong></span>을 입력해주세요.</div></li></ul></div>`
           )
           ChatUtils.editIsTyping(id, true)
         } else {
@@ -133,7 +133,7 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>입력하신 문자는 다음과 같습니다<div><strong>${messageOption.content}</strong>수정하고자 하는 메시지를 입력해주세요</div></div>`
+          `<div>수정하고자 하는 메시지를 입력해주세요</div>`
         )
         setCurrentProcess('edit')
         break
@@ -158,7 +158,7 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>입력하신 문자는 다음과 같습니다<div><strong>${messageOption.content}</strong>수정하고자 하는 메시지를 입력해주세요</div></div>`
+          `<div>정하고자 하는 메시지를 입력해주세요</div>`
         )
         break
       case '다음':
@@ -175,7 +175,7 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>수정된 내용은 다음과 같습니다<div><strong>${value}</strong></div><div/>추가 수정을 원하시면 <span style="color: #f838a8">수정</span>, 다음 단계는<span style="color: #34d399">다음</span>을 입력해주세요.</div></div>`
+          `<div>수정된 내용은 다음과 같습니다<div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><div/><ul><li>추가 수정을 원하시면 <span style="color: #f838a8">수정</span>을 입력해주세요</div></li><div>다음 단계는<span style="color: #34d399">다음</span>을 입력해주세요.</div></li></div>`
         )
         break
     }

@@ -1,8 +1,6 @@
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from '../utils/ChatUtils'
 import MessageOptionUtils from '../utils/MessageOptionUtils'
-import { useSelector } from 'react-redux'
-import { RootState } from '@/redux/store'
 import { MessageOptionState } from '@/redux/slices/messageOptionSlice'
 import apiClient from '@/services/apiClient'
 import { CreateImagePromptProcessType } from './image-prompt'

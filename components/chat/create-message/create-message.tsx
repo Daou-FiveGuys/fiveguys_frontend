@@ -49,7 +49,7 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>문자 전송을 도와드릴게요! 우선 전송할 내용을 정해볼까요? 🧐 <div><strong><span>직접 작성</strong>은 <strong><span style="color: #38bdf8;">직접</span></strong>, <strong>자동 생성</strong>은 <strong><span style="color: #34d399;">자동</span></strong>을 입력해주세요.</div></div>`
+          `<div>문자 전송을 도와드릴게요! 우선 전송할 내용을 정해볼까요? 🧐 <ul><li><div><strong><span>직접 작성</strong>은 <strong><span style="color: #38bdf8;">직접</span></strong>을 입력해주세요</div></li><li><strong>자동 생성</strong>은 <strong><span style="color: #34d399;">자동</span></strong>을 입력해주세요.</div></li></ul></div>`
         )
       }
     }, [isActive, hasAddedChat, messages])
@@ -74,11 +74,6 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       }
     }))
 
-    useEffect(() => {
-      setCurrentProcess('welcome')
-      setHasAddedChat(false)
-    }, [activeButton])
-
     const handleButtonClick = () => {
       setIsModalOpen(true)
     }
@@ -90,10 +85,13 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       ChatUtils.clearChat(buttonType)
       ChatUtils.clearChat('create-image-prompt')
       setActiveButton('create-message')
+
+      setCurrentProcess('welcome')
+      setHasAddedChat(false)
       ChatUtils.addChat(
         buttonType,
         'assistant-animation-html',
-        `<div>문자 전송을 도와드릴게요! 우선 전송할 내용을 정해볼까요? 🧐 <div><strong><span>직접 작성</strong>은 <strong><span style="color: #38bdf8;">직접</span></strong>, <strong>자동 생성</strong>은 <strong><span style="color: #34d399;">자동</span></strong>을 입력해주세요.</div></div>`
+        `<div>문자 전송을 도와드릴게요! 우선 전송할 내용을 정해볼까요? 🧐 <ul><li><div><strong><span>직접 작성</strong>은 <strong><span style="color: #38bdf8;">직접</span></strong>을 입력해주세요</div></li><li><strong>자동 생성</strong>은 <strong><span style="color: #34d399;">자동</span></strong>을 입력해주세요.</div></li></ul></div>`
       )
     }
 
