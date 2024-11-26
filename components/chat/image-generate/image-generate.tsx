@@ -53,30 +53,13 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         setTimeout(() => {}, 100)
       }
     }))
-    const messages = useSelector(
-      (state: RootState) => state.chat[buttonType].messages
-    )
-    React.useEffect(() => {
-      if (
-        ChatUtils.dispatch &&
-        !isActive &&
-        !hasAddedChat &&
-        messages.length === 0
-      ) {
-        setHasAddedChat(true)
-        ChatUtils.addChat(
-          buttonType,
-          'assistant-animation-html',
-          '이미지를 생성하시겠습니까?(예, 아니오)'
-        )
-      }
-    }, [isActive, hasAddedChat, messages])
 
     useEffect(() => {
       if (
         ChatUtils.dispatch &&
         !hasAddedChat &&
-        activeButton === 'image-generate'
+        activeButton === 'image-generate' &&
+        isActive
       ) {
         ChatUtils.addChat(
           buttonType,
