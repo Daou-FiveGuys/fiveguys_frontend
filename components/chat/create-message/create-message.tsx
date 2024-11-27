@@ -26,6 +26,8 @@ export type CreateMessageProcessType =
   | 'welcome'
   | 'message-input'
   | 'message-generate'
+  | 'done'
+  | 'done-ai'
   | 'edit'
 
 const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
@@ -84,8 +86,10 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       MessageOptionUtils.addPrompt('')
       ChatUtils.clearChat(buttonType)
       ChatUtils.clearChat('create-image-prompt')
+      ChatUtils.clearChat('image-generate')
+      ChatUtils.clearChat('select-image')
+      ChatUtils.clearChat('select-image-option')
       setActiveButton('create-message')
-
       setCurrentProcess('welcome')
       setHasAddedChat(false)
       ChatUtils.addChat(

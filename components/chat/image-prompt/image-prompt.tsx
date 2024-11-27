@@ -19,6 +19,8 @@ export type CreateImagePromptProcessType =
   | 'welcome'
   | 'prompt-input'
   | 'prompt-generate'
+  | 'done'
+  | 'done-ai'
   | 'edit'
 
 export interface CustomButtonHandle {
@@ -89,6 +91,9 @@ const CreateImagePromptButton = forwardRef<
     MessageOptionUtils.addPrompt('')
     ChatUtils.clearChat(buttonType)
     ChatUtils.clearChat('create-image-prompt')
+    ChatUtils.clearChat('image-generate')
+    ChatUtils.clearChat('select-image')
+    ChatUtils.clearChat('select-image-option')
     setActiveButton(buttonType)
     ChatUtils.addChat(
       buttonType,
