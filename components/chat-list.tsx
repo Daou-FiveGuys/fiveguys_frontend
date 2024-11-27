@@ -1,27 +1,29 @@
 // ChatList.tsx
-import React, { useCallback, useMemo } from 'react'
+import React, {useCallback, useMemo, useState} from 'react'
 import { Separator } from '@/components/ui/separator'
 import { setIsTyping, Message } from '@/redux/slices/chatSlice'
-import { useDispatch } from 'react-redux'
+import {useDispatch, useSelector} from 'react-redux'
 import MessageItem from './chat/utils/MessageItem'
 import { ButtonType } from './prompt-form'
-import ChatUtils from './chat/utils/ChatUtils'
-import CalendarComponent from './chat/history/calendar'
-import { MessageHistory } from './chat/history/message-history'
 import HistoryPanel from './chat/history/history-panel'
-import SendMessagePanel from './chat/send-message/send-message-panel'
-import { BotCard } from './stocks'
-import AddressBookModal from '@/app/address/modal/select-contact-modal'
+import AmountUsedPanel from './chat/amount-used/amount-used-panel'
+import Component from "@/components/image-option-modal";
+import HandleGenerateImage from "@/components/chat/image-generate/image-generate-modal";
+import {ImageOption, initialState} from "@/redux/slices/imageOptionSlice";
+import {RootState} from "@/redux/store";
 
 export const ChatList = ({
   chatId,
-  messages
+  messages,
+  setActiveButton
 }: {
   chatId: ButtonType
   messages: Message[]
+  setActiveButton: (value: ButtonType) => void
 }) => {
-  console.log(messages) 
-  const newMessage = messages.filter((m,i)=> i == 0 || (i>0 && messages[i-1].text) !== m.text);
+  const newMessage = messages.filter(
+    (m, i) => i == 0 || (i > 0 && messages[i - 1].text) !== m.text
+  )
   if (newMessage.length === 0) {
     return null
   }
@@ -42,14 +44,21 @@ export const ChatList = ({
       content.endsWith('>')
     )
   }
+  const [imageOption, setImageOption] = useState<ImageOption>(initialState)
+  const messageOption = useSelector((root: RootState) => root.messageOption)
+  const [isOpen, setIsOpen] = React.useState(true)
+  // 선택 imageOption
+  //
 
   const isHistoryChat = chatId === 'history'
   const isSendMessageChat = chatId === 'send-message'
+  const isAmountUsed = chatId === 'amount-used'
+  const isImageOption = chatId === 'select-image'
+  const isImageGenerate = chatId === 'select-image-options'
 
   return (
     <div className="relative mx-auto max-w-2xl px-4">
       {newMessage.map((message, index) => {
-        console.log(message)
         return (
           <React.Fragment key={message.id}>
             <div className="ml-2">
@@ -64,6 +73,16 @@ export const ChatList = ({
         )
       })}
       {isHistoryChat && <HistoryPanel />}
+      {isAmountUsed && <AmountUsedPanel />}
+      {isImageGenerate && (
+        <Component
+          isOpen={isOpen}
+          setImageOption={setImageOption}
+          imageOption={imageOption}
+          setActiveButton={setActiveButton}
+        />
+      )}
+      {isImageOption && <HandleGenerateImage imageOption={imageOption} messageOption={messageOption}/>}
     </div>
   )
 }

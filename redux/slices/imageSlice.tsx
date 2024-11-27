@@ -1,14 +1,14 @@
 // store/imageSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-interface ImageState {
+export interface ImageState {
   requestId: string | null
   url: string | null
 }
 
 const initialState: ImageState = {
-  requestId: 'e5c449c9-877b-4d33-9e7f-3a12ccb88964',
-  url: 'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'
+  requestId: 'd63c7405-15c8-4eda-9939-f124afe3cb74',
+  url: 'https://fal.media/files/panda/sWvbZ_f4jJjUGrV1sKf7g_ff1709e838fd41c6b018d68bc33f2ef9.jpg'
 }
 
 const imageSlice = createSlice({

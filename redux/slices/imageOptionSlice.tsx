@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { random } from 'nanoid'
 
 export type ImageStyle = 'waterColor' | 'cityPop' | 'mix'
 
@@ -12,7 +11,7 @@ export interface ImageOption {
   guidanceScale: number
 }
 
-const initialState: ImageOption = {
+export const initialState: ImageOption = {
   imageStyle: 'mix',
   width: 256,
   height: 256,
@@ -21,7 +20,7 @@ const initialState: ImageOption = {
   numInferenceSteps: 28
 }
 const imageOptionSlice = createSlice({
-  name: 'chat',
+  name: 'imageOption',
   initialState,
   reducers: {
     setImageOption(state, action: PayloadAction<ImageOption>) {

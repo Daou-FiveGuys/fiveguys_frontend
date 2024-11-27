@@ -65,14 +65,12 @@
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
   }
-}
-
-@layer base {
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+    @apply font-sans; /* 기본 폰트를 Noto Sans로 설정 */
   }
 }
 
@@ -129,6 +127,86 @@
   background-size: 200% 200%;
   background-position: center;
   animation: spinLinear calc(var(--speed) * 2) infinite linear;
+}
+
+.spotlight {
+  position: absolute;
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(
+    circle,
+    var(--spotlight-color-start) 0%,
+    var(--spotlight-color-middle) 50%,
+    var(--spotlight-color-end) 100%
+  );
+  filter: blur(300px); /* Glow 효과를 더 부드럽게 */
+  pointer-events: none;
+  mix-blend-mode: screen;
+  animation: rotateSpotlight 20s linear infinite; /* 회전 애니메이션 */
+}
+
+:root {
+  --spotlight-color-start: rgba(255, 182, 193, 1); /* 중심부 핑크 */
+  --spotlight-color-middle: rgba(216, 191, 216, 0.8); /* 중간부 보라 */
+  --spotlight-color-end: rgba(255, 255, 255, 0.1); /* 외곽 거의 투명 */
+}
+
+.dark {
+  --spotlight-color-start: rgba(255, 255, 255, 0.07); /* 중심부 핑크 */
+  --spotlight-color-middle: rgba(255, 255, 255, 0.05); /* 중간부 보라 */
+  --spotlight-color-end: rgba(255, 255, 255, 0.01); /* 외곽 거의 투명 */
+}
+
+.spotlight.left {
+  bottom: -400px; /* 중심부를 화면 최하단으로 위치 */
+  left: -400px;
+  animation: moveSpotlightLeft 5s infinite alternate;
+}
+
+.spotlight.right {
+  bottom: -400px; /* 중심부를 화면 최하단으로 위치 */
+  right: -400px;
+  animation: moveSpotlightRight 5s infinite alternate;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+@keyframes rotateSpotlight {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 1s ease-in-out forwards;
+}
+
+.fade-out {
+  animation: fadeOut 1s ease-in-out forwards;
+  pointer-events: none; /* 버튼 클릭 방지 */
 }
 
 @font-face {
@@ -274,4 +352,10 @@
   font-family: 'Noto Sans KR', 'GothicA1-Light', sans-serif;
   font-size: 18px;
   font-weight: 300;
+}
+
+.user-message {
+  font-family: 'Noto Sans KR', 'GothicA1-Light', sans-serif;
+  font-size: 17px;
+  font-weight: 400;
 }

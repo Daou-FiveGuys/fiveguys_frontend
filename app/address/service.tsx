@@ -1,5 +1,6 @@
 import apiClient from '@/services/apiClient';
 import { Folder2, Contact2, CommonResponse, Group2 } from './entity'
+import { Dispatch, SetStateAction } from 'react';
 
   // Simulated API control code
 export const api = {
@@ -21,12 +22,12 @@ export const api = {
       }
     },
 
-    readFolder: async () : Promise<Folder2[]|undefined> => {
+    readFolder: async (setTopFolder2s: Dispatch<SetStateAction<Folder2[]>>) : Promise<Folder2[]|undefined> => {
       try {
         const response = await apiClient.get<CommonResponse<Folder2[]>>(`/folder2/user`)
 
         const folder2List = response.data.data;
-        if(response.data.code == 200) return folder2List
+        if(response.data.code == 200) setTopFolder2s(folder2List)
         return undefined
       } catch(error) {
         return undefined

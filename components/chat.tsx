@@ -20,9 +20,25 @@ export interface ChatProps extends React.ComponentProps<'div'> {
 export function Chat({ id, className }: ChatProps) {
   const [input, setInput] = useState<string>('')
   const [activeButton, setActiveButton] = useState<ButtonType>('faq')
-  const messages = useSelector((state: RootState) =>
-    state.chat[activeButton] ? state.chat[activeButton].messages : []
-  )
+  const messages = useSelector((state: RootState) => {
+    if (
+      activeButton === 'create-message' ||
+      activeButton === 'create-image-prompt' ||
+      activeButton === 'image-generate' ||
+        activeButton === 'select-image' ||
+        activeButton === 'select-image-options'
+    ) {
+      // 조건에 맞는 상태의 메시지 배열을 병합
+      return [
+        ...(state.chat['create-message']?.messages || []),
+        ...(state.chat['create-image-prompt']?.messages || []),
+        ...(state.chat['image-generate']?.messages || [])
+      ]
+    } else {
+      // 조건이 맞지 않을 경우, 선택된 버튼의 상태를 반환
+      return state.chat[activeButton]?.messages || []
+    }
+  })
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -36,36 +52,39 @@ export function Chat({ id, className }: ChatProps) {
   const scrollTimeoutRef = useRef<number | null>(null) // 스크롤 타임아웃 레퍼런스
 
   const easeCustom = (progress: number) => {
-    // sine 기반 부드러운 가속/감속
-    return Math.sin((progress * Math.PI) / 2)
+    return progress < 0.5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2
   }
-
   const scrollToBottomWithAnimation = () => {
     if (
-      scrollRef.current &&
-      isAtBottomRef.current &&
-      !isUserScrollingRef.current
+      !scrollRef.current ||
+      !isAtBottomRef.current ||
+      isUserScrollingRef.current
     ) {
-      const start = scrollRef.current.scrollTop
-      const end = scrollRef.current.scrollHeight
-      const duration = 1000 // 애니메이션 지속 시간 (ms)
-      const startTime = performance.now()
-
-      const animateScroll = (currentTime: number) => {
-        const elapsed = currentTime - startTime
-        const progress = Math.min(elapsed / duration, 1) // 진행 비율 (0~1)
-
-        const easeCustomProgress = easeCustom(progress)
-        scrollRef.current!.scrollTop =
-          start + (end - start) * easeCustomProgress
-
-        if (progress < 1) {
-          requestAnimationFrame(animateScroll)
-        }
-      }
-
-      requestAnimationFrame(animateScroll)
+      return
     }
+
+    const start = scrollRef.current.scrollTop
+    const end = scrollRef.current.scrollHeight
+    const duration = 1000 // animation duration (ms)
+    const startTime = performance.now()
+
+    const animateScroll = (currentTime: number) => {
+      if (!scrollRef.current) return
+
+      const elapsed = currentTime - startTime
+      const progress = Math.min(elapsed / duration, 1) // Progress (0 to 1)
+      const easeCustomProgress = easeCustom(progress)
+
+      scrollRef.current.scrollTop = start + (end - start) * easeCustomProgress
+
+      if (progress < 1) {
+        requestAnimationFrame(animateScroll)
+      }
+    }
+
+    requestAnimationFrame(animateScroll)
   }
 
   const handleScroll = () => {
@@ -136,7 +155,7 @@ export function Chat({ id, className }: ChatProps) {
         ref={messagesContainerRef}
       >
         {messages.length ? (
-          <ChatList chatId={activeButton} messages={messages} />
+          <ChatList chatId={activeButton} messages={messages} setActiveButton={setActiveButton}/>
         ) : (
           <EmptyScreen />
         )}

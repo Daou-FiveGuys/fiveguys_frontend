@@ -4,7 +4,7 @@ import chatReducer from './slices/chatSlice'
 import imageOptionReducer from './slices/imageOptionSlice'
 import calendarReducer from './slices/calendarSlice'
 import contact2Reducer from './slices/contactsSlice'
-import createTextReducer from './slices/createTextSlice'
+import messageReducer from './slices/messageOptionSlice'
 
 export const store = configureStore({
   reducer: {
@@ -13,7 +13,7 @@ export const store = configureStore({
     imageOption: imageOptionReducer,
     calendar: calendarReducer,
     contact2: contact2Reducer,
-    createText: createTextReducer
+    messageOption: messageReducer
   }
 })
 

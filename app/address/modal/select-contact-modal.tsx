@@ -10,11 +10,13 @@ import { api, Target } from './service'
 interface AddressBookModalProps {
   file: File // File passed from ParentComponent
   onClose: () => void // Close modal callback
+  method: string
 }
 
 const AddressBookModal: React.FC<AddressBookModalProps> = ({
   file,
-  onClose
+  onClose,
+  method
 }) => {
   const [selectedContacts, setSelectedContacts] = useState<Contact2[]>([])
   const [inputValue, setInputValue] = useState('') // Sender's phone number
@@ -92,7 +94,6 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
     const subject = '전송할 제목입니다.'
     const content = '안녕하세요 테스트중입니다.'
 
-    // Send the message via API
     api
       .sendMessage(
         {
@@ -102,6 +103,7 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
           targets,
           subject
         },
+        method,
         file
       )
       .then(() => {
@@ -117,7 +119,7 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent
-        className="fixed bg-white dark:bg-gray-800 rounded-2xl shadow-lg w-full max-w-[95vw] md:max-w-[1000px] z-[99999]"
+        className="fixed bg-white dark:bg-gray-800 rounded-2xl shadow-lg w-full max-w-[95vw] md:max-w-[1000px] z-50"
         style={{
           top: '50%',
           left: '50%',
@@ -125,7 +127,7 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
           maxHeight: '90vh',
           overflowY: 'auto'
         }}
-        onClick={e => e.stopPropagation()} // Prevent background click propagation
+        onClick={e => e.stopPropagation()}
       >
         {/* AddressBook Component */}
         <div className="mt-4">
@@ -135,7 +137,12 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
         <div className="mt-4 flex justify-end">
           <Button
             onClick={handleSend}
-            className="bg-blue-500 hover:bg-blue-600 text-white"
+            disabled={selectedContacts.length === 0}
+            className={`text-white ${
+              selectedContacts.length === 0
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-blue-500 hover:bg-blue-600'
+            }`}
           >
             전송하기 ({selectedContacts.length})
           </Button>

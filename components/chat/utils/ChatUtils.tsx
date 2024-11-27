@@ -8,8 +8,10 @@ import {
   updateMessageUserType,
   UserType
 } from '@/redux/slices/chatSlice'
+import { RootState } from '@/redux/store'
 import { nanoid } from 'nanoid'
 import ReactDOMServer from 'react-dom/server'
+import { useSelector } from 'react-redux'
 
 /**
  * 채팅 기록 유지를 위한 static class
@@ -55,7 +57,10 @@ export default class ChatUtils {
         }
       })
     )
-    if (userType === 'assistant-animation') {
+    if (
+      userType === 'assistant-animation' ||
+      userType === 'assistant-animation-html'
+    ) {
       ChatUtils.dispatch(setIsTyping({ chatId, isTyping: true }))
     }
     return messageId

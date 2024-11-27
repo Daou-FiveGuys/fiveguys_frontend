@@ -15,7 +15,8 @@ export default function CalendarComponent({
   setCurrentDate,
   selectedDate,
   setSelectedDate,
-  dayStates
+  dayStates,
+  setDayStates
 }: CalendarProps): JSX.Element {
   // 현재 월의 날짜 계산
   const firstDayOfMonth = new Date(
@@ -43,6 +44,7 @@ export default function CalendarComponent({
     )
     setCurrentDate(newDate)
     setSelectedDate(null) // 선택된 날짜 해제
+    setDayStates([])
   }
 
   // 다음 달로 이동
@@ -54,6 +56,7 @@ export default function CalendarComponent({
     )
     setCurrentDate(newDate)
     setSelectedDate(null) // 선택된 날짜 해제
+    setDayStates([])
   }
 
   // 날짜 클릭 핸들러
@@ -128,7 +131,7 @@ export default function CalendarComponent({
             return (
               <div
                 key={i}
-                className={`relative rounded-lg p-2 ${
+                className={`relative flex flex-col items-center justify-center rounded-lg p-2 ${
                   day
                     ? `cursor-pointer ${
                         isSelected
@@ -140,16 +143,16 @@ export default function CalendarComponent({
                 onClick={day ? () => handleDateClick(day) : undefined}
               >
                 {day && (
-                  <div className="font-medium flex justify-center items-center space-x-1">
-                    <span>{day}</span>
-                    <span
-                      className={`h-2 w-2 rounded-full ${
+                  <>
+                    <div className="font-medium">{day}</div>
+                    <div
+                      className={`mt-1 w-full h-1 rounded-full ${
                         dayStates[day - 1]
                           ? 'bg-blue-500 dark:bg-blue-300'
                           : 'bg-transparent'
                       }`}
-                    ></span>
-                  </div>
+                    ></div>
+                  </>
                 )}
               </div>
             )

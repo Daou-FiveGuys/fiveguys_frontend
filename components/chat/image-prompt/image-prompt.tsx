@@ -1,14 +1,25 @@
-import React, { forwardRef, useImperativeHandle, useEffect } from 'react'
+import React, {
+  forwardRef,
+  useImperativeHandle,
+  useEffect,
+  useMemo,
+  useState
+} from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
-import CreateMessage from '@/components/chat/send-message/create-message'
-import { setText } from '@/redux/slices/createTextSlice'
-import CreateImagePrompt from './createimageprompt'
-import { setImageOption } from '@/redux/slices/imageOptionSlice'
 import { clearMessages } from '@/redux/slices/chatSlice'
+import { handleCreateImagePrompt } from './handle-create-image-prompt'
+import MessageOptionUtils from '../utils/MessageOptionUtils'
+import CancelProcessModal from '../cancel-process-modal'
+
+export type CreateImagePromptProcessType =
+  | 'welcome'
+  | 'prompt-input'
+  | 'prompt-generate'
+  | 'edit'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -20,84 +31,103 @@ interface CustomButtonProps {
   setActiveButton: (value: ButtonType) => void
 }
 
-const ImagePromptButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
-  ({ buttonType, activeButton, setActiveButton }, ref) => {
-    const isActive = buttonType === activeButton
-    const [hasAddedChat, setHasAddedChat] = React.useState(false)
-    const [lastUserInput, setLastUserInput] = React.useState<string | null>(null)
-    const message = useSelector((state: RootState) => state.chat[buttonType])
-    const imageOption = useSelector((state: RootState) => state.imageOption)
-    const dispatch = useDispatch()
-    const [openModeal, setOpenModal] = React.useState(false);
-    const [userInput, setUserInput] = React.useState('');
-
-    useImperativeHandle(ref, () => ({
-      handleEnterPress: (value: string) => {
-        setUserInput(value)
-        dispatch(
-          clearMessages({chatId:'send-message'})
-        )
-        ChatUtils.addChat(
-          'send-message',
-          'assistant-animation',
-          '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
-        )
-        // ChatUtils.addChat(
-        //   'image-generate',
-        //   'assistant-animation',
-        //   '이미지를 추가하시겠습니까?'
-        // )
-        // ChatUtils.addChat(
-        //   'create-image-prompt',
-        //   'assistant-animation',
-        //   '이미지를 추가하시겠습니까?'
-        // )
-        dispatch(
-        setImageOption(
-          {
-            imageStyle: 'mix',
-            width: 256,
-            height: 256,
-            guidanceScale: 3.5,
-            seed: -1,
-            numInferenceSteps: 28
-          }
-        )
+const CreateImagePromptButton = forwardRef<
+  CustomButtonHandle,
+  CustomButtonProps
+>(({ buttonType, activeButton, setActiveButton }, ref) => {
+  const isActive = buttonType === activeButton
+  const [lastUserInput, setLastUserInput] = React.useState<string | null>(null)
+  const [hasAddedChat, setHasAddedChat] = React.useState(false)
+  const [currentProcess, setCurrentProcess] =
+    useState<CreateImagePromptProcessType>('welcome')
+  const messageOption = useSelector((state: RootState) => state.messageOption)
+  const isTyping = useSelector(
+    (state: RootState) => state.chat['create-message'].isTyping
+  )
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  React.useEffect(() => {
+    if (ChatUtils.dispatch && isActive && !hasAddedChat && !isTyping) {
+      setHasAddedChat(true)
+      ChatUtils.addChat(
+        buttonType,
+        'assistant-animation-html',
+        `<div>함께 이미지 생성을 위한 프롬프트를 만들어볼까요? 🙌🏻 <ul><li><div><strong><span>직접 입력</strong>은 <strong><span style="color: #34d399;">직접</span></strong>을 입력해주세요</div></li><li><div><strong><span>자동 생성</strong>은 <strong><span style="color: #38bdf8;">자동</span></strong>을 입력해주세요</div></li></ul></div>`
       )
-        console.log(imageOption.imageStyle)
-        if (isActive && value.trim()) {
-          ChatUtils.addChat(buttonType, 'user', value.trim())
-          setLastUserInput(value.trim())
-          if(lastUserInput === '예')setOpenModal(true)
-        }
-      }
-    }))
+    }
+  }, [isActive, hasAddedChat, isTyping])
 
-    useEffect(() => { 
-      if (ChatUtils.dispatch && !hasAddedChat) {
-        ChatUtils.addChat(
-          buttonType,
-          'assistant-animation',
-          '이미지를 생성하시겠습니까?(예, 아니오)'
+  useImperativeHandle(ref, () => ({
+    handleEnterPress: (value: string) => {
+      if (isActive && value.trim()) {
+        ChatUtils.addChat(buttonType, 'user', value.trim())
+        setLastUserInput(value.trim())
+      }
+      setTimeout(() => {
+        handleCreateImagePrompt(
+          value,
+          setActiveButton,
+          messageOption,
+          currentProcess,
+          setCurrentProcess
         )
-        setHasAddedChat(true)
-      }
-    },[lastUserInput])
+      }, 100)
+    }
+  }))
 
-    
-    return (
-      <>
-        <Button
-          className="w-full md:w-28 h-8 mb-2 md:mb-0"
-          variant={isActive? 'default' : 'outline'}
-          onClick={() => setActiveButton('create-image-prompt')}
-        >
-          프롬프트 생성
-        </Button>
-        <CreateImagePrompt buttonType={'create-image-prompt'} lastUserInput={lastUserInput} />
-      </>
+  useEffect(() => {
+    setCurrentProcess('welcome')
+    setHasAddedChat(false)
+  }, [activeButton])
+
+  const handleButtonClick = () => {
+    setIsModalOpen(true)
+  }
+
+  const handleConfirm = () => {
+    setIsModalOpen(false)
+    MessageOptionUtils.addContent('')
+    MessageOptionUtils.addPrompt('')
+    ChatUtils.clearChat(buttonType)
+    ChatUtils.clearChat('create-image-prompt')
+    setActiveButton(buttonType)
+    ChatUtils.addChat(
+      buttonType,
+      'assistant-animation-html',
+      `<div>함께 이미지 생성을 위한 프롬프트를 만들어볼까요? 🙌🏻 <ul><li><div><strong><span>직접 입력</strong>은 <strong><span style="color: #34d399;">직접</span></strong>을 입력해주세요</div></li><li><div><strong><span>자동 생성</strong>은 <strong><span style="color: #38bdf8;">자동</span></strong>을 입력해주세요</div></li></ul></div>`
     )
   }
-)
 
-export default ImagePromptButton
+  const handleCancel = () => {
+    setIsModalOpen(false)
+  }
+
+  return (
+    <>
+      <Button
+        className="w-full md:w-28 h-8 mb-2 md:mb-0"
+        variant={
+          messageOption.content === null
+            ? 'outline'
+            : isActive
+              ? 'default'
+              : 'outline'
+        }
+        disabled={
+          messageOption.content === null || activeButton === 'create-message'
+        }
+        onClick={handleButtonClick}
+      >
+        프롬프트 생성
+      </Button>
+      {isModalOpen && (
+        <CancelProcessModal
+          isOpen={isModalOpen}
+          onClose={handleCancel}
+          onConfirm={handleConfirm}
+        />
+      )}
+    </>
+  )
+})
+
+export default CreateImagePromptButton

@@ -35,28 +35,8 @@ export function SiteHeader() {
             </Link>
           </div>
           <div className="flex flex-1 items-center justify-end space-x-4">
-            <nav className="flex items-center space-x-6">
-              <Link
-                href="/pricing"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-              >
-                Pricing
-              </Link>
-              <Link
-                href="/blog"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-              >
-                Blog
-              </Link>
-              <Link
-                href="/documentation"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-              >
-                Documentation
-              </Link>
-            </nav>
             <Button asChild variant="default">
-              <Link href="/sign-in">Sign In →</Link>
+              <Link href="/login">로그인</Link>
             </Button>
           </div>
         </div>

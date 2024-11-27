@@ -2,6 +2,7 @@
 import toast, { Toaster } from 'react-hot-toast'
 import { useEffect, useRef, useState } from 'react'
 import { Rect, Object as FabricObject } from 'fabric'
+import { filters } from 'fabric'
 import * as fabric from 'fabric'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -21,7 +22,8 @@ import {
   Wand2Icon,
   SparklesIcon,
   ImagePlusIcon,
-  FrameIcon
+  FrameIcon,
+  Sparkles
 } from 'lucide-react'
 import {
   Popover,
@@ -47,6 +49,11 @@ import { RootState } from '@/redux/store'
 import { Input } from './ui/input'
 import { ChangeEvent } from 'react'
 import AddressBookModal from '@/app/address/modal/select-contact-modal'
+import apiClient from '@/services/apiClient'
+import { Slider } from './ui/slider'
+import { useRouter } from 'next/navigation'
+import { Dialog } from '@radix-ui/react-dialog'
+import { ImageEditorCancelDialog } from './image-editor-cancel-modal'
 
 type FrameOption = 'default' | '512x512' | 'landscape' | 'custom'
 
@@ -163,7 +170,7 @@ export default function ImageEditor() {
       const fabricCanvas = initializeCanvas()
 
       if (imageSlice.url) {
-        fabric.FabricImage.fromURL(imageSlice.url, {
+        fabric.FabricImage.fromURL(imageSlice.url + '?no-cache', {
           crossOrigin: 'anonymous'
         }).then(img => {
           if (
@@ -197,8 +204,6 @@ export default function ImageEditor() {
           })
           frameOptions.default.width = canvasWidth
           frameOptions.default.height = canvasHeight
-
-          console.log(canvasWidth * scale, canvasHeight * scale)
 
           // 이미지 배경 설정 (캔버스 중앙에 배치)
           img.set({
@@ -241,22 +246,23 @@ export default function ImageEditor() {
         var objWidth = obj.getScaledWidth()
         var objHeight = obj.getScaledHeight()
 
-        // 객체가 캔버스 밖으로 나가지 않도록 제한
-        if (obj.left < 0) {
-          obj.left = 0
-        }
-        if (obj.top < 0) {
-          obj.top = 0
-        }
-        if (obj.left + objWidth > canvasWidth) {
-          obj.left = canvasWidth - objWidth
-        }
-        if (obj.top + objHeight > canvasHeight) {
-          obj.top = canvasHeight - objHeight
-        }
+        if (objWidth <= canvasWidth && objHeight <= canvasHeight) {
+          if (obj.left < 0) {
+            obj.left = 0
+          }
+          if (obj.top < 0) {
+            obj.top = 0
+          }
+          if (obj.left + objWidth > canvasWidth) {
+            obj.left = canvasWidth - objWidth
+          }
+          if (obj.top + objHeight > canvasHeight) {
+            obj.top = canvasHeight - objHeight
+          }
 
-        // 객체 위치 업데이트
-        obj.setCoords()
+          // 객체 위치 업데이트
+          obj.setCoords()
+        }
       })
 
       const handleResize = () => {
@@ -310,6 +316,43 @@ export default function ImageEditor() {
   }
   //펜 기능
 
+  useEffect(() => {
+    if (!canvas || !originImgObject) return
+
+    const handleSelection = () => {
+      const activeObjects = canvas.getActiveObjects()
+
+      if (activeObjects.includes(originImgObject)) {
+        if (activeShape !== 'move') {
+          // "선택" 모드가 아닌 경우 원본 이미지 선택 해제
+          canvas.discardActiveObject()
+
+          const objectsToKeepActive = activeObjects.filter(
+            (obj: fabric.Object) => obj !== originImgObject
+          )
+
+          // 원본 이미지를 제외한 객체들만 다시 활성화
+          if (objectsToKeepActive.length > 0) {
+            const selection = new fabric.ActiveSelection(objectsToKeepActive, {
+              canvas: canvas
+            })
+            canvas.setActiveObject(selection)
+          }
+
+          canvas.renderAll()
+        }
+      }
+    }
+
+    canvas.on('selection:created', handleSelection)
+    canvas.on('selection:updated', handleSelection)
+
+    return () => {
+      canvas.off('selection:created', handleSelection)
+      canvas.off('selection:updated', handleSelection)
+    }
+  }, [canvas, originImgObject, activeShape])
+
   const disableDrawing = () => {
     if (!canvas) return
     setIsPen(false)
@@ -318,40 +361,60 @@ export default function ImageEditor() {
   }
 
   const enableErasing = () => {
-    if (!canvas) return
+    if (!canvas || !originImgObject) return
 
     canvas.isDrawingMode = false
     canvas.selection = true
-    canvas.forEachObject(obj => {
-      obj.selectable = true
+
+    // 원본 이미지는 선택 불가하게 설정
+    originImgObject.selectable = false
+    originImgObject.evented = false
+
+    // 다른 객체들은 선택 가능하게 설정
+    canvas.forEachObject((obj: fabric.Object) => {
+      if (obj !== originImgObject) {
+        obj.selectable = true
+        obj.evented = true
+      }
     })
 
-    const eraseObject = () => {
-      const activeObject = canvas.getActiveObject()
-      if (activeObject) {
-        canvas.remove(activeObject)
-        if (activeObject === maskRect) {
-          setMaskRect(null)
-          setMaskInfo(null)
-        }
+    canvas.defaultCursor = 'crosshair'
+
+    // 클릭한 객체를 삭제하는 이벤트 핸들러
+    const eraseObject = (
+      options: fabric.TPointerEventInfo<fabric.TPointerEvent>
+    ): void => {
+      const target = options.target // 선택된 객체에 접근
+      if (target && target !== originImgObject) {
+        canvas.remove(target)
         canvas.discardActiveObject()
         canvas.requestRenderAll()
       }
     }
 
-    canvas.on('selection:created', eraseObject)
-    canvas.on('selection:updated', eraseObject)
-    canvas.defaultCursor = 'crosshair'
+    // 기존의 이벤트 핸들러 제거 후 새 이벤트 핸들러 추가
+    canvas.off('mouse:down')
+    canvas.on('mouse:down', eraseObject)
+
     setActiveShape('eraser')
   }
-  //지우기 기능
 
   const disableErasing = () => {
-    if (!canvas) return
+    if (!canvas || !originImgObject) return
 
-    canvas.off('selection:created')
-    canvas.off('selection:updated')
-    canvas.defaultCursor = 'default'
+    // 이벤트 핸들러 제거
+    canvas.off('mouse:down')
+
+    // 모든 객체 선택 불가 설정
+    canvas.forEachObject((obj: fabric.Object) => {
+      obj.selectable = false
+      obj.evented = false
+    })
+
+    // 원본 이미지 선택 불가 설정
+    originImgObject.selectable = false
+    originImgObject.evented = false
+
     setActiveShape(null)
   }
 
@@ -541,18 +604,76 @@ export default function ImageEditor() {
     a: 1
   })
   const [currentTextColor, setCurrentTextColor] = useState('rgba(0, 0, 0, 255)')
+
+  const fontRef = useRef(font)
+  const fontSizeRef = useRef(fontSize)
+  const isBoldRef = useRef(isBold)
+  const isUnderlineRef = useRef(isUnderline)
+  const isItalicRef = useRef(isItalic)
+  const isHighlighterRef = useRef(isHighlighter)
+  const highlighterColorRef = useRef(highlighterColor)
+  const currentTextColorRef = useRef(currentTextColor)
+  useEffect(() => {
+    fontRef.current = font
+  }, [font])
+
+  useEffect(() => {
+    fontSizeRef.current = fontSize
+  }, [fontSize])
+
+  useEffect(() => {
+    isBoldRef.current = isBold
+  }, [isBold])
+
+  useEffect(() => {
+    isUnderlineRef.current = isUnderline
+  }, [isUnderline])
+
+  useEffect(() => {
+    isItalicRef.current = isItalic
+  }, [isItalic])
+
+  useEffect(() => {
+    isHighlighterRef.current = isHighlighter
+  }, [isHighlighter])
+
+  useEffect(() => {
+    highlighterColorRef.current = highlighterColor
+  }, [highlighterColor])
+
+  useEffect(() => {
+    currentTextColorRef.current = currentTextColor
+  }, [currentTextColor])
+
   const [isMovingObject, setIsMovingObject] = useState<boolean>(false)
   const textRef = useRef<fabric.IText | null>(null) // text 객체를 추적하는 ref
 
-  const [apiTextData, setApiTextData] = useState([
-    '안녕하세요! 😊',
-    '방학을 맞이하여 한성대학교에서 코딩 캠프를 진행합니다!',
-    '일시는 2024년 12월 3일 (화요일)이며, 시간은 10:00 - 12:00입니다',
-    '장소는 한성대학교 상상관 6층입니다',
-    '코딩에 관심이 있는 학생들의 많은 참여 부탁드립니다!',
-    '함께 재미있는 시간을 보내요! 🖥️💻',
-    '감사합니다!'
-  ])
+  const [isRequest, setIsRequest] = useState(false)
+  const [apiTextData, setApiTextData] = useState([])
+  const content = useSelector((state: RootState) => state.messageOption.content)
+
+  useEffect(() => {
+    console.log(content)
+    if (!isRequest) {
+      setIsRequest(true) // 호출 시작 상태로 변경
+      apiClient
+        .post('/ai/gpt/extract-key-points', { text: content })
+        .then(res => {
+          if (res.data.code === 200) {
+            setApiTextData(res.data.data) // API 데이터 저장
+          } else {
+            setApiTextData([])
+          }
+        })
+        .catch(err => {
+          console.error('API 호출 오류:', err)
+          setApiTextData([])
+        })
+        .finally(() => {
+          setIsRequest(false) // 호출 완료 상태로 변경
+        })
+    }
+  }, [])
 
   const fontOptions = [
     { value: 'Arial', label: 'Arial' },
@@ -577,9 +698,45 @@ export default function ImageEditor() {
   ]
 
   const enableAddText = () => {
+    if (!canvas || !originImgObject) return
+
+    canvas.selection = true
+
+    canvas.forEachObject((obj: fabric.Object) => {
+      if (obj !== originImgObject) {
+        obj.selectable = true
+        obj.evented = true
+      } else {
+        obj.selectable = false
+        obj.evented = false
+      }
+    })
+
     setActiveShape('text')
     setIsAddingText(true)
   }
+
+  useEffect(() => {
+    if (!canvas || !originImgObject) return
+
+    // 클릭 이벤트 리스너 추가
+    const handleMouseDown = (
+      event: fabric.TPointerEventInfo<fabric.TPointerEvent>
+    ) => {
+      // 클릭된 객체가 originalImgObject인지 확인
+      if (event.target === originImgObject) {
+        canvas.discardActiveObject() // 선택 해제
+        canvas.renderAll() // 캔버스 다시 렌더링
+      }
+    }
+
+    canvas.on('mouse:down', handleMouseDown)
+
+    // Cleanup: 컴포넌트 언마운트 시 이벤트 리스너 제거
+    return () => {
+      canvas.off('mouse:down', handleMouseDown)
+    }
+  }, [canvas, originImgObject])
 
   const disableAddText = () => {
     setIsAddingText(false)
@@ -599,30 +756,91 @@ export default function ImageEditor() {
     const text = new fabric.IText(str, {
       editable: true,
       width: 150,
-      fontWeight: isBold ? 800 : 300,
-      fontSize: fontSize,
-      fill: currentTextColor,
-      fontFamily: font,
-      underline: isUnderline,
-      backgroundColor: isHighlighter
-        ? `rgba(${highlighterColor.r}, ${highlighterColor.g}, ${highlighterColor.b}, ${highlighterColor.a})`
+      fontWeight: isBoldRef.current ? 'bold' : 'normal',
+      fontSize: fontSizeRef.current,
+      fill: currentTextColorRef.current,
+      fontFamily: fontRef.current,
+      underline: isUnderlineRef.current,
+      backgroundColor: isHighlighterRef.current
+        ? `rgba(${highlighterColorRef.current.r}, ${highlighterColorRef.current.g}, ${highlighterColorRef.current.b}, ${highlighterColorRef.current.a})`
         : 'rgba(0, 0, 0, 0)',
-      fontStyle: isItalic ? 'italic' : 'normal'
+      fontStyle: isItalicRef.current ? 'italic' : 'normal'
     })
     text.textAlign = 'left'
     text.set({ width: text.width + text.fontSize / 2 })
     text.enterEditing()
     setIsTyping(true)
+
     text.on('editing:entered', () => {
       setIsTyping(true)
     })
 
-    // 편집이 끝날 때는 setIsTyping(false)
     text.on('editing:exited', () => {
       setIsTyping(false)
     })
+
     return text
   }
+  const parseRGBA = (rgbaString: string) => {
+    const match = rgbaString.match(
+      /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+\.?\d*))?\)/
+    )
+    if (match) {
+      return {
+        r: parseInt(match[1], 10),
+        g: parseInt(match[2], 10),
+        b: parseInt(match[3], 10),
+        a: match[4] ? parseFloat(match[4]) : 1
+      }
+    }
+    return { r: 0, g: 0, b: 0, a: 1 }
+  }
+
+  useEffect(() => {
+    if (!canvas) return
+
+    const handleSelection = () => {
+      const activeObjects = canvas.getActiveObjects()
+      if (activeObjects.length === 1 && activeObjects[0].type === 'i-text') {
+        const text = activeObjects[0] as fabric.IText
+
+        setFont(text.fontFamily || 'Arial')
+        setFontSize(text.fontSize || 20)
+        setIsBold(text.fontWeight === 'bold' || Number(text.fontWeight) > 500)
+        setIsUnderline(!!text.underline)
+        setIsItalic(text.fontStyle === 'italic')
+        setCurrentTextColor(text.fill as string)
+
+        // Parse background color for highlighter
+        if (
+          text.backgroundColor &&
+          text.backgroundColor !== 'rgba(0, 0, 0, 0)'
+        ) {
+          setIsHighlighter(true)
+          setHighlighterColor(parseRGBA(text.backgroundColor as string))
+        } else {
+          setIsHighlighter(false)
+        }
+      } else {
+        // Multiple objects selected or not a text object
+        // Keep existing state or reset if necessary
+      }
+    }
+
+    const handleSelectionCleared = () => {
+      // Optionally reset state variables or leave them unchanged
+    }
+
+    canvas.on('selection:created', handleSelection)
+    canvas.on('selection:updated', handleSelection)
+    canvas.on('selection:cleared', handleSelectionCleared)
+
+    return () => {
+      canvas.off('selection:created', handleSelection)
+      canvas.off('selection:updated', handleSelection)
+      canvas.off('selection:cleared', handleSelectionCleared)
+    }
+  }, [canvas])
 
   const addTextByButton = (value: string) => {
     if (!canvas) return
@@ -694,6 +912,7 @@ export default function ImageEditor() {
     canvas.setActiveObject(text)
     canvas.renderAll()
   }
+
   useEffect(() => {
     if (!canvas) return
 
@@ -728,7 +947,28 @@ export default function ImageEditor() {
     const handleMouseUp = (
       options: fabric.TPointerEventInfo<fabric.TPointerEvent>
     ) => {
-      if (!isDragging && isAddingText) {
+      if (isDragging) {
+        if (!originImgObject) return
+        // 현재 활성 객체들을 가져옴
+        const activeObjects = canvas.getActiveObjects()
+
+        if (activeObjects.includes(originImgObject)) {
+          // 선택된 객체 중 originImgObject를 제거
+          canvas.discardActiveObject() // 전체 비활성화
+          const objectsToKeepActive = activeObjects.filter(
+            obj => obj !== originImgObject
+          )
+
+          // originImgObject를 제외한 객체만 다시 활성화
+          if (objectsToKeepActive.length > 0) {
+            const selection = new fabric.ActiveSelection(objectsToKeepActive, {
+              canvas: canvas
+            })
+            canvas.setActiveObject(selection)
+          }
+        }
+        canvas.renderAll() // 렌더링 반영
+      } else if (isAddingText) {
         handleAddText(options) // 클릭 이벤트로 텍스트 추가
       }
       startPointer = null
@@ -767,33 +1007,63 @@ export default function ImageEditor() {
   }
 
   const enableMoveObject = () => {
-    if (!canvas) return
+    if (!canvas || !originImgObject) return
 
-    // 객체 이동을 활성화
     canvas.selection = true
-    canvas.forEachObject(obj => {
+
+    canvas.forEachObject((obj: fabric.Object) => {
       obj.selectable = true
+      obj.evented = true
     })
+
+    // 원본 이미지도 선택 가능하게 설정
+    originImgObject.selectable = true
+    originImgObject.evented = true
 
     setIsMovingObject(true)
     setActiveShape('move')
   }
 
   const disableMoveObject = () => {
-    if (!canvas) return
+    if (!canvas || !originImgObject) return
 
-    // 객체 이동 비활성화
     canvas.selection = false
-    canvas.forEachObject(obj => {
+
+    canvas.forEachObject((obj: fabric.Object) => {
       obj.selectable = false
+      obj.evented = false
     })
+
+    originImgObject.selectable = false
+    originImgObject.evented = false
 
     setIsMovingObject(false)
     setActiveShape(null)
   }
 
   const disableAll = () => {
-    setFramePopoverOpen(false)
+    if (!canvas || !originImgObject) return
+    canvas.discardActiveObject()
+    // 모든 이벤트 핸들러 제거
+    canvas.off('mouse:down', eraseObject as any)
+    canvas.off('selection:created', handleSelection)
+    canvas.off('selection:updated', handleSelection)
+
+    // 모든 객체 선택 불가
+    canvas.selection = false
+
+    canvas.forEachObject((obj: fabric.Object) => {
+      obj.selectable = false
+      obj.evented = false
+    })
+
+    // 원본 이미지 선택 불가
+    originImgObject.selectable = false
+    originImgObject.evented = false
+
+    setImageFilterPopoverOpen(false)
+    setIsFramePopover(false)
+    setIsFramePopoverOpen(false)
     setSelectedShape(null)
     disableMasking()
     disableDrawing()
@@ -934,6 +1204,33 @@ export default function ImageEditor() {
     }
   }
 
+  // eraseObject 함수 정의
+  const eraseObject = (
+    options: fabric.TPointerEventInfo<fabric.TPointerEvent>
+  ): void => {
+    const target = options.target
+    if (canvas && target && target !== originImgObject) {
+      canvas.remove(target)
+      canvas.discardActiveObject()
+      canvas.requestRenderAll()
+    }
+  }
+
+  // handleSelection 함수 정의
+  const handleSelection = (): void => {
+    if (!canvas || !originImgObject) return
+
+    canvas.forEachObject((obj: fabric.Object) => {
+      if (obj !== originImgObject) {
+        obj.selectable = true
+        obj.evented = true
+      } else {
+        obj.selectable = false
+        obj.evented = false
+      }
+    })
+  }
+
   // 마스킹 또는 지우개 두께 변경 시 업데이트
   useEffect(() => {
     if (!canvas || !canvas.freeDrawingBrush) return
@@ -970,33 +1267,67 @@ export default function ImageEditor() {
       reader.onload = function (f) {
         const data = f.target?.result
         if (typeof data === 'string') {
-          fabric.FabricImage.fromURL(data, { crossOrigin: 'anonymous' }).then(
-            img => {
-              if (!canvas) return
-              const canvasWidth = canvas.getWidth()
-              const canvasHeight = canvas.getHeight()
+          fabric.FabricImage.fromURL(data + '?no-cache', {
+            crossOrigin: 'anonymous'
+          }).then(img => {
+            if (!canvas) return
 
-              // 이미지 크기 조정
-              const maxWidth = canvasWidth * 0.8 // 캔버스의 80% 너비
-              const maxHeight = canvasHeight * 0.8 // 캔버스의 80% 높이
+            const canvasWidth = canvas.getWidth()
+            const canvasHeight = canvas.getHeight()
 
-              const scaleX = maxWidth / img.width!
-              const scaleY = maxHeight / img.height!
-              const scale = Math.min(scaleX, scaleY, 1) // 비율 유지하며 스케일 제한
+            // 이미지 크기 비율 조정
+            const maxWidth = canvasWidth * 0.8 // 캔버스의 80% 너비
+            const maxHeight = canvasHeight * 0.8 // 캔버스의 80% 높이
+            const scaleX = maxWidth / img.width!
+            const scaleY = maxHeight / img.height!
+            const scale = Math.min(scaleX, scaleY, 1) // 비율 유지하며 최대 스케일 제한
 
-              img.scale(scale)
+            img.scale(scale)
 
-              // 정중앙 배치
-              img.set({
-                left: canvasWidth / 2 - img.getScaledWidth() / 2,
-                top: canvasHeight / 2 - img.getScaledHeight() / 2,
-                originX: 'left',
-                originY: 'top'
-              })
+            // 이미지 정중앙 배치
+            img.set({
+              left: canvasWidth / 2 - img.getScaledWidth() / 2,
+              top: canvasHeight / 2 - img.getScaledHeight() / 2,
+              originX: 'left',
+              originY: 'top'
+            })
 
-              canvas.add(img)
-            }
-          )
+            // 최소 크기 설정
+            img.setControlsVisibility({
+              mt: false, // top middle
+              mb: false, // bottom middle
+              ml: false, // middle left
+              mr: false // middle right
+            })
+
+            img.on('scaling', (event: fabric.TEvent<fabric.TPointerEvent>) => {
+              const obj = (event as unknown as { target: fabric.Object }).target
+              if (!obj) return
+
+              const boundingRect = obj.getBoundingRect() // true로 설정해 화면 경계를 기준으로
+              const minSize = 50
+
+              if (
+                boundingRect.width < minSize ||
+                boundingRect.height < minSize
+              ) {
+                const scaleX = minSize / boundingRect.width
+                const scaleY = minSize / boundingRect.height
+                const scale = Math.max(scaleX, scaleY)
+
+                obj.scale(scale)
+                obj.left = boundingRect.left // 위치 보정
+                obj.top = boundingRect.top
+              }
+
+              obj.setCoords()
+              canvas.renderAll()
+            })
+
+            canvas.add(img)
+            canvas.setActiveObject(img)
+            canvas.renderAll()
+          })
         }
       }
       reader.readAsDataURL(file)
@@ -1019,7 +1350,6 @@ export default function ImageEditor() {
         })
       })
       canvas.backgroundImage.visible = true
-      console.log(originalImgDimensions)
       canvas.setDimensions(originalImgDimensions)
       originImgObject.visible = false
     } else {
@@ -1037,8 +1367,14 @@ export default function ImageEditor() {
       canvas.setDimensions(canvasDimensions)
       originImgObject.visible = true
     }
+    canvas.discardActiveObject()
     canvas.renderAll() // 화면 업데이트
   }, [isMasking])
+
+  useEffect(() => {
+    if (!canvas || !canvas.backgroundImage) return
+    canvas.backgroundImage.visible = isMasking
+  }, [canvas?.backgroundImage, isMasking])
 
   const enableTool = (tool: string) => {
     switch (tool) {
@@ -1075,8 +1411,11 @@ export default function ImageEditor() {
         triggerFileInput()
         break
       case 'frameSize':
-        console.log('dd')
-        setFramePopoverOpen(true)
+        setIsFramePopover(true)
+        setIsFramePopoverOpen(true)
+        break
+      case 'filter':
+        setImageFilterPopoverOpen(true)
         break
       default:
         console.warn(`Unknown tool: ${tool}`)
@@ -1094,6 +1433,7 @@ export default function ImageEditor() {
   }
 
   const confirmToolSwitch = () => {
+    if (!canvas || !canvas.backgroundImage) return
     disableAll()
     if (pendingTool) enableTool(pendingTool) // 전환할 도구 활성화
     setInpaintPrompt('')
@@ -1367,24 +1707,8 @@ export default function ImageEditor() {
     }
   }, [originImgObject, canvas])
 
-  const handleFrameSize = (e: ChangeEvent<HTMLInputElement>, loc: string) => {
-    switch (loc) {
-      case 'width':
-        setCanvasDimensions({
-          width: parseInt(e.target.value),
-          height: canvasDimensions.height
-        })
-        break
-      case 'height':
-        setCanvasDimensions({
-          width: canvasDimensions.width,
-          height: parseInt(e.target.value)
-        })
-        break
-    }
-  }
-
-  const [framePopoverOpen, setFramePopoverOpen] = useState(false)
+  const [isFramePopover, setIsFramePopover] = useState(false)
+  const [isframePopoverOpen, setIsFramePopoverOpen] = useState(false)
 
   const [selectedOption, setSelectedOption] = useState<FrameOption>('default')
   const [width, setWidth] = useState(canvasDimensions.width)
@@ -1405,6 +1729,8 @@ export default function ImageEditor() {
   const applyCanvasSize = () => {
     if (!canvas) return
     setCanvasDimensions({ width: width, height: height })
+    if (width > 1024) setWidth(1024)
+    if (height > 1024) setHeight(1024)
     canvas.width = width
     canvas.height = height
     canvas.renderAll()
@@ -1412,7 +1738,9 @@ export default function ImageEditor() {
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
-  const handleFileGenerated = (generatedFile: File) => {
+  const [method, setMethod] = useState<string>('image')
+  const handleFileGenerated = (generatedFile: File, method: string) => {
+    setMethod(method)
     setFile(generatedFile)
     setIsModalOpen(true)
   }
@@ -1424,10 +1752,195 @@ export default function ImageEditor() {
     setIsModalOpen(false)
     setFile(null)
   }
+
+  const [imageFilterPopoverOpen, setImageFilterPopoverOpen] = useState(false)
+  const [brightness, setBrightness] = useState(0)
+  const [contrast, setContrast] = useState(0)
+  const [saturation, setSaturation] = useState(0)
+  const [selectedColor, setSelectedColor] = useState('#FF0000')
+  const [showAdjustments, setShowAdjustments] = useState(false) // 조절 패널 표시 여부
+
+  const applyFilter = (
+    filter: filters.BaseFilter<string, Record<string, any>>
+  ) => {
+    if (!originImgObject) return
+
+    // 기존 필터 초기화 후 새로운 필터 추가
+    originImgObject.filters = originImgObject.filters || []
+    originImgObject.filters.push(filter)
+    if (brightness !== 0) {
+      originImgObject.filters.push(new filters.Brightness({ brightness }))
+    }
+    if (contrast !== 0) {
+      originImgObject.filters.push(new filters.Contrast({ contrast }))
+    }
+    if (saturation !== 0) {
+      originImgObject.filters.push(new filters.Saturation({ saturation }))
+    }
+    originImgObject.applyFilters()
+    canvas?.renderAll()
+  }
+
+  const resetFilters = () => {
+    if (!originImgObject) return
+
+    // 모든 필터 초기화
+    originImgObject.filters = []
+    originImgObject.applyFilters()
+    canvas?.renderAll()
+
+    // 슬라이더 값 초기화
+    setBrightness(0)
+    setContrast(0)
+    setSaturation(0)
+  }
+
+  // 밝기, 대비, 채도 적용
+  const updateColorAdjustments = () => {
+    if (!originImgObject) return
+
+    // 기존 필터 유지하면서 밝기, 대비, 채도 필터 업데이트
+    const existingFilters =
+      originImgObject.filters?.filter(
+        filter =>
+          !(filter instanceof filters.Brightness) &&
+          !(filter instanceof filters.Contrast) &&
+          !(filter instanceof filters.Saturation)
+      ) || []
+
+    if (brightness !== 0) {
+      existingFilters.push(new filters.Brightness({ brightness }))
+    }
+    if (contrast !== 0) {
+      existingFilters.push(new filters.Contrast({ contrast }))
+    }
+    if (saturation !== 0) {
+      existingFilters.push(new filters.Saturation({ saturation }))
+    }
+
+    originImgObject.filters = existingFilters
+    originImgObject.applyFilters()
+    canvas?.renderAll()
+  }
+
+  // 상태 변수 선언
+  const [filterPreviews, setFilterPreviews] = useState<
+    {
+      name: string
+      filter: filters.BaseFilter<string, Record<string, any>>
+      dataUrl: string
+    }[]
+  >([])
+
+  // 필터 프리뷰 생성 함수
+  const [filtersList, setFilter] = useState<
+    { name: string; filter: filters.BaseFilter<string, Record<string, any>> }[]
+  >([
+    { name: '빈티지 효과', filter: new filters.Vintage() },
+    { name: '코닥 크롬', filter: new filters.Kodachrome() },
+    { name: '브라우니 효과', filter: new filters.Brownie() },
+    { name: '세피아', filter: new filters.Sepia() },
+    { name: '흑백', filter: new filters.Grayscale() },
+    { name: '테크니컬러', filter: new filters.Technicolor() },
+    { name: '폴라로이드 효과', filter: new filters.Polaroid() },
+    { name: '노이즈 추가', filter: new filters.Noise({ noise: 10 }) },
+    { name: '생동감', filter: new filters.Vibrance({ vibrance: 0.5 }) },
+    {
+      name: '컨볼루션 필터',
+      filter: new filters.Convolute({
+        matrix: [0, -1, 0, -1, 5, -1, 0, -1, 0]
+      })
+    },
+    { name: '컬러 매트릭스', filter: new filters.ColorMatrix() },
+    { name: '블러', filter: new filters.Blur({ blur: 0.02 }) },
+    {
+      name: '감마 보정',
+      filter: new filters.Gamma({ gamma: [1.2, 1.2, 1.2] })
+    },
+    { name: '픽셀화', filter: new filters.Pixelate({ blocksize: 1 }) },
+    {
+      name: '특정 색상 제거',
+      filter: new filters.RemoveColor({ color: '#FF0000', distance: 0.3 })
+    },
+    { name: '색상 반전', filter: new filters.Invert() },
+    { name: '색조 회전', filter: new filters.HueRotation({ rotation: 0.1 }) }
+  ])
+
+  const generateFilterPreviews = async () => {
+    if (!originImgObject) return
+
+    const croppedWidth = originImgObject.width! * 0.3
+    const croppedHeight = croppedWidth
+
+    const previews = await Promise.all(
+      filtersList.map(async ({ name, filter }) => {
+        try {
+          const clonedImg =
+            (await originImgObject.clone()) as fabric.FabricImage
+
+          if (!clonedImg) {
+            return { name, filter, dataUrl: '' }
+          }
+
+          // Crop image
+          const left = (clonedImg.width! - croppedWidth) / 2
+          const top = (clonedImg.height! - croppedHeight) / 2
+          clonedImg.set({
+            cropX: left,
+            cropY: top,
+            width: croppedWidth,
+            height: croppedHeight,
+            scaleX: 1,
+            scaleY: 1
+          })
+
+          // Apply filter
+          clonedImg.filters = [filter]
+          clonedImg.applyFilters()
+
+          // Render on temporary canvas
+          const previewCanvas = document.createElement('canvas')
+          previewCanvas.width = croppedWidth
+          previewCanvas.height = croppedHeight
+          const tempCanvas = new fabric.StaticCanvas(previewCanvas)
+          tempCanvas.add(clonedImg)
+          tempCanvas.renderAll()
+
+          // Get data URL
+          const dataUrl = previewCanvas.toDataURL('image/png')
+
+          return { name, filter, dataUrl }
+        } catch (error) {
+          console.error('Error generating preview for filter:', name, error)
+          return { name, filter, dataUrl: '' }
+        }
+      })
+    )
+
+    setFilterPreviews(previews)
+  }
+
+  useEffect(() => {
+    if (imageFilterPopoverOpen && !isMasking) {
+      generateFilterPreviews()
+    }
+  }, [imageFilterPopoverOpen])
+
+  const [trigger, setTrigger] = useState(false)
+  useEffect(() => {
+    if (!isMasking) {
+      setTrigger(!isMasking)
+      generateFilterPreviews()
+    }
+  }, [isMasking])
+
+  const [showCancelModal, setShowCancelModal] = useState(false) // 취소 모달 상태 추가
+  const router = useRouter() // 루트 도메인으로 이동하기 위한 라우터
+
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-5xl mx-auto overflow-auto">
       <CardContent className="p-6">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-9 gap-2 mb-4">
           <Button
             onClick={() => {
               handleToolSwitch('move')
@@ -1668,6 +2181,7 @@ export default function ImageEditor() {
                       handleToolSwitch('aiTool')
                     }
                   }}
+                  disabled={imageSlice.requestId === null}
                   variant={isAITool ? 'default' : 'outline'}
                   className="w-full text-sm p-2 h-9"
                   // className="h-9 w-full flex items-center justify-center whitespace-nowrap"
@@ -1844,6 +2358,167 @@ export default function ImageEditor() {
                 onChange={handleImageUpload}
               />
             </div>
+            <div>
+              {/* Popover 버튼 */}
+              <Popover
+                open={imageFilterPopoverOpen}
+                onOpenChange={setImageFilterPopoverOpen}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    className="w-full text-sm p-2 h-9"
+                    variant={imageFilterPopoverOpen ? 'default' : 'outline'}
+                    onClick={() => {
+                      if (!imageFilterPopoverOpen) {
+                        handleToolSwitch('filter') // 조건 확인 및 도구 전환
+                      } else {
+                        setImageFilterPopoverOpen(false) // 팝오버 닫기
+                      }
+                    }}
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    필터
+                  </Button>
+                </PopoverTrigger>
+                {!isMasking && (
+                  <PopoverContent className="w-96">
+                    {/* 팝오버 컨텐츠 */}
+                    <div className="space-y-4">
+                      {/* 상단 영역: 원본으로 되돌리기 버튼과 조절 버튼 */}
+                      <div className="flex items-center space-x-2">
+                        {/* 원본으로 되돌리기 버튼 */}
+                        <Button
+                          onClick={resetFilters}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          원본으로 되돌리기
+                        </Button>
+
+                        {/* 조절 버튼 */}
+
+                        {/* 조절 Popover */}
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full">
+                              조절
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80 p-4">
+                            {/* 조절 패널 */}
+                            <div className="space-y-6">
+                              {/* 밝기, 대비, 채도 슬라이더 */}
+                              <div className="space-y-4">
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">
+                                    밝기
+                                  </label>
+                                  <Slider
+                                    className="w-full"
+                                    min={-1}
+                                    max={1}
+                                    step={0.1}
+                                    value={[brightness]}
+                                    onValueChange={value => {
+                                      setBrightness(value[0])
+                                      updateColorAdjustments()
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">
+                                    대비
+                                  </label>
+                                  <Slider
+                                    className="w-full"
+                                    min={-1}
+                                    max={1}
+                                    step={0.1}
+                                    value={[contrast]}
+                                    onValueChange={value => {
+                                      setContrast(value[0])
+                                      updateColorAdjustments()
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">
+                                    채도
+                                  </label>
+                                  <Slider
+                                    className="w-full"
+                                    min={-1}
+                                    max={1}
+                                    step={0.1}
+                                    value={[saturation]}
+                                    onValueChange={value => {
+                                      setSaturation(value[0])
+                                      updateColorAdjustments()
+                                    }}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* RemoveColor 필터용 컬러 피커 */}
+                              <div>
+                                <label className="block text-sm font-medium mb-2">
+                                  색상 제거
+                                </label>
+                                <div className="rounded-lg border p-2">
+                                  <ChromePicker
+                                    color={selectedColor}
+                                    onChange={color => {
+                                      setSelectedColor(color.hex)
+                                      // 필터 리스트 업데이트
+                                      filtersList.forEach(item => {
+                                        if (item.name === '특정 색상 제거') {
+                                          item.filter = new filters.RemoveColor(
+                                            {
+                                              color: color.hex,
+                                              distance: 0.3
+                                            }
+                                          )
+                                        }
+                                      })
+                                      generateFilterPreviews() // 프리뷰 업데이트
+                                    }}
+                                    disableAlpha
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      {/* 필터 프리뷰 영역 */}
+                      <div className="overflow-y-auto max-h-96">
+                        <div className="grid grid-cols-2 gap-2">
+                          {filterPreviews.map((preview, index) => (
+                            <div
+                              key={index}
+                              className="relative group cursor-pointer"
+                              onClick={() => applyFilter(preview.filter)}
+                            >
+                              <img
+                                src={preview.dataUrl}
+                                alt={preview.name}
+                                className="w-full h-full object-cover rounded-lg" // border-radius 적용
+                              />
+                              <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-50 transition-opacity rounded-lg"></div>
+                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-white text-center">
+                                  {preview.name}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                )}
+              </Popover>
+            </div>
             {isAddingText && (
               <PopoverContent
                 className="w-[225px] mt-2 relative left-0"
@@ -1930,7 +2605,9 @@ export default function ImageEditor() {
                   <div className="flex space-x-2">
                     <Select
                       value={font.toString()}
-                      onValueChange={value => setFont(value)}
+                      onValueChange={value => {
+                        setFont(value)
+                      }}
                     >
                       <SelectTrigger className="w-[100px] max-w-[120px] truncate">
                         <SelectValue placeholder={font == '' ? '폰트' : font} />
@@ -2044,12 +2721,13 @@ export default function ImageEditor() {
             )}
           </Popover>
 
-          <Popover open={framePopoverOpen}>
+          <Popover open={isframePopoverOpen}>
             <PopoverTrigger asChild>
               <Button
-                variant={framePopoverOpen ? 'default' : 'outline'}
+                variant={isFramePopover ? 'default' : 'outline'}
                 onClick={() => {
-                  if (!framePopoverOpen) handleToolSwitch('frameSize')
+                  if (!isFramePopover) handleToolSwitch('frameSize')
+                  if (!isMasking) setIsFramePopoverOpen(!isframePopoverOpen)
                 }}
               >
                 <FrameIcon className="mr-2 h-4 w-4" />
@@ -2079,8 +2757,12 @@ export default function ImageEditor() {
                     <span className="text-sm font-medium">Width:</span>
                     <Input
                       type="number"
-                      value={Math.floor(width)}
-                      onChange={e => setWidth(Number(e.target.value))}
+                      value={width === 0 ? 0 : Math.floor(width)}
+                      onChange={e => {
+                        const value = parseInt(e.target.value)
+                        value === 0 ? 0 : Math.floor(value)
+                        setWidth(value)
+                      }}
                       disabled={selectedOption !== 'custom'}
                     />
                   </label>
@@ -2088,8 +2770,12 @@ export default function ImageEditor() {
                     <span className="text-sm font-medium">Height:</span>
                     <Input
                       type="number"
-                      value={Math.floor(height)}
-                      onChange={e => setHeight(Number(e.target.value))}
+                      value={height === 0 ? 0 : Math.floor(height)}
+                      onChange={e => {
+                        const value = parseInt(e.target.value)
+                        value === 0 ? 0 : Math.floor(value)
+                        setHeight(value)
+                      }}
                       disabled={selectedOption !== 'custom'}
                     />
                   </label>
@@ -2108,10 +2794,10 @@ export default function ImageEditor() {
             onCancel={cancelToolSwitch}
           />
         )}
+
         <div
           className="flex items-center justify-center bg-black" // Flexbox 설정
           style={{
-            width: '100%', // 부모 div 너비를 화면 전체로 설정
             position: 'relative' // 화면 중앙 정렬을 위한 position 설정
           }}
         >
@@ -2151,7 +2837,11 @@ export default function ImageEditor() {
         <div className="flex justify-end">
           {!isMasking && !isRemoveText && !isUpscale && (
             <>
-              <Button className="w-full" variant="outline">
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => setShowCancelModal(true)}
+              >
                 취소
               </Button>
               <Separator className="p-1" />
@@ -2199,6 +2889,7 @@ export default function ImageEditor() {
             mode={mode}
             originImgObject={originImgObject}
             setOriginImgObject={setOriginImgObject}
+            isMasking={isMasking}
           />
         ))}
         {isDone && (
@@ -2210,10 +2901,20 @@ export default function ImageEditor() {
           />
         )}
         {isModalOpen && file && (
-          <AddressBookModal file={file} onClose={handleCloseModal} />
+          <AddressBookModal
+            file={file}
+            onClose={handleCloseModal}
+            method={method}
+          />
         )}
         {!available && (
           <ImageNotAvailableModal onConfirm={() => setAvailable(true)} />
+        )}
+        {showCancelModal && (
+          <ImageEditorCancelDialog
+            onConfirm={() => router.push('/')}
+            onCancel={() => setShowCancelModal(false)}
+          />
         )}
       </CardContent>
     </Card>

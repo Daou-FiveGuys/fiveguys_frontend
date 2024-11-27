@@ -22,6 +22,11 @@ import CreateMessageButton from './chat/create-message/create-message'
 import ImagePromptButton from './chat/image-prompt/image-prompt'
 import ReturnButton from './chat/ReturnButton'
 import ImageGenerateButton from './chat/image-generate/image-generate'
+import AmountUsedButton from './chat/amount-used/amount-used'
+import MessageOptionUtils from './chat/utils/MessageOptionUtils'
+import SkipButton from './chat/utils/skip-button'
+import { Message } from '@/redux/slices/chatSlice'
+import ImageUtils from './chat/utils/ImageUtils'
 
 /**
  *
@@ -63,6 +68,9 @@ export type ButtonType =
   | 'create-message' //------------- 문자 생성 or 입력 (수정 가능하도록)
   | 'create-image-prompt' //-------- 이미지 프롬프트 생성 (입력 또는 생성) : 여기서 이미지 생성할건지 먼저 물어봐주세요 이미지 생성 안하면 이미지 추가하는 할건지에 따라 분기
   | 'image-generate' //------------- 이미지 생성 : 이미지 생성하기 전에 image-option-modal에서 ImageOptionSlice(redux)에 값을 저장 시키고 값을 토대로 생성 요청
+  | 'amount-used'
+  | 'select-image'
+  | 'select-image-options'
 //---------------------------------- 여기서 선택까지 수행하고 이미지 편집으로 넘기든가 이미지 추가 안했으면 주소록 고르는 모달으로 넘겨주세요 flux랑 flux lora랑 생성하는 api 달라요
 
 export function PromptForm({
@@ -76,7 +84,9 @@ export function PromptForm({
   activeButton: ButtonType
   setActiveButton: (value: ButtonType) => void
 }) {
-  const dispatch = useDispatch()
+  const dispatch1 = useDispatch()
+  const dispatch2 = useDispatch()
+  const dispatch3 = useDispatch()
   const router = useRouter()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const FaqButtonRef = React.useRef<CustomButtonHandle>(null)
@@ -85,8 +95,7 @@ export function PromptForm({
   const SendMessageButtonRef = React.useRef<CustomButtonHandle>(null)
   const ImagePromptButtonRef = React.useRef<CustomButtonHandle>(null)
   const ImageGenerateButtonRef = React.useRef<CustomButtonHandle>(null)
-  const createText = useSelector((state: RootState) => state.createText)
-
+  const AmountUsedButtonRef = React.useRef<CustomButtonHandle>(null)
 
   const isTyping = useSelector(
     (state: RootState) => state.chat[activeButton]?.isTyping || false
@@ -96,7 +105,9 @@ export function PromptForm({
     if (inputRef.current) {
       inputRef.current.focus()
     }
-    ChatUtils.initialize(dispatch)
+    ChatUtils.initialize(dispatch1)
+    MessageOptionUtils.initialize(dispatch2)
+    ImageUtils.initialize(dispatch3)
   }, [])
 
   const handleFormSubmit = (
@@ -124,86 +135,98 @@ export function PromptForm({
     if (SendMessageButtonRef.current && activeButton === 'send-message') {
       SendMessageButtonRef.current.handleEnterPress(trimmedValue)
     }
-    if (ImagePromptButtonRef.current && activeButton === 'create-image-prompt') {
+    if (
+      ImagePromptButtonRef.current &&
+      activeButton === 'create-image-prompt'
+    ) {
       ImagePromptButtonRef.current.handleEnterPress(trimmedValue)
     }
     if (ImageGenerateButtonRef.current && activeButton === 'image-generate') {
       ImageGenerateButtonRef.current.handleEnterPress(trimmedValue)
     }
-
+    if (AmountUsedButtonRef.current && activeButton === 'amount-used') {
+      AmountUsedButtonRef.current.handleEnterPress(trimmedValue)
+    }
     setInput('')
   }
+
+  const chatState = useSelector((state: RootState) => state.chat)
+  const messages =
+    activeButton === 'create-message' ||
+    activeButton === 'create-image-prompt' ||
+    activeButton === 'image-generate' ||
+    activeButton === 'select-image' ||
+    activeButton === 'select-image-options'
+      ? [
+          ...(chatState['create-message']?.messages || []),
+          ...(chatState['create-image-prompt']?.messages || []),
+          ...(chatState['image-generate']?.messages || [])
+        ]
+      : chatState[activeButton]?.messages || []
 
   return (
     <>
       <div className="flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-2 px-4 md:px-8">
-
-  {
-    (activeButton === 'send-message' 
-      || activeButton === 'create-message'
-      ||activeButton === "create-image-prompt"
-      ||activeButton === "image-generate")?
-    (
-      <>
-      <ReturnButton setActiveButton={setActiveButton}></ReturnButton>
-        <CreateMessageButton
-          ref={CreateMessageButtonRef}
-          buttonType="create-message"
+        <SkipButton
+          messages={messages}
           activeButton={activeButton}
-          setActiveButton={setActiveButton}
-          />
-          {
-            (createText.text === '')?
-            null
-            :
-            <>
-            <ImagePromptButton
-            ref={ImagePromptButtonRef}
-            buttonType="create-image-prompt"
-            activeButton={activeButton}
-            setActiveButton={setActiveButton}
-            />        
-            <ImageGenerateButton
-            ref={ImageGenerateButtonRef}
-            buttonType="image-generate"
-            activeButton={activeButton}
-            setActiveButton={setActiveButton}
+          chatState={chatState}
+        />
+        {activeButton === 'send-message' ||
+        activeButton === 'create-message' ||
+        activeButton === 'create-image-prompt' ||
+        activeButton === 'image-generate' ||
+        activeButton === 'select-image' ||
+        activeButton === 'select-image-options' ? (
+          <>
+            <ReturnButton setActiveButton={setActiveButton} />
+            <CreateMessageButton
+              ref={CreateMessageButtonRef}
+              buttonType="create-message"
+              activeButton={activeButton}
+              setActiveButton={setActiveButton}
             />
-            </>
-          }
-        <SendMessageButton
-          ref={SendMessageButtonRef}
-          buttonType='send-message'
-          activeButton={activeButton}
-          setActiveButton={setActiveButton}
-        />
-        </>
-    )
-    :
-    (
-      <>
-      <FaqButton
-          ref={FaqButtonRef}
-          buttonType="faq"
-          activeButton={activeButton}
-          setActiveButton={setActiveButton}
-        />
-        <HistoryButton
-          ref={HistoryButtonRef}
-          buttonType="history"
-          activeButton={activeButton}
-          setActiveButton={setActiveButton}
-        />
-        <SendMessageButton
-          ref={SendMessageButtonRef}
-          buttonType='send-message'
-          activeButton={activeButton}
-          setActiveButton={setActiveButton}
-        />
-      </>
-    )
-  }
-    
+            <ImagePromptButton
+              ref={ImagePromptButtonRef}
+              buttonType="create-image-prompt"
+              activeButton={activeButton}
+              setActiveButton={setActiveButton}
+            />
+            <ImageGenerateButton
+              ref={ImageGenerateButtonRef}
+              buttonType="image-generate"
+              activeButton={activeButton}
+              setActiveButton={setActiveButton}
+            />
+          </>
+        ) : (
+          <>
+            <FaqButton
+              ref={FaqButtonRef}
+              buttonType="faq"
+              activeButton={activeButton}
+              setActiveButton={setActiveButton}
+            />
+            <HistoryButton
+              ref={HistoryButtonRef}
+              buttonType="history"
+              activeButton={activeButton}
+              setActiveButton={setActiveButton}
+            />
+            <AmountUsedButton // TODO: 1. 배치 위치 잘 모르겠음(해결) 2. 이후 이동될 버튼 조작할 것
+              ref={AmountUsedButtonRef}
+              buttonType="amount-used"
+              activeButton={activeButton}
+              setActiveButton={setActiveButton}
+            />
+            <SendMessageButton
+              ref={SendMessageButtonRef}
+              buttonType="send-message"
+              activeButton={activeButton}
+              setActiveButton={setActiveButton}
+            />
+          </>
+        )}
       </div>
       <form>
         <div className="relative flex max-h-60 w-full grow flex-col overflow-hidden bg-background px-8 sm:rounded-md sm:border sm:px-12 mt-4">
@@ -227,7 +250,7 @@ export function PromptForm({
             ref={inputRef}
             tabIndex={0}
             placeholder={
-              activeButton === 'history'
+              activeButton === 'history' || activeButton === 'amount-used'
                 ? '대화 기능을 사용할 수 없습니다'
                 : 'Send a message.'
             }
@@ -239,8 +262,19 @@ export function PromptForm({
             name="message"
             rows={1}
             value={input}
-            disabled={activeButton === 'history'}
-            onChange={e => setInput(e.target.value)}
+            disabled={
+              activeButton === 'history' || activeButton === 'amount-used'
+            }
+            onChange={e => {
+              if (
+                activeButton === 'history' ||
+                activeButton === 'amount-used'
+              ) {
+                setInput('')
+                return
+              }
+              setInput(e.target.value)
+            }}
             onKeyDown={e => {
               const nativeEvent = e.nativeEvent as KeyboardEvent
               if (e.key === 'Enter' && !nativeEvent.isComposing) {

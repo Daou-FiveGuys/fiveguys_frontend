@@ -6,7 +6,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { setImageData } from '@/redux/slices/imageSlice'
 import { RootState } from '@/redux/store'
 import apiClient from '@/services/apiClient'
-import { isVisible } from 'handsontable/helpers/dom'
 
 interface YourComponentProps {
   canvas: fabric.Canvas | null
@@ -26,6 +25,7 @@ interface YourComponentProps {
       fabric.ObjectEvents
     > | null>
   >
+  isMasking: boolean
 }
 
 const ImageAIEdit: React.FC<YourComponentProps> = ({
@@ -34,7 +34,8 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
   setIsProcessing,
   mode,
   option,
-  originImgObject
+  originImgObject,
+  isMasking
 }) => {
   const dispatch = useDispatch()
   const image = useSelector((state: RootState) => state.image)
@@ -92,7 +93,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     if (!canvas) return
     if (newImageUrl) {
       console.log(newImageUrl)
-      fabric.FabricImage.fromURL(newImageUrl, {
+      fabric.FabricImage.fromURL(newImageUrl + '?no-cache', {
         crossOrigin: 'anonymous'
       }).then(img => {
         if (!canvas || !originImgObject) return
@@ -108,8 +109,12 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
         img.left = 0 // 이미지를 캔버스 왼쪽 위로 정렬
         img.top = 0
         canvas.backgroundImage = img
-        if (mode === 'removeText') canvas.backgroundImage.visible = false
-        originImgObject.setSrc(newImageUrl, { crossOrigin: 'anonymous' })
+        // canvas.backgroundImage.visible = false
+        // if (mode === 'removeText') canvas.backgroundImage.visible = false
+        if (!isMasking) canvas.backgroundImage.visible = false
+        originImgObject.setSrc(newImageUrl + '?no-cache', {
+          crossOrigin: 'anonymous'
+        })
         canvas.renderAll.bind(canvas)
         img.canvas = canvas
         canvas.renderAll()
@@ -221,11 +226,6 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
       enableRetinaScaling: false
     })
 
-    const link = document.createElement('a')
-    link.href = imageData
-    link.download = 'canvas_image.png' // 다운로드할 파일 이름 설정
-    link.click() // 링크 클릭하여 다운로드 시작
-
     // 배경 이미지와 색상, 객체의 원래 색상 복원
     canvas.backgroundImage = originalBackgroundImage
     canvas.backgroundColor = originalBackgroundColor
@@ -254,7 +254,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
 
     const imageInpaintDTO = {
       requestId: image.requestId, // 실제 요청 ID로 설정
-      prompt: option, // 사용자가 입력한 프롬프트,
+      prompt: option, // z사용자가 입력한 프롬프트,
       width: canvas.backgroundImage?.width,
       height: canvas.backgroundImage?.height
     }

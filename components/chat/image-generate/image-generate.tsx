@@ -1,15 +1,11 @@
-import React, { forwardRef, useImperativeHandle, useEffect } from 'react'
+import React, { forwardRef, useEffect, useImperativeHandle } from 'react'
 import { Button } from '@/components/ui/button'
 import { ButtonType } from '@/components/prompt-form'
 import ChatUtils from './../utils/ChatUtils'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
-import CreateMessage from '@/components/chat/send-message/create-message'
-import { setText } from '@/redux/slices/createTextSlice'
-import ImageGenerateModal from './image-generate-modal'
-import { setImageOption } from '@/redux/slices/imageOptionSlice'
+import { ImageOption } from '@/redux/slices/imageOptionSlice'
 import { clearMessages } from '@/redux/slices/chatSlice'
-import CreateImagePrompt from '../image-prompt/createimageprompt'
 
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -21,37 +17,49 @@ interface CustomButtonProps {
   setActiveButton: (value: ButtonType) => void
 }
 
+/**
+ * 🚨 messageOptionSlice 사용해주세요
+ *
+ *
+ *
+ * */
 const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
   ({ buttonType, activeButton, setActiveButton }, ref) => {
     const isActive = buttonType === activeButton
     const [hasAddedChat, setHasAddedChat] = React.useState(false)
-    const [lastUserInput, setLastUserInput] = React.useState<string | null>(null)
+    const [lastUserInput, setLastUserInput] = React.useState<string | null>(
+      null
+    )
     const message = useSelector((state: RootState) => state.chat[buttonType])
     const imageOption = useSelector((state: RootState) => state.imageOption)
     const dispatch = useDispatch()
-    const [openModeal, setOpenModal] = React.useState(false);
-
+    const [openModal, setOpenModal] = React.useState(false)
+    const messageOption = useSelector((root: RootState) => root.messageOption)
     useImperativeHandle(ref, () => ({
       handleEnterPress: (value: string) => {
-        dispatch(
-          clearMessages({chatId:'send-message'})
-        )
-        ChatUtils.addChat(
-          'send-message',
-          'assistant-animation',
-          '홍보 메시지를 만들어보세요! 뒤에 "직접입력"하거나 "자동생성"을 요청할 수 있습니다.'
-        )
-        console.log(imageOption.imageStyle)
-        if (isActive && value.trim()) {
-          ChatUtils.addChat(buttonType, 'user', value.trim())
-          setLastUserInput(value.trim())
-          if(lastUserInput === '예')setOpenModal(true)
+        dispatch(clearMessages({ chatId: 'send-message' }))
+        value = value.trim()
+        if (value) {
+          ChatUtils.addChat(buttonType, 'user', value)
+          setLastUserInput(value)
         }
+        if (value === '예') {
+          setActiveButton('select-image-options')
+        }
+        /**
+         * 🚨 함수 만들고 input 넘겨서 작업해주세요 🚨
+         *
+         */
+        setTimeout(() => {}, 100)
       }
     }))
 
-    useEffect(() => { 
-      if (ChatUtils.dispatch && !hasAddedChat) {
+    useEffect(() => {
+      if (
+        ChatUtils.dispatch &&
+        !hasAddedChat &&
+        activeButton === 'image-generate'
+      ) {
         ChatUtils.addChat(
           buttonType,
           'assistant-animation',
@@ -59,19 +67,36 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         )
         setHasAddedChat(true)
       }
-    }, [hasAddedChat, buttonType])
+    }, [hasAddedChat, buttonType, activeButton, ChatUtils.dispatch])
+
+    const handleGenerateImage2 = (imageOption: ImageOption) => {
+      /*setLastUserInput(null)
+      handleGenerateImage(
+        imageOption,
+        messageOption,
+        dispatch,
+        buttonType
+      ).then(r => r)
+      setOpenModal(true)*/
+    }
 
     return (
-      <>
+      <div>
         <Button
           className="w-full md:w-28 h-8 mb-2 md:mb-0"
-          variant={isActive ? 'default' : 'outline'}
+          variant={
+            messageOption.content === null
+              ? 'outline'
+              : isActive
+                ? 'default'
+                : 'outline'
+          }
+          disabled={messageOption.prompt === null || !isActive}
           onClick={() => setActiveButton('image-generate')}
         >
           이미지 생성
         </Button>
-        <CreateImagePrompt buttonType={'image-generate'} lastUserInput={lastUserInput} />
-      </>
+      </div>
     )
   }
 )

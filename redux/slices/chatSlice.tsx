@@ -27,7 +27,13 @@ const initialState: ChatState = {
   ['faq']: { messages: [], isTyping: false },
   ['history']: { messages: [], isTyping: false },
   ['usage']: { messages: [], isTyping: false },
-  ['send-message']: { messages: [], isTyping: false }
+  ['send-message']: { messages: [], isTyping: false },
+  ['amount-used']: { messages: [], isTyping: false },
+  ['create-message']: { messages: [], isTyping: false },
+  ['create-image-prompt']: { messages: [], isTyping: false },
+  ['image-generate']: { messages: [], isTyping: false },
+  ['select-image']: { messages: [], isTyping: false },
+  ['select-image-options']: { messages: [], isTyping: false }
 }
 
 const chatSlice = createSlice({
