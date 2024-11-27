@@ -49,19 +49,16 @@ export default function SkipButton({
 
   return (
     <div
-      className={`absolute left-1/2 transform -translate-x-1/2 z-50 transition-opacity duration-500 ${
-        isVisible
-          ? 'opacity-100 pointer-events-auto'
-          : 'opacity-0 pointer-events-none'
+      className={`flex items-center space-x-2 transition-opacity duration-500 ${
+        isVisible ? 'opacity-100' : 'opacity-0'
       }`}
       style={{
-        top: '-60px',
         animation: 'float 3s infinite ease-in-out'
       }}
     >
       <Button
         value="default"
-        className="rounded-3xl bg-zinc-800 hover:bg-zinc-700"
+        className="rounded-3xl bg-zinc-800 hover:bg-zinc-700 flex items-center space-x-2 transition-opacity duration-500"
         onClick={handleCancelAnimation}
       >
         <div className="ps-1 pb-1">

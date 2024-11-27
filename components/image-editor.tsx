@@ -54,6 +54,7 @@ import { Slider } from './ui/slider'
 import { useRouter } from 'next/navigation'
 import { Dialog } from '@radix-ui/react-dialog'
 import { ImageEditorCancelDialog } from './image-editor-cancel-modal'
+import TranslationPopup from './papago/papago-pop-up-content'
 
 type FrameOption = 'default' | '512x512' | 'landscape' | 'custom'
 
@@ -1937,10 +1938,17 @@ export default function ImageEditor() {
   const [showCancelModal, setShowCancelModal] = useState(false) // 취소 모달 상태 추가
   const router = useRouter() // 루트 도메인으로 이동하기 위한 라우터
 
+  const [isPopupOpen, setIsPopupOpen] = useState(false)
+
+  const togglePopup = () => {
+    setIsPopupOpen(!isPopupOpen)
+  }
+
+  const [isVisible, setIsVisible] = useState(false)
   return (
     <Card className="w-full max-w-5xl mx-auto overflow-auto">
       <CardContent className="p-6">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-9 gap-2 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 mb-4">
           <Button
             onClick={() => {
               handleToolSwitch('move')
@@ -2786,6 +2794,21 @@ export default function ImageEditor() {
               </div>
             </PopoverContent>
           </Popover>
+
+          <Button
+            onClick={togglePopup}
+            className="w-full text-sm p-2 h-9"
+            variant={'outline'}
+            aria-label={isPopupOpen ? '번역기 닫기' : '번역기 열기'}
+          >
+            {/* 버튼 이미지 */}
+            <img
+              src="https://play-lh.googleusercontent.com/_QBOE9CjR52GCUysHKReJLY0f72Rrjvw4S1Po7iwgEEv1StW9AOb43TS5_Veid2rRA=w480-h960-rw"
+              alt={isPopupOpen ? 'Close Translation' : 'Open Translation'}
+              className="w-6 h-6"
+            />
+            번역
+          </Button>
         </div>
         {showConfirmationModal && (
           <Modal
@@ -2916,6 +2939,8 @@ export default function ImageEditor() {
             onCancel={() => setShowCancelModal(false)}
           />
         )}
+
+        <TranslationPopup isOpen={isPopupOpen} onClose={togglePopup} />
       </CardContent>
     </Card>
   )
