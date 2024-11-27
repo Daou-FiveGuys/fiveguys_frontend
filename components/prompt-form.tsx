@@ -26,6 +26,7 @@ import AmountUsedButton from './chat/amount-used/amount-used'
 import MessageOptionUtils from './chat/utils/MessageOptionUtils'
 import SkipButton from './chat/utils/skip-button'
 import { Message } from '@/redux/slices/chatSlice'
+import ImageUtils from './chat/utils/ImageUtils'
 
 /**
  *
@@ -83,7 +84,9 @@ export function PromptForm({
   activeButton: ButtonType
   setActiveButton: (value: ButtonType) => void
 }) {
-  const dispatch = useDispatch()
+  const dispatch1 = useDispatch()
+  const dispatch2 = useDispatch()
+  const dispatch3 = useDispatch()
   const router = useRouter()
   const inputRef = React.useRef<HTMLTextAreaElement>(null)
   const FaqButtonRef = React.useRef<CustomButtonHandle>(null)
@@ -102,8 +105,9 @@ export function PromptForm({
     if (inputRef.current) {
       inputRef.current.focus()
     }
-    ChatUtils.initialize(dispatch)
-    MessageOptionUtils.initialize(dispatch)
+    ChatUtils.initialize(dispatch1)
+    MessageOptionUtils.initialize(dispatch2)
+    ImageUtils.initialize(dispatch3)
   }, [])
 
   const handleFormSubmit = (

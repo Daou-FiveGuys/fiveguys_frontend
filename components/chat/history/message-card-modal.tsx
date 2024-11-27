@@ -11,6 +11,10 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { SentMessages } from './history-panel'
+import MessageOptionUtils from '../utils/MessageOptionUtils'
+import ImageUtils from '../utils/ImageUtils'
+import { useRouter } from 'next/navigation'
+import { Separator } from '@radix-ui/react-separator'
 
 interface MessageCardModalProps {
   isOpen: boolean
@@ -28,6 +32,8 @@ export default function MessageCardModal({
   const handleOpenImageInNewTab = () => {
     window.open(message.image, '_blank')
   }
+
+  const router = useRouter()
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -87,9 +93,25 @@ export default function MessageCardModal({
         </DialogHeader>
 
         <DialogFooter>
-          <Button variant="default" onClick={onClose}>
-            닫기
-          </Button>
+          <div className="flex items-end justify-end">
+            <Button variant="default" onClick={onClose}>
+              닫기
+            </Button>
+            <Separator className="px-1" />
+            {message.image && (
+              <Button
+                className="bg-[rgb(31,111,186)]"
+                onClick={() => {
+                  onClose()
+                  ImageUtils.addImage(null, message.image)
+                  MessageOptionUtils.addContent(message.content)
+                  router.push('edit')
+                }}
+              >
+                재전송
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

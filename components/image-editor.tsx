@@ -170,7 +170,7 @@ export default function ImageEditor() {
       const fabricCanvas = initializeCanvas()
 
       if (imageSlice.url) {
-        fabric.FabricImage.fromURL(imageSlice.url, {
+        fabric.FabricImage.fromURL(imageSlice.url + '?no-cache', {
           crossOrigin: 'anonymous'
         }).then(img => {
           if (
@@ -648,32 +648,32 @@ export default function ImageEditor() {
   const [isMovingObject, setIsMovingObject] = useState<boolean>(false)
   const textRef = useRef<fabric.IText | null>(null) // text 객체를 추적하는 ref
 
-  const [content, setContet] = useState(
-    useSelector((state: RootState) => state.messageOption.content)
-  )
+  const [isRequest, setIsRequest] = useState(false)
+  const [apiTextData, setApiTextData] = useState([])
+  const content = useSelector((state: RootState) => state.messageOption.content)
+
   useEffect(() => {
-    if (!content) {
+    console.log(content)
+    if (!isRequest) {
+      setIsRequest(true) // 호출 시작 상태로 변경
       apiClient
         .post('/ai/gpt/extract-key-points', { text: content })
         .then(res => {
           if (res.data.code === 200) {
-            setApiTextData(res.data.data)
+            setApiTextData(res.data.data) // API 데이터 저장
+          } else {
+            setApiTextData([])
           }
         })
         .catch(err => {
+          console.error('API 호출 오류:', err)
           setApiTextData([])
         })
+        .finally(() => {
+          setIsRequest(false) // 호출 완료 상태로 변경
+        })
     }
-  }, [content])
-  const [apiTextData, setApiTextData] = useState([
-    '안녕하세요! 😊',
-    '방학을 맞이하여 한성대학교에서 코딩 캠프를 진행합니다!',
-    '일시는 2024년 12월 3일 (화요일)이며, 시간은 10:00 - 12:00입니다',
-    '장소는 한성대학교 상상관 6층입니다',
-    '코딩에 관심이 있는 학생들의 많은 참여 부탁드립니다!',
-    '함께 재미있는 시간을 보내요! 🖥️💻',
-    '감사합니다!'
-  ])
+  }, [])
 
   const fontOptions = [
     { value: 'Arial', label: 'Arial' },
@@ -1267,71 +1267,67 @@ export default function ImageEditor() {
       reader.onload = function (f) {
         const data = f.target?.result
         if (typeof data === 'string') {
-          fabric.FabricImage.fromURL(data, { crossOrigin: 'anonymous' }).then(
-            img => {
-              if (!canvas) return
+          fabric.FabricImage.fromURL(data + '?no-cache', {
+            crossOrigin: 'anonymous'
+          }).then(img => {
+            if (!canvas) return
 
-              const canvasWidth = canvas.getWidth()
-              const canvasHeight = canvas.getHeight()
+            const canvasWidth = canvas.getWidth()
+            const canvasHeight = canvas.getHeight()
 
-              // 이미지 크기 비율 조정
-              const maxWidth = canvasWidth * 0.8 // 캔버스의 80% 너비
-              const maxHeight = canvasHeight * 0.8 // 캔버스의 80% 높이
-              const scaleX = maxWidth / img.width!
-              const scaleY = maxHeight / img.height!
-              const scale = Math.min(scaleX, scaleY, 1) // 비율 유지하며 최대 스케일 제한
+            // 이미지 크기 비율 조정
+            const maxWidth = canvasWidth * 0.8 // 캔버스의 80% 너비
+            const maxHeight = canvasHeight * 0.8 // 캔버스의 80% 높이
+            const scaleX = maxWidth / img.width!
+            const scaleY = maxHeight / img.height!
+            const scale = Math.min(scaleX, scaleY, 1) // 비율 유지하며 최대 스케일 제한
 
-              img.scale(scale)
+            img.scale(scale)
 
-              // 이미지 정중앙 배치
-              img.set({
-                left: canvasWidth / 2 - img.getScaledWidth() / 2,
-                top: canvasHeight / 2 - img.getScaledHeight() / 2,
-                originX: 'left',
-                originY: 'top'
-              })
+            // 이미지 정중앙 배치
+            img.set({
+              left: canvasWidth / 2 - img.getScaledWidth() / 2,
+              top: canvasHeight / 2 - img.getScaledHeight() / 2,
+              originX: 'left',
+              originY: 'top'
+            })
 
-              // 최소 크기 설정
-              img.setControlsVisibility({
-                mt: false, // top middle
-                mb: false, // bottom middle
-                ml: false, // middle left
-                mr: false // middle right
-              })
+            // 최소 크기 설정
+            img.setControlsVisibility({
+              mt: false, // top middle
+              mb: false, // bottom middle
+              ml: false, // middle left
+              mr: false // middle right
+            })
 
-              img.on(
-                'scaling',
-                (event: fabric.TEvent<fabric.TPointerEvent>) => {
-                  const obj = (event as unknown as { target: fabric.Object })
-                    .target
-                  if (!obj) return
+            img.on('scaling', (event: fabric.TEvent<fabric.TPointerEvent>) => {
+              const obj = (event as unknown as { target: fabric.Object }).target
+              if (!obj) return
 
-                  const boundingRect = obj.getBoundingRect() // true로 설정해 화면 경계를 기준으로
-                  const minSize = 50
+              const boundingRect = obj.getBoundingRect() // true로 설정해 화면 경계를 기준으로
+              const minSize = 50
 
-                  if (
-                    boundingRect.width < minSize ||
-                    boundingRect.height < minSize
-                  ) {
-                    const scaleX = minSize / boundingRect.width
-                    const scaleY = minSize / boundingRect.height
-                    const scale = Math.max(scaleX, scaleY)
+              if (
+                boundingRect.width < minSize ||
+                boundingRect.height < minSize
+              ) {
+                const scaleX = minSize / boundingRect.width
+                const scaleY = minSize / boundingRect.height
+                const scale = Math.max(scaleX, scaleY)
 
-                    obj.scale(scale)
-                    obj.left = boundingRect.left // 위치 보정
-                    obj.top = boundingRect.top
-                  }
+                obj.scale(scale)
+                obj.left = boundingRect.left // 위치 보정
+                obj.top = boundingRect.top
+              }
 
-                  obj.setCoords()
-                  canvas.renderAll()
-                }
-              )
-
-              canvas.add(img)
-              canvas.setActiveObject(img)
+              obj.setCoords()
               canvas.renderAll()
-            }
-          )
+            })
+
+            canvas.add(img)
+            canvas.setActiveObject(img)
+            canvas.renderAll()
+          })
         }
       }
       reader.readAsDataURL(file)
@@ -2185,6 +2181,7 @@ export default function ImageEditor() {
                       handleToolSwitch('aiTool')
                     }
                   }}
+                  disabled={imageSlice.requestId === null}
                   variant={isAITool ? 'default' : 'outline'}
                   className="w-full text-sm p-2 h-9"
                   // className="h-9 w-full flex items-center justify-center whitespace-nowrap"
