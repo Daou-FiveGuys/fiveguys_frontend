@@ -150,28 +150,9 @@ export function PromptForm({
     setInput('')
   }
 
-  const chatState = useSelector((state: RootState) => state.chat)
-  const messages =
-    activeButton === 'create-message' ||
-    activeButton === 'create-image-prompt' ||
-    activeButton === 'image-generate' ||
-    activeButton === 'select-image' ||
-    activeButton === 'select-image-options'
-      ? [
-          ...(chatState['create-message']?.messages || []),
-          ...(chatState['create-image-prompt']?.messages || []),
-          ...(chatState['image-generate']?.messages || [])
-        ]
-      : chatState[activeButton]?.messages || []
-
   return (
     <>
       <div className="flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-2 px-4 md:px-8">
-        <SkipButton
-          messages={messages}
-          activeButton={activeButton}
-          chatState={chatState}
-        />
         {activeButton === 'send-message' ||
         activeButton === 'create-message' ||
         activeButton === 'create-image-prompt' ||
