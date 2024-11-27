@@ -8,7 +8,7 @@ import { Contact2 } from '../entity'
 import { api, Target } from './service'
 
 interface AddressBookModalProps {
-  file: File // File passed from ParentComponent
+  file: File | null // File passed from ParentComponent
   onClose: () => void // Close modal callback
   method: string
 }
@@ -63,11 +63,6 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
    * Handle sending the message with the selected contacts and file.
    */
   const handleSend = () => {
-    if (!file) {
-      alert('No file selected!')
-      return
-    }
-
     if (!inputValue) {
       alert("Please enter the sender's phone number.")
       return
@@ -89,7 +84,7 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
     }))
 
     // Define message parameters
-    const messageType = 'MMS' // Adjust based on your requirements
+    const messageType = file ? 'MMS' : 'LMS' // Adjust based on your requirements
     const fromNumber = inputValue
     const subject = '전송할 제목입니다.'
     const content = '안녕하세요 테스트중입니다.'
@@ -104,7 +99,7 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
           subject
         },
         method,
-        file
+        file || undefined
       )
       .then(() => {
         console.log('Message sent successfully.')
