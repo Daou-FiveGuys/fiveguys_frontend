@@ -98,7 +98,7 @@ export default function MessageCardModal({
               닫기
             </Button>
             <Separator className="px-1" />
-            {message.image && (
+            {
               <Button
                 className="bg-[rgb(31,111,186)]"
                 onClick={() => {
@@ -110,7 +110,7 @@ export default function MessageCardModal({
               >
                 재전송
               </Button>
-            )}
+            }
           </div>
         </DialogFooter>
       </DialogContent>

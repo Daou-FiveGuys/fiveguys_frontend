@@ -8,7 +8,7 @@ import { Contact2 } from '../entity'
 import { api, Target } from './service'
 
 interface AddressBookModalProps {
-  file: File // File passed from ParentComponent
+  file: File | null // File passed from ParentComponent
   onClose: () => void // Close modal callback
   method: string
 }

@@ -12,6 +12,8 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import MessageOptionUtils from '../utils/MessageOptionUtils'
 import CancelProcessModal from '../cancel-process-modal'
+import MessageCardModal from '../history/message-card-modal'
+import AddressBookModal from '@/app/address/modal/select-contact-modal'
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
 }
@@ -27,6 +29,7 @@ export type CreateMessageProcessType =
   | 'message-input'
   | 'message-generate'
   | 'edit'
+  | 'send'
 
 const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
   ({ buttonType, activeButton, setActiveButton }, ref) => {
@@ -42,6 +45,7 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       (state: RootState) => state.chat[buttonType].messages
     )
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isSendModalOpen, setIsSendModalOpen] = useState(false)
 
     React.useEffect(() => {
       if (ChatUtils.dispatch && !hasAddedChat && messages.length === 0) {
@@ -68,7 +72,8 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
             setActiveButton,
             messageOption,
             currentProcess,
-            setCurrentProcess
+            setCurrentProcess,
+            setIsSendModalOpen
           )
         }, 100)
       }
@@ -98,6 +103,9 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     const handleCancel = () => {
       setIsModalOpen(false)
     }
+    const handleSendCancel = () => {
+      setIsSendModalOpen(false)
+    }
 
     return (
       <>
@@ -114,6 +122,13 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
             onClose={handleCancel}
             onConfirm={handleConfirm}
           />
+        )}
+        {isSendModalOpen && (
+          <AddressBookModal
+          file={null}
+          onClose={handleSendCancel}
+          method={"image"}
+        />
         )}
       </>
     )

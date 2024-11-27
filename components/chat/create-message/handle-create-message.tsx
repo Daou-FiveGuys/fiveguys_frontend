@@ -14,7 +14,8 @@ export const handleCreateMessage = (
   setActiveButton: (value: ButtonType) => void,
   messageOption: MessageOptionState,
   currentProcess: CreateMessageProcessType,
-  setCurrentProcess: (currentProcess: CreateMessageProcessType) => void
+  setCurrentProcess: (currentProcess: CreateMessageProcessType) => void,
+  setIsSendModalOpen: (isOpen: boolean) => void
 ) => {
   switch (currentProcess) {
     case 'welcome':
@@ -76,6 +77,16 @@ export const handleCreateMessage = (
         setCurrentProcess('welcome')
         setActiveButton('create-image-prompt')
         break
+        case '전송':
+          ChatUtils.addChat(
+            buttonType,
+            'assistant',
+            `<div>생성된 문자를 전송합니다.</div>`
+          )
+          setCurrentProcess('send')
+          setIsSendModalOpen(true)  // 모달을 열기 위해 setSendModal을 호출합니다.
+          break
+      //2. 전송 입력 후 전송 프로세스
       default:
         MessageOptionUtils.addContent(value)
         ChatUtils.addChat(
