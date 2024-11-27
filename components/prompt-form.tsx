@@ -24,6 +24,8 @@ import ReturnButton from './chat/ReturnButton'
 import ImageGenerateButton from './chat/image-generate/image-generate'
 import AmountUsedButton from './chat/amount-used/amount-used'
 import MessageOptionUtils from './chat/utils/MessageOptionUtils'
+import SkipButton from './chat/utils/skip-button'
+import { Message } from '@/redux/slices/chatSlice'
 
 /**
  *
@@ -144,9 +146,28 @@ export function PromptForm({
     setInput('')
   }
 
+  const chatState = useSelector((state: RootState) => state.chat)
+  const messages =
+    activeButton === 'create-message' ||
+    activeButton === 'create-image-prompt' ||
+    activeButton === 'image-generate' ||
+    activeButton === 'select-image' ||
+    activeButton === 'select-image-options'
+      ? [
+          ...(chatState['create-message']?.messages || []),
+          ...(chatState['create-image-prompt']?.messages || []),
+          ...(chatState['image-generate']?.messages || [])
+        ]
+      : chatState[activeButton]?.messages || []
+
   return (
     <>
       <div className="flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-2 px-4 md:px-8">
+        <SkipButton
+          messages={messages}
+          activeButton={activeButton}
+          chatState={chatState}
+        />
         {activeButton === 'send-message' ||
         activeButton === 'create-message' ||
         activeButton === 'create-image-prompt' ||
@@ -225,7 +246,7 @@ export function PromptForm({
             ref={inputRef}
             tabIndex={0}
             placeholder={
-              activeButton === 'history'
+              activeButton === 'history' || activeButton === 'amount-used'
                 ? '대화 기능을 사용할 수 없습니다'
                 : 'Send a message.'
             }
@@ -237,8 +258,19 @@ export function PromptForm({
             name="message"
             rows={1}
             value={input}
-            disabled={activeButton === 'history'}
-            onChange={e => setInput(e.target.value)}
+            disabled={
+              activeButton === 'history' || activeButton === 'amount-used'
+            }
+            onChange={e => {
+              if (
+                activeButton === 'history' ||
+                activeButton === 'amount-used'
+              ) {
+                setInput('')
+                return
+              }
+              setInput(e.target.value)
+            }}
             onKeyDown={e => {
               const nativeEvent = e.nativeEvent as KeyboardEvent
               if (e.key === 'Enter' && !nativeEvent.isComposing) {

@@ -57,7 +57,10 @@ export default class ChatUtils {
         }
       })
     )
-    if (userType === 'assistant-animation') {
+    if (
+      userType === 'assistant-animation' ||
+      userType === 'assistant-animation-html'
+    ) {
       ChatUtils.dispatch(setIsTyping({ chatId, isTyping: true }))
     }
     return messageId
