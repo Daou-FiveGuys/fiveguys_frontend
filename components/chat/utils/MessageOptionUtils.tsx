@@ -1,4 +1,7 @@
-import { setContent, setPrompt } from '@/redux/slices/messageOptionSlice'
+import {
+  setMessageOptionContent,
+  setPrompt
+} from '@/redux/slices/messageOptionSlice'
 
 export default class MessageOptionUtils {
   static dispatch: Function | null = null
@@ -13,7 +16,7 @@ export default class MessageOptionUtils {
         'Dispatch is not initialized. Call MessageOptionUtils.initialize() first.'
       )
     }
-    MessageOptionUtils.dispatch(setContent(value))
+    MessageOptionUtils.dispatch(setMessageOptionContent(value))
   }
 
   static addPrompt(value: string | null) {

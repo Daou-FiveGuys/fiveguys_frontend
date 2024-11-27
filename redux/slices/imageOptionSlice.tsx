@@ -20,7 +20,7 @@ export const initialState: ImageOption = {
   numInferenceSteps: 28
 }
 const imageOptionSlice = createSlice({
-  name: 'chat',
+  name: 'imageOption',
   initialState,
   reducers: {
     setImageOption(state, action: PayloadAction<ImageOption>) {

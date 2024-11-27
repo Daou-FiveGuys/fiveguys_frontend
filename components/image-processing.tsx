@@ -93,7 +93,7 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
     if (!canvas) return
     if (newImageUrl) {
       console.log(newImageUrl)
-      fabric.FabricImage.fromURL(newImageUrl, {
+      fabric.FabricImage.fromURL(newImageUrl + '?no-cache', {
         crossOrigin: 'anonymous'
       }).then(img => {
         if (!canvas || !originImgObject) return
@@ -112,7 +112,9 @@ const ImageAIEdit: React.FC<YourComponentProps> = ({
         // canvas.backgroundImage.visible = false
         // if (mode === 'removeText') canvas.backgroundImage.visible = false
         if (!isMasking) canvas.backgroundImage.visible = false
-        originImgObject.setSrc(newImageUrl, { crossOrigin: 'anonymous' })
+        originImgObject.setSrc(newImageUrl + '?no-cache', {
+          crossOrigin: 'anonymous'
+        })
         canvas.renderAll.bind(canvas)
         img.canvas = canvas
         canvas.renderAll()

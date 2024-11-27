@@ -13,7 +13,7 @@ export const initialState: MessageOptionState = {
 }
 
 const messageOption = createSlice({
-  name: 'image',
+  name: 'message',
   initialState,
   reducers: {
     setMessage(state, action: PayloadAction<MessageOptionState>) {
@@ -24,7 +24,7 @@ const messageOption = createSlice({
     setPrompt(state, action: PayloadAction<string | null>) {
       state.prompt = action.payload
     },
-    setContent(state, action: PayloadAction<string | null>) {
+    setMessageOptionContent(state, action: PayloadAction<string | null>) {
       state.content = action.payload
     },
     clearTitle(state) {
@@ -44,7 +44,7 @@ export const {
   clearTitle,
   clearContent,
   clearPrompt,
-  setContent,
+  setMessageOptionContent,
   setPrompt
 } = messageOption.actions
 export default messageOption.reducer
