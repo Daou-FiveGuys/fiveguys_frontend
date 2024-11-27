@@ -45,7 +45,7 @@ const FaqButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         const id = ChatUtils.addChat(
           buttonType,
           'assistant-animation',
-          '생각중입니다...'
+          '생각중이에요 💭'
         )
         await apiClient
           .post<CommonResponse<FaqResponse>>(`/chatbot`, {
