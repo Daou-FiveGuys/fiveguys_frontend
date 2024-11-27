@@ -19,7 +19,6 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
   method
 }) => {
   const [selectedContacts, setSelectedContacts] = useState<Contact2[]>([])
-  const [inputValue, setInputValue] = useState('') // Sender's phone number
 
   /**
    * Handle contact selection based on type:
@@ -63,11 +62,6 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
    * Handle sending the message with the selected contacts and file.
    */
   const handleSend = () => {
-    if (!inputValue) {
-      alert("Please enter the sender's phone number.")
-      return
-    }
-
     const targets: Target[] = selectedContacts.map(contact => ({
       toNumber: contact.telNum,
       changeWord: {
@@ -85,7 +79,6 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
 
     // Define message parameters
     const messageType = file ? 'MMS' : 'LMS' // Adjust based on your requirements
-    const fromNumber = inputValue
     const subject = '전송할 제목입니다.'
     const content = '안녕하세요 테스트중입니다.'
 
@@ -94,7 +87,6 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
         {
           messageType,
           content,
-          fromNumber,
           targets,
           subject
         },

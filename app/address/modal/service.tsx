@@ -3,7 +3,6 @@ import apiClient from '@/services/apiClient'
 type PpurioMessageDTO = {
   messageType: string
   content: string
-  fromNumber: string
   targets: Target[]
   subject: string
 }
