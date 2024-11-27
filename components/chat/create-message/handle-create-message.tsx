@@ -81,7 +81,7 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>입력하신 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li>수정을 원하시면 <span style="color: #f838a8;">수정</span>을 입력해주세요</li><li>다음 단계는 <span style="color: #34d399;">다음</span>을 입력해주세요.</li></ul></div>`
+          `<div>입력하신 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8;">수정</span></strong>을 입력해주세요</li><li><strong>다음</strong> 단계는 <strong><span style="color: #34d399;">다음</span></strong>을 입력해주세요.</li></ul></div>`
         )
         break
     }
