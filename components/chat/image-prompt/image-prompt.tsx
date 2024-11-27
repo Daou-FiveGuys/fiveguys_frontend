@@ -19,6 +19,8 @@ export type CreateImagePromptProcessType =
   | 'welcome'
   | 'prompt-input'
   | 'prompt-generate'
+  | 'done'
+  | 'done-ai'
   | 'edit'
 
 export interface CustomButtonHandle {

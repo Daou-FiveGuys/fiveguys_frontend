@@ -26,6 +26,12 @@ export const handleCreateMessage = (
     case 'message-generate':
       handleMessageGenerate()
       break
+    case 'done':
+      handleNextLevel()
+      break
+    case 'done-ai':
+      handleNextLevelAI()
+      break
     case 'edit':
       handleEdit()
       break
@@ -59,6 +65,26 @@ export const handleCreateMessage = (
 
   function handleMessageInput() {
     switch (value) {
+      case '직접':
+      case '자동':
+      case '수정':
+      case '재생성':
+        exceptionHandler('다시 시도해주세요')
+        break
+      default:
+        MessageOptionUtils.addContent(value)
+        ChatUtils.addChat(
+          buttonType,
+          'assistant-animation-html',
+          `<div>입력하신 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8;">수정</span></strong>을 입력해주세요</li><li><strong>다음</strong> 단계는 <strong><span style="color: #34d399;">다음</span></strong>을 입력해주세요</li></ul></div>`
+        )
+        setCurrentProcess('done')
+        break
+    }
+  }
+
+  function handleNextLevel() {
+    switch (value) {
       case '수정':
         ChatUtils.addChat(
           buttonType,
@@ -77,12 +103,7 @@ export const handleCreateMessage = (
         setActiveButton('create-image-prompt')
         break
       default:
-        MessageOptionUtils.addContent(value)
-        ChatUtils.addChat(
-          buttonType,
-          'assistant-animation-html',
-          `<div>입력하신 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8;">수정</span></strong>을 입력해주세요</li><li><strong>다음</strong> 단계는 <strong><span style="color: #34d399;">다음</span></strong>을 입력해주세요</li></ul></div>`
-        )
+        exceptionHandler('다시 시도해주세요')
         break
     }
   }
@@ -105,6 +126,7 @@ export const handleCreateMessage = (
             `<div>생성된 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${res.data.data}</div><ul><li><div><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</div></li><li><div><strong>다시 생성</strong>은<strong><span style="color: #38bdf8"> 재생성</span></strong>을 입력해주세요</div></li><li><div><strong>다음</strong> 단계는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요</div></li></ul></div>`
           )
           ChatUtils.editIsTyping(id, true)
+          setCurrentProcess('done-ai')
         } else {
           throw new Error()
         }
@@ -115,12 +137,28 @@ export const handleCreateMessage = (
         ChatUtils.editChat(
           buttonType,
           id,
-          '오류가 발생했습니다. 다시 시도해주세요'
+          '오류가 발생했습니다. 전송하고자 하는 문자 내용을 다시 입력해주세요'
         )
+        ChatUtils.editIsTyping(buttonType, false)
+        setCurrentProcess('message-generate')
       })
   }
 
   function handleMessageGenerate() {
+    switch (value) {
+      case '직접':
+      case '자동':
+      case '수정':
+      case '재생성':
+        exceptionHandler('다시 시도해주세요')
+        break
+      default:
+        callGenerateMessage()
+        break
+    }
+  }
+
+  function handleNextLevelAI() {
     switch (value) {
       case '재생성':
         ChatUtils.addChat(
@@ -128,6 +166,7 @@ export const handleCreateMessage = (
           'assistant-animation-html',
           `전송하고자 하는 문자의 내용을 간략히 입력해주세요! 🧙🏿‍♂️`
         )
+        setCurrentProcess('message-generate')
         break
       case '수정':
         ChatUtils.addChat(
@@ -147,7 +186,7 @@ export const handleCreateMessage = (
         setActiveButton('create-image-prompt')
         break
       default:
-        callGenerateMessage()
+        exceptionHandler('다시 시도해주세요')
         break
     }
   }
