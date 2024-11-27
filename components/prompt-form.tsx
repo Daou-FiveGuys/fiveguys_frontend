@@ -96,7 +96,7 @@ export function PromptForm({
   const ImagePromptButtonRef = React.useRef<CustomButtonHandle>(null)
   const ImageGenerateButtonRef = React.useRef<CustomButtonHandle>(null)
   const AmountUsedButtonRef = React.useRef<CustomButtonHandle>(null)
-
+  const [initialize, setInitialize] = React.useState(false)
   const isTyping = useSelector(
     (state: RootState) => state.chat[activeButton]?.isTyping || false
   )
@@ -105,6 +105,9 @@ export function PromptForm({
     if (inputRef.current) {
       inputRef.current.focus()
     }
+    setTimeout(() => {
+      setInitialize(true)
+    }, 5000)
     ChatUtils.initialize(dispatch1)
     MessageOptionUtils.initialize(dispatch2)
     ImageUtils.initialize(dispatch3)
@@ -231,7 +234,9 @@ export function PromptForm({
             ref={inputRef}
             tabIndex={0}
             placeholder={
-              activeButton === 'history' || activeButton === 'amount-used'
+              activeButton === 'history' ||
+              activeButton === 'amount-used' ||
+              !initialize
                 ? '대화 기능을 사용할 수 없습니다'
                 : 'Send a message.'
             }
@@ -244,7 +249,9 @@ export function PromptForm({
             rows={1}
             value={input}
             disabled={
-              activeButton === 'history' || activeButton === 'amount-used'
+              !initialize ||
+              activeButton === 'history' ||
+              activeButton === 'amount-used'
             }
             onChange={e => {
               if (
