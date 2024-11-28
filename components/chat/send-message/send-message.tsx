@@ -36,7 +36,6 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
           ChatUtils.addChat(buttonType, 'user', value.trim())
           setLastUserInput(value.trim())
         }
-        console.log(content)
       }
     }))
 
@@ -54,7 +53,7 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
               ChatUtils.addChat(
                 'create-image-prompt',
                 'assistant-animation-html',
-                `<div>함께 이미지 생성을 위한 프롬프트를 만들어볼까요? 🙌🏻 <ul><li><div><strong><span>직접 입력</strong>은 <strong><span style="color: #34d399;">직접</span></strong>을 입력해주세요</div></li><li><div><strong><span>자동 생성</strong>은 <strong><span style="color: #38bdf8;">자동</span></strong>을 입력해주세요</div></li></ul></div>`
+                `<div>함께 이미지 생성을 위한 프롬프트를 만들어볼까요? 🙌🏻 <ul><li><div><strong><span>직접 입력</strong>은 <strong><span style="color: #34d399;">직접</span></strong>을 입력해주세요</div></li><li><div><strong><span>자동 생성</strong>은 <strong><span style="color: #38bdf8;">자동</span></strong>을 입력해주세요</div></li><li><div><strong><span>추천 생성</strong>은 <strong><span style="color: #fbbf24;">추천</span></strong>을 입력해주세요</div></li></ul></div>`
               )
               setActiveButton('create-image-prompt')
             } else {
