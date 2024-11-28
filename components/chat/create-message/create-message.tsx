@@ -80,7 +80,7 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
             messageOption,
             currentProcess,
             setCurrentProcess,
-            setIsSendModalOpen
+            setIsDone
           )
         }, 100)
       }
@@ -275,7 +275,7 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
               onFileGenerated={handleFileGenerated}/>
             )
           )
-        } */}
+        }
         {/* 이미지가 있으면 편집창 처럼 나오게, 이미지 없으면 이미지 없는 상태로 전송 모달 */}
         {isSendModalOpen && (
           <AddressBookModal
