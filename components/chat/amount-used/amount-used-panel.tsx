@@ -4,6 +4,7 @@ import { RootState } from '@/redux/store'
 import { CSSTransition } from 'react-transition-group'
 import AmountChart from './amount-chart'
 import { AmountUsedCard } from './amount-used-card'
+import { Separator } from '@radix-ui/react-separator'
 
 export interface SentMessages {
   id: number
@@ -15,7 +16,9 @@ export interface SentMessages {
 
 export default function AmountUsedPanel() {
   const [visible, setVisible] = useState(false)
-  const isTyping = useSelector((state: RootState) => state.chat['amount-used']?.isTyping ?? false) // 안전한 접근
+  const isTyping = useSelector(
+    (state: RootState) => state.chat['amount-used']?.isTyping ?? false
+  ) // 안전한 접근
   const nodeRef = useRef(null) // DOM 노드를 참조할 ref 생성
 
   useEffect(() => {
@@ -39,9 +42,11 @@ export default function AmountUsedPanel() {
       nodeRef={nodeRef} // nodeRef 전달
     >
       <div ref={nodeRef} className="flex-col items-center justify-center mb-4">
+        <Separator className="my-4" />
         {/* TODO: 그래프 추가 */}
         <AmountChart />
         {/* TODO: 전체 정보 */}
+        <Separator className="my-4" />
         <AmountUsedCard />
       </div>
     </CSSTransition>

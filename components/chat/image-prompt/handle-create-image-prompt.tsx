@@ -69,7 +69,7 @@ export const handleCreateImagePrompt = (
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>입력하신 프롬프트는 다음과 같아요!<div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><div/><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</li><li><strong>다음</strong> 단계는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요</li></ul>`
+          `<div>입력하신 프롬프트는 다음과 같아요!<div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><div/><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</li><li><strong>다음 단계</strong>는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요</li></ul>`
         )
         setCurrentProcess('done')
         break
@@ -113,7 +113,7 @@ export const handleCreateImagePrompt = (
           ChatUtils.editChat(
             buttonType,
             id,
-            `<div>생성된 프롬프트는 다음과 같아요!<div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${res.data.data}</div><div/><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong></li>을 입력해주세요<li><div><strong>다시 생성</strong>은<strong><span style="color: #38bdf8"> 재생성</span></strong>을 입력해주세요</div></li><li><div><strong>다음</strong> 단계는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요</div></li></ul>`
+            `<div>생성된 프롬프트는 다음과 같아요!<div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${res.data.data}</div><div/><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong></li>을 입력해주세요<li><div><strong>다시 생성</strong>은<strong><span style="color: #38bdf8"> 재생성</span></strong>을 입력해주세요</div></li><li><div><strong>다음 단계</strong>는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요</div></li></ul>`
           )
           ChatUtils.editIsTyping(id, true)
           setCurrentProcess('done-ai')
@@ -189,7 +189,7 @@ export const handleCreateImagePrompt = (
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>다음 내용으로 수정되었습니다.<div style="margin-top: 12px; font-size: 16px;>${value}</div><div/><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</li><li><strong>다음</strong> 단계는 <strong><span style="color: #34d399">다음</span></strong>을 입력해주세요</li></ul>`
+          `<div>다음 내용으로 수정되었습니다.<div style="margin-top: 12px; font-size: 16px;>${value}</div><div/><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</li><li><strong>다음 단계</strong>는 <strong><span style="color: #34d399">다음</span></strong>을 입력해주세요</li></ul>`
         )
         break
     }

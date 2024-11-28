@@ -45,19 +45,11 @@ export function ChatPanel({
         <div className="flex flex-col items-center relative">
           {/* 상단 버튼 그룹: SkipButton 중앙, PapagoPopup 오른쪽 */}
           <div className="w-full flex justify-center items-center mb-4">
-            {[
-              'create-message',
-              'create-image-prompt',
-              'image-generate',
-              'select-image',
-              'select-image-options'
-            ].includes(activeButton) && (
-              <SkipButton
-                messages={messages}
-                activeButton={activeButton}
-                chatState={chatState}
-              />
-            )}
+            <SkipButton
+              messages={messages}
+              activeButton={activeButton}
+              chatState={chatState}
+            />
 
             {/* PapagoPopup을 부모 컨테이너의 오른쪽 끝에 배치 */}
             {(activeButton === 'create-message' ||
