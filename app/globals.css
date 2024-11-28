@@ -209,6 +209,12 @@ body {
   pointer-events: none; /* 버튼 클릭 방지 */
 }
 
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in forwards;
+  }
+}
+
 @font-face {
   font-family: '쿠키런';
   src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/CookieRun-Regular.woff')

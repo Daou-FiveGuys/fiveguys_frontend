@@ -1,11 +1,10 @@
 'use client'
 
-import { redirect, useRouter } from 'next/navigation'
-import { useEffect, useRef } from 'react'
-import { NextResponse } from 'next/server'
+import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 import apiClient from '@/services/apiClient'
 import { setCookie } from 'cookies-next'
-import axios from 'axios'
+import { Progress } from '@/components/ui/progress'
 
 interface CallBackProps {
   params: { provider: string }
@@ -21,6 +20,32 @@ export default function CallBack({ params, searchParams }: CallBackProps) {
   const state = searchParams.state
   const router = useRouter()
   const isCalled = useRef(false) // useRef to track if the call has been made
+  const [progress, setProgress] = useState(0)
+  const [showRedirect, setShowRedirect] = useState(false)
+  const [isRedirecting, setIsRedirecting] = useState(false)
+  useEffect(() => {
+    const duration = 7000 // 7초
+    const interval = 50 // 업데이트 간격 (ms)
+    const steps = duration / interval
+    const increment = 100 / steps
+
+    const timer = setInterval(() => {
+      setProgress(prev => {
+        let next = Math.min(prev + increment, 99)
+        if (isRedirecting) {
+          next = 100
+          clearInterval(timer)
+          setShowRedirect(true)
+          setTimeout(() => {
+            router.push('/') // 리다이렉트할 경로
+          }, 1000)
+        }
+        return next
+      })
+    }, interval)
+
+    return () => clearInterval(timer)
+  }, [router, isRedirecting])
 
   useEffect(() => {
     if (isCalled.current) return // Return if already called
@@ -54,7 +79,7 @@ export default function CallBack({ params, searchParams }: CallBackProps) {
               maxAge: 60 * 60,
               path: '/'
             })
-            router.push('/')
+            setIsRedirecting(true)
           } else {
             console.error('Error response:', res.data)
           }
@@ -68,6 +93,42 @@ export default function CallBack({ params, searchParams }: CallBackProps) {
   }, [provider, code, state, router])
 
   return (
-    <div className="flex items-center justify-center h-screen">로그인 중</div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="w-full max-w-md p-8 space-y-8">
+        <div className="text-center space-y-6">
+          <div className="flex items-center justify-center space-x-1">
+            <span className="text-2xl font-medium">로그인</span>
+            <div className="flex space-x-1">
+              {[...Array(4)].map((_, i) => (
+                <span
+                  key={i}
+                  className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"
+                  style={{
+                    animationDelay: `${i * 0.15}s`,
+                    animationDuration: '0.8s'
+                  }}
+                ></span>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Progress
+              value={progress}
+              className="h-2 transition-all duration-300"
+            />
+            <div className="text-sm text-muted-foreground">
+              {progress.toFixed(0)}%
+            </div>
+          </div>
+
+          {showRedirect && (
+            <div className="text-primary animate-fade-in">
+              리다이렉팅하는 중...
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
