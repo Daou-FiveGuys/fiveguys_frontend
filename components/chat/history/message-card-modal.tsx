@@ -30,6 +30,7 @@ export default function MessageCardModal({
   const [hovered, setHovered] = useState(false)
 
   const handleOpenImageInNewTab = () => {
+    if(message.image === null)return;// null 값에 대한 예외처리.
     window.open(message.image, '_blank')
   }
 

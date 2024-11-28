@@ -15,7 +15,7 @@ export const handleCreateMessage = (
   messageOption: MessageOptionState,
   currentProcess: CreateMessageProcessType,
   setCurrentProcess: (currentProcess: CreateMessageProcessType) => void,
-  setIsSendModalOpen: (isOpen: boolean) => void
+  setIsDone: (isOpen: boolean) => void// 모달 띄우기 위해서.
 ) => {
   switch (currentProcess) {
     case 'welcome':
@@ -83,8 +83,7 @@ export const handleCreateMessage = (
             'assistant',
             `<div>생성된 문자를 전송합니다.</div>`
           )
-          setCurrentProcess('send')
-          setIsSendModalOpen(true)  // 모달을 열기 위해 setSendModal을 호출합니다.
+          setIsDone(true)  // 모달을 열기 위해 setSendModal을 호출합니다.
           break
       //2. 전송 입력 후 전송 프로세스
       default:
@@ -92,7 +91,7 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>입력하신 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li>수정을 원하시면 <span style="color: #f838a8;">수정</span>을 입력해주세요</li><li>다음 단계는 <span style="color: #34d399;">다음</span>을 입력해주세요.</li></ul></div>`
+          `<div>입력하신 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li>수정을 원하시면 <span style="color: #f838a8;">수정</span>을 입력해주세요</li><li>다음 단계는 <span style="color: #34d399;">다음</span>을 입력해주세요.</li><li>전송을 원하시면 <span style="color: #34d399;">전송</span>을 입력해주세요.</li></ul></div>`
         )
         break
     }
