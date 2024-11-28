@@ -112,10 +112,13 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     const handleCancel = () => {
       setIsSendModalOpen(false)
     }
+    const handleModalCancel = () => {
+      setIsModalOpen(false)
+    }
     //addressBookModal 닫는 용도
-    
-    const [isDone, setIsDone] = useState(false);
-    const [file, setFile] = useState<File | null>(null);
+
+    const [isDone, setIsDone] = useState(false)
+    const [file, setFile] = useState<File | null>(null)
     const [method, setMethod] = useState('')
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(true)
     //
@@ -135,13 +138,10 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       setIsDone,
       onFileGenerated
     }) => {
-  
-
       const handleOptionSelect = async (option: 'link' | 'image') => {
         setIsModalOpen(false)
-        if(image.url === null)return;
+        if (image.url === null) return
         if (option === 'image') {
-          
           const compressedBlob = await resizeImage(image.url, 300 * 1024)
           const fileName = `edited_image_${new Date().toISOString()}.jpeg`
           const compressedFile = new File([compressedBlob], fileName, {
@@ -154,11 +154,11 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
           const originalFile = new File([blob], fileName, { type: 'image/png' })
           handleFileGenerated(originalFile, 'link')
         }
-    
+
         // 상태 초기화
         setIsDone(false)
       }
-  
+
       const dataURLToBlob = (dataURL: string): Blob => {
         const parts = dataURL.split(',')
         const byteString =
@@ -166,61 +166,60 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
             ? atob(parts[1])
             : decodeURIComponent(parts[1])
         const mimeString = parts[0].split(':')[1].split(';')[0]
-    
+
         const array = new Uint8Array(byteString.length)
         for (let i = 0; i < byteString.length; i++) {
           array[i] = byteString.charCodeAt(i)
         }
-    
+
         return new Blob([array], { type: mimeString })
       }
-  
+
       const resizeImage = async (
         dataURL: string,
         maxSize: number
       ): Promise<Blob> => {
-        if(dataURL === null)return new Blob();
+        if (dataURL === null) return new Blob()
         let quality = 1.0
         let scaleFactor = 1.0
         let blob = dataURLToBlob(dataURL)
-    
+
         // 압축 반복
         while (blob.size > maxSize && (quality > 0.05 || scaleFactor > 0.1)) {
           // 품질 감소
           if (quality > 0.05) {
             quality -= 0.05
           }
-    
+
           // 배율 감소
           if (blob.size > maxSize * 1.5 && scaleFactor > 0.1) {
             scaleFactor -= 0.1
           }
-    
+
           // HTML Canvas 생성 및 크기 조정
           const image = new Image()
           image.src = dataURL
-    
+
           // Promise로 이미지 로드 완료 대기
           await new Promise(resolve => (image.onload = resolve))
-    
+
           const canvas = document.createElement('canvas')
           const ctx = canvas.getContext('2d')!
-    
+
           canvas.width = image.width * scaleFactor
           canvas.height = image.height * scaleFactor
-    
+
           // 크기 조정 후 다시 그림
           ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
-    
+
           // JPEG로 변환하여 크기 축소
           const resizedDataURL = canvas.toDataURL('image/jpeg', quality)
           blob = dataURLToBlob(resizedDataURL)
         }
-        
-    
+
         return blob
       }
-    
+
       return (
         <>
           {isSaveModalOpen && (
@@ -250,10 +249,10 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         {isModalOpen && (
           <CancelProcessModal
             isOpen={isModalOpen}
-            onClose={handleCancel}
+            onClose={handleModalCancel}
             onConfirm={handleConfirm}
           />
-        )}        
+        )}
         {/* {
           isDone && (
             (!image.url && messageOption.title!==null && messageOption.content!==null) ? (
@@ -278,15 +277,13 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
           )
         } */}
         {/* 이미지가 있으면 편집창 처럼 나오게, 이미지 없으면 이미지 없는 상태로 전송 모달 */}
-        {
-          isSendModalOpen &&  (
+        {isSendModalOpen && (
           <AddressBookModal
             file={file} // null 적으면 전송하기 버튼 클릭 시 오류남.
             onClose={handleCancel}
             method={method}
           />
-        )
-        }
+        )}
         {/* 링크, 사진으로 보내기 클릭 시 나오는 모달 */}
       </>
     )

@@ -69,7 +69,7 @@ export default function SkipButton({
             🔥
           </span>
         </div>
-        <div className="pe-1 ps-1 pb-4">
+        <div className="pe-1 pb-4">
           <span
             className="text-3xl inline-block transform"
             style={{ transform: 'scaleX(-1)' }}
