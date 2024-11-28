@@ -118,6 +118,7 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         'assistant-animation-html',
         '<div>문자 전송이 완료 되었습니다. 👏🏻</div>'
       )
+      MessageOptionUtils.addContent(null)
       setIsModalOpen(false)
     }
     //addressBookModal 닫는 용도
