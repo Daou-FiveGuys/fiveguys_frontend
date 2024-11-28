@@ -80,7 +80,7 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
             messageOption,
             currentProcess,
             setCurrentProcess,
-            setIsDone
+            setIsSendModalOpen
           )
         }, 100)
       }
