@@ -8,6 +8,11 @@ import ImagePreviewModal from '@/components/image-preview-modal'
 import { useRouter } from 'next/navigation'
 import { MessageOptionState } from '@/redux/slices/messageOptionSlice'
 
+interface GImageData {
+  requestId: string;
+  url: string
+}
+
 export default function HandleGenerateImage({
   imageOption,
   messageOption
@@ -20,13 +25,16 @@ export default function HandleGenerateImage({
   const [isDone, setDone] = useState<boolean>(false)
   const [imageUrl, setImageUrl] = useState<string>('')
   let imageUrls: string[] = []
-
+  const [imageUrlList, setImageUrlList] = useState<string[]>([])
+  const [imageData, setImageData] = useState<GImageData[]>([])
   const handleEditImage = (isEdit: boolean) => {
     setIsOpen(false)
     isEdit && router.push('/edit')
   }
-
+  const [isFected, setIsFected] = useState<boolean>(false)
   const fetchImages = async () => {
+    if (isFected) return
+    setIsFected(true)
     try {
       const imagePromises = Array(4)
         .fill(null)
@@ -48,9 +56,18 @@ export default function HandleGenerateImage({
         })
 
       const imageResults = await Promise.all(imagePromises) // 모든 이미지 Promise 처리
-      const imageUrls: string[] = ['','','','']
+      let imageUrls: string[] = ['','','','']
       const imageList: Array<{ requestId: string; url: string }> = []
-
+      console.log(imageResults)
+      setImageUrlList(imageResults.map((r) => r?.url || ""))
+      setImageData(
+        imageResults.map(r => {
+          return {
+            requestId: r?.requestId || "",
+            url: r?.url || ""
+          }
+        }
+      ))
       imageResults.forEach((result, index) => {
         if (result) {
           imageList[index] = {
@@ -101,7 +118,7 @@ export default function HandleGenerateImage({
         />
       )}
       <BotCard>
-        {imageUrls?.map(
+        {imageUrlList?.map(
           (
             url,
             idx // imageUrls?.map
@@ -110,10 +127,6 @@ export default function HandleGenerateImage({
               <button
                 key={`image-${idx}`}
                 onClick={() => {
-                  setImageData({
-                    requestId: '',
-                    url: ''
-                  })
                   setImageUrl(url)
                   /*setImageUrl(
                     'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'
