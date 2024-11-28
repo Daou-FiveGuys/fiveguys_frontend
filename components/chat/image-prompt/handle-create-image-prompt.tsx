@@ -113,9 +113,9 @@ export const handleCreateImagePrompt = (
           ChatUtils.editChat(
             buttonType,
             id,
-            `<div>생성된 프롬프트는 다음과 같아요!<div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${res.data.data}</div><div/><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong></li>을 입력해주세요<li><div><strong>다시 생성</strong>은<strong><span style="color: #38bdf8"> 재생성</span></strong>을 입력해주세요</div></li><li><div><strong>다음 단계</strong>는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요</div></li></ul>`
+            `<div>생성된 프롬프트는 다음과 같아요!<div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${res.data.data}</div><div/><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</li><li><div><strong>다시 생성</strong>은<strong><span style="color: #38bdf8"> 재생성</span></strong>을 입력해주세요</div></li><li><div><strong>다음 단계</strong>는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요</div></li></ul>`
           )
-          ChatUtils.editIsTyping(id, true)
+          // ChatUtils.editIsTyping(id, true)
           setCurrentProcess('done-ai')
         } else {
           throw new Error()
@@ -158,7 +158,7 @@ export const handleCreateImagePrompt = (
           `<div>프롬프트 생성이 완료되었습니다. 👏🏻</div>`
         )
         setCurrentProcess('welcome')
-        setActiveButton('create-image-prompt')
+        setActiveButton('image-generate')
         break
       default:
         exceptionHandler('다시 시도해주세요')

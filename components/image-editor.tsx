@@ -2058,7 +2058,10 @@ export default function ImageEditor() {
           </Button>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full text-sm p-2 h-9">
+              <Button
+                variant={selectedShape === null ? 'outline' : 'default'}
+                className="w-full text-sm p-2 h-9"
+              >
                 {selectedShape === 'circle' ? (
                   <>
                     <CircleIcon className="mr-2 h-4 w-4" />원
@@ -2380,6 +2383,7 @@ export default function ImageEditor() {
                       if (!imageFilterPopoverOpen) {
                         handleToolSwitch('filter') // 조건 확인 및 도구 전환
                       } else {
+                        handleToolSwitch('default')
                         setImageFilterPopoverOpen(false) // 팝오버 닫기
                       }
                     }}

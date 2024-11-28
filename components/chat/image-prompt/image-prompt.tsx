@@ -95,6 +95,7 @@ const CreateImagePromptButton = forwardRef<
     ChatUtils.clearChat('select-image')
     ChatUtils.clearChat('select-image-option')
     setActiveButton(buttonType)
+    setCurrentProcess('welcome')
     ChatUtils.addChat(
       buttonType,
       'assistant-animation-html',
