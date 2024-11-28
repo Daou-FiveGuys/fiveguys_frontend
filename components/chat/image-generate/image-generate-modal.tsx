@@ -48,7 +48,7 @@ export default function HandleGenerateImage({
         })
 
       const imageResults = await Promise.all(imagePromises) // 모든 이미지 Promise 처리
-      const imageUrls: string[] = []
+      const imageUrls: string[] = ['','','','']
       const imageList: Array<{ requestId: string; url: string }> = []
 
       imageResults.forEach((result, index) => {
@@ -64,7 +64,7 @@ export default function HandleGenerateImage({
             url: ''
           }
           // 실패한 경우 기본값 설정
-          imageUrls[index] = 'a'
+          imageUrls[index] = '/public/no-image.png'
         }
       })
 
@@ -101,7 +101,7 @@ export default function HandleGenerateImage({
         />
       )}
       <BotCard>
-        {['a', 'b', 'c', 'd']?.map(
+        {imageUrls?.map(
           (
             url,
             idx // imageUrls?.map
@@ -114,10 +114,10 @@ export default function HandleGenerateImage({
                     requestId: '',
                     url: ''
                   })
-                  // setImageUrl(url)
-                  setImageUrl(
+                  setImageUrl(url)
+                  /*setImageUrl(
                     'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'
-                  )
+                  )*/
                   setIsOpen(true)
                 }}
                 style={{
@@ -128,10 +128,10 @@ export default function HandleGenerateImage({
                 }}
               >
                 <img
-                  src={
+                  /*src={
                     'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'
-                  }
-                  /*src={url}*/
+                  }*/
+                  src={url}
                   alt={`Generated Image ${idx + 1}`}
                   width={200}
                   height={200}
@@ -151,7 +151,7 @@ export default function HandleGenerateImage({
               >
                 <img
                   src={
-                    'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'
+                    '/public/no-image.png'
                   }
                   alt={`Generated Image ${idx + 1}`}
                   width={200}
