@@ -37,7 +37,7 @@ export default function UserOrLogin() {
         )}
       {!pathname.includes('/mypage') &&
       !pathname.includes('/login') &&
-      !pathname.includes('/address') &&
+      !pathname.includes('/reservation') &&
       !pathname.includes('/signup') && (
         <div className="flex items-center">
           <div className="flex items-center">
