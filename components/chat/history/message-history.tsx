@@ -29,13 +29,6 @@ export function MessageHistory({
   const leftPadding = cardWidth / 2
   const rightPadding = cardWidth / 2
 
-  const [isSendModalOpen, setIsSendModalOpen] = useState(false)
-  const image = useSelector((state: RootState) => state.image)
-
-  const handleCancel = () => {
-    setIsSendModalOpen(false)
-  }
-
   useEffect(() => {
     const handleResize = () => {
       updateCardScales()
@@ -208,15 +201,6 @@ export function MessageHistory({
       )}
 
       {isModalOpen && selectedMessage && (
-        selectedMessage?.image === null ?
-        (
-          <AddressBookModal
-          file={null} // null 적으면 전송하기 버튼 클릭 시 오류남.
-          onClose={handleCancel}
-          method={'message'}
-        />
-        )
-        :
           <MessageCardModal
           message={selectedMessage}
           isOpen={isModalOpen}

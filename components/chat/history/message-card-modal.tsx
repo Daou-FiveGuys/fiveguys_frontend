@@ -15,6 +15,7 @@ import MessageOptionUtils from '../utils/MessageOptionUtils'
 import ImageUtils from '../utils/ImageUtils'
 import { useRouter } from 'next/navigation'
 import { Separator } from '@radix-ui/react-separator'
+import AddressBookModal from '@/app/address/modal/select-contact-modal'
 
 interface MessageCardModalProps {
   isOpen: boolean
@@ -32,6 +33,12 @@ export default function MessageCardModal({
   const handleOpenImageInNewTab = () => {
     if(message.image === null)return;// null 값에 대한 예외처리.
     window.open(message.image, '_blank')
+  }
+
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false)
+
+  const handleCancel = () => {
+    setIsSendModalOpen(false)
   }
 
   const router = useRouter()
@@ -103,11 +110,22 @@ export default function MessageCardModal({
               <Button
                 className="bg-[rgb(31,111,186)]"
                 onClick={() => {
-                  onClose()
-                  ImageUtils.addImage(null, message.image)
-                  MessageOptionUtils.addContent(message.content)
-                  router.push('edit')
-                }}
+                  
+                  if (message.image) {
+                    // message.image가 있는 경우 동작
+                    onClose();
+                    ImageUtils.addImage(null, message.image);
+                    MessageOptionUtils.addContent(message.content);
+                    router.push('edit');
+                  } else {
+                    <AddressBookModal
+                    file={null} // null 적으면 전송하기 버튼 클릭 시 오류남.
+                    onClose={handleCancel}
+                    method={'message'}
+                  />
+                }
+              }
+            }
               >
                 재전송
               </Button>
