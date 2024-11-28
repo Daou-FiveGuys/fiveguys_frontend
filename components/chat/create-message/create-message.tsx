@@ -113,6 +113,11 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       setIsSendModalOpen(false)
     }
     const handleModalCancel = () => {
+      ChatUtils.addChat(
+        buttonType,
+        'assistant-animation-html',
+        '<div>문자 전송이 완료 되었습니다. 👏🏻</div>'
+      )
       setIsModalOpen(false)
     }
     //addressBookModal 닫는 용도
@@ -141,7 +146,7 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
           <AddressBookModal
             file={file} // null 적으면 전송하기 버튼 클릭 시 오류남.
             onClose={handleCancel}
-            method={method}
+            method={'image'}
           />
         )}
         {/* 링크, 사진으로 보내기 클릭 시 나오는 모달 */}

@@ -5,6 +5,7 @@ type PpurioMessageDTO = {
   content: string
   targets: Target[]
   subject: string
+  scheduledDate?: string
 }
 
 export type Target = {
