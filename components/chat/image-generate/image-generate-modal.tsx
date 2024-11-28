@@ -38,12 +38,13 @@ export default function HandleGenerateImage({
     try {
       const imagePromises = Array(4)
         .fill(null)
-        .map(async () => {
+        .map(async (_, index) => {
           try {
             // postImageGenerate 결과 확인
             const result = await postImageGenerate(
               imageOption,
-              messageOption.prompt || ''
+              messageOption.prompt || '',
+                index
             )
             return {
               requestId: result?.requestId || '',

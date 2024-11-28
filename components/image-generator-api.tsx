@@ -10,20 +10,25 @@ interface ImageSource {
 
 export async function postImageGenerate(
   imageOption: ImageOption,
-  prompt: string
+  prompt: string,
+  index: number,
 ): Promise<ImageSource> {
   let iR: ImageSource = {
     requestId: '',
     url: ''
   }
   try {
-    const response = await apiClient.post('/ai/image/generate-lora', {
+    let url: string = '/ai/image/generate-lora'
+    if (imageOption.imageStyle == "mix") {
+      url = '/ai/image/generate'
+    }
+    const response = await apiClient.post(url, {
       prompt: prompt,
       lora: imageOption.imageStyle,
       width: imageOption.width,
       height: imageOption.height,
       numInterfaceSteps: imageOption.numInferenceSteps,
-      seed: imageOption.seed,
+      seed: index+1,
       cfg: imageOption.guidanceScale
     })
     if (response.data) {
