@@ -96,7 +96,7 @@ export function PromptForm({
   const ImagePromptButtonRef = React.useRef<CustomButtonHandle>(null)
   const ImageGenerateButtonRef = React.useRef<CustomButtonHandle>(null)
   const AmountUsedButtonRef = React.useRef<CustomButtonHandle>(null)
-
+  const [initialize, setInitialize] = React.useState(false)
   const isTyping = useSelector(
     (state: RootState) => state.chat[activeButton]?.isTyping || false
   )
@@ -105,6 +105,9 @@ export function PromptForm({
     if (inputRef.current) {
       inputRef.current.focus()
     }
+    setTimeout(() => {
+      setInitialize(true)
+    }, 5000)
     ChatUtils.initialize(dispatch1)
     MessageOptionUtils.initialize(dispatch2)
     ImageUtils.initialize(dispatch3)
@@ -150,28 +153,9 @@ export function PromptForm({
     setInput('')
   }
 
-  const chatState = useSelector((state: RootState) => state.chat)
-  const messages =
-    activeButton === 'create-message' ||
-    activeButton === 'create-image-prompt' ||
-    activeButton === 'image-generate' ||
-    activeButton === 'select-image' ||
-    activeButton === 'select-image-options'
-      ? [
-          ...(chatState['create-message']?.messages || []),
-          ...(chatState['create-image-prompt']?.messages || []),
-          ...(chatState['image-generate']?.messages || [])
-        ]
-      : chatState[activeButton]?.messages || []
-
   return (
     <>
       <div className="flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-2 px-4 md:px-8">
-        <SkipButton
-          messages={messages}
-          activeButton={activeButton}
-          chatState={chatState}
-        />
         {activeButton === 'send-message' ||
         activeButton === 'create-message' ||
         activeButton === 'create-image-prompt' ||
@@ -250,7 +234,9 @@ export function PromptForm({
             ref={inputRef}
             tabIndex={0}
             placeholder={
-              activeButton === 'history' || activeButton === 'amount-used'
+              activeButton === 'history' ||
+              activeButton === 'amount-used' ||
+              !initialize
                 ? '대화 기능을 사용할 수 없습니다'
                 : 'Send a message.'
             }
@@ -263,7 +249,9 @@ export function PromptForm({
             rows={1}
             value={input}
             disabled={
-              activeButton === 'history' || activeButton === 'amount-used'
+              !initialize ||
+              activeButton === 'history' ||
+              activeButton === 'amount-used'
             }
             onChange={e => {
               if (

@@ -50,7 +50,6 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
          * 🚨 함수 만들고 input 넘겨서 작업해주세요 🚨
          *
          */
-        setTimeout(() => {}, 100)
       }
     }))
 
@@ -63,8 +62,11 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
         ChatUtils.addChat(
           buttonType,
           'assistant-animation',
-          '이미지를 생성하시겠습니까?(예, 아니오)'
+          `마지막으로 이미지 스타일을 지정해보아요! 🧑🏻‍🔬`
         )
+        setTimeout(() => {
+          setActiveButton('select-image-options')
+        }, 1800)
         setHasAddedChat(true)
       }
     }, [hasAddedChat, buttonType, activeButton, ChatUtils.dispatch])

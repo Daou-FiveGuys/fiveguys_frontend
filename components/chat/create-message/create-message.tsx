@@ -14,8 +14,6 @@ import MessageOptionUtils from '../utils/MessageOptionUtils'
 import CancelProcessModal from '../cancel-process-modal'
 import MessageCardModal from '../history/message-card-modal'
 import AddressBookModal from '@/app/address/modal/select-contact-modal'
-import SaveEditedImage from '@/components/image-save'
-import SaveEditedImageWithModal from '@/components/image-save'
 import CustomImageModal from '@/components/image-method-modal'
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
@@ -31,8 +29,13 @@ export type CreateMessageProcessType =
   | 'welcome'
   | 'message-input'
   | 'message-generate'
+  | 'done'
+  | 'done-ai'
   | 'edit'
   | 'send'
+  | 'done'
+  | 'done-ai'
+  | 'edit'
 
 const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
   ({ buttonType, activeButton, setActiveButton }, ref) => {
@@ -93,8 +96,10 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       MessageOptionUtils.addPrompt('')
       ChatUtils.clearChat(buttonType)
       ChatUtils.clearChat('create-image-prompt')
+      ChatUtils.clearChat('image-generate')
+      ChatUtils.clearChat('select-image')
+      ChatUtils.clearChat('select-image-option')
       setActiveButton('create-message')
-
       setCurrentProcess('welcome')
       setHasAddedChat(false)
       ChatUtils.addChat(
@@ -224,7 +229,7 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
               onImageSend={() => handleOptionSelect('image')}
               onClose={() => {
                 setIsSaveModalOpen(false)
-                setIsSendModalOpen(false)
+                setIsDone(false)
               }}
             />
           )}

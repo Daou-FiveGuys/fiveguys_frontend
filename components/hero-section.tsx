@@ -5,13 +5,13 @@ import { Separator } from '@radix-ui/react-separator'
 
 export function HeroSection() {
   return (
-    <section className="relative">
+    <section className="relative flex items-center justify-center h-screen">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="spotlight left"></div>
         {/* 우하단 스포트라이트 */}
         <div className="spotlight right"></div>
       </div>
-      <div className="container relative z-10 isolate flex flex-col items-center justify-center gap-4 py-12 text-center md:py-16">
+      <div className="container relative z-10 isolate flex flex-col items-center justify-center gap-4 py-12 text-center md:py-16 transform -translate-y-40">
         <div className="relative inline-flex items-center rounded-lg bg-muted px-3 py-1 text-sm">
           <div className="animate-gradient absolute inset-0 block h-full w-full bg-gradient-to-r from-[#ffaa40]/50 via-[#9c40ff]/50 to-[#ffaa40]/50 bg-[length:var(--bg-size)_100%] p-[1px] ![mask-composite:subtract] [border-radius:inherit] [mask:linear-gradient(#fff_0_0)_content-box,linear-gradient(#fff_0_0)]"></div>
           <span className="relative z-10">
@@ -20,16 +20,17 @@ export function HeroSection() {
           </span>
         </div>
         <Separator className="space-y-2" />
-        <div className="max-w-3xl space-y-4">
-          <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-8xl font-saas">
-            문자 발송의 새로운 패러다임{' '}
+        <div className="w-full space-y-4">
+          <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-7xl font-saas">
+            문자 발송의 새로운 패러다임 <br></br>
             <span className="bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">
-              SaaS Starter
-            </span>
+              Pa·Letter
+            </span>{' '}
+            🎨
           </h1>
           <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-            Build your next project using Next.js 14, Prisma, Neon, Auth.js v5,
-            Resend, React Email, Shadcn/ui, Stripe.
+            아직도 문자 내용을 고민하세요? AI가 문장을 만들어주고, 이미지
+            생성까지 해주는 새로운 문자 서비스, Pa·Letter를 만나보세요!
           </p>
         </div>
         <div className="flex flex-col gap-4 sm:flex-row">
