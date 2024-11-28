@@ -21,6 +21,9 @@ export const handleCreateImagePrompt = (
       handleImagePromptInput()
       break
     case 'prompt-generate':
+      handleImagePromptGenerateInput()
+      break
+    case 'prompt-generate-text':
       handleImagePromptGenerate()
       break
     case 'done':
@@ -28,6 +31,9 @@ export const handleCreateImagePrompt = (
       break
     case 'done-ai':
       handleNextLevelAI()
+      break
+    case 'done-ai-text':
+      handleNextLevelAIText()
       break
     case 'edit':
       handleEdit()
@@ -47,8 +53,16 @@ export const handleCreateImagePrompt = (
         setCurrentProcess('prompt-input')
         break
       case '자동':
-        handleImagePromptGenerate()
+        ChatUtils.addChat(
+          'create-image-prompt',
+          'assistant-animation-html',
+          `자동을 선택하셨습니다. 생성하고자 하는 이미지를 묘사해주세요 👨🏽‍🎨`
+        )
         setCurrentProcess('prompt-generate')
+        break
+      case '추천':
+        handleImagePromptGenerate()
+        setCurrentProcess('prompt-generate-text')
         break
       default:
         exceptionHandler('다시 시도해주세요')
@@ -72,6 +86,48 @@ export const handleCreateImagePrompt = (
           `<div>입력하신 프롬프트는 다음과 같아요!<div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><div/><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</li><li><strong>다음 단계</strong>는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요</li></ul>`
         )
         setCurrentProcess('done')
+        break
+    }
+  }
+
+  function handleImagePromptGenerateInput() {
+    switch (value) {
+      case '직접':
+      case '자동':
+      case '수정':
+      case '재생성':
+        exceptionHandler('다시 시도해주세요')
+        break
+      default:
+        handleImagePromptGenerate()
+        break
+    }
+  }
+
+  function handleNextLevelAI() {
+    switch (value) {
+      case '수정':
+        ChatUtils.addChat(
+          buttonType,
+          'assistant-animation-html',
+          `<div>수정하고자 하는 프롬프트를 입력해주세요</div>`
+        )
+        setCurrentProcess('edit')
+        break
+      case '다음':
+        ChatUtils.addChat(
+          buttonType,
+          'assistant',
+          `<div>프롬프트 생성이 완료되었습니다. 👏🏻</div>`
+        )
+        setCurrentProcess('welcome')
+        setActiveButton('image-generate')
+        break
+      case '재생성':
+        callGeneratePrompt()
+        break
+      default:
+        exceptionHandler('다시 입력해주세요')
         break
     }
   }
@@ -105,7 +161,12 @@ export const handleCreateImagePrompt = (
       '프롬프트를 생성하고 있어요! 💭'
     )
     apiClient
-      .post('/ai/gpt/generate-image-prompt', { text: messageOption.content })
+      .post('/ai/gpt/generate-image-prompt', {
+        text:
+          currentProcess === 'prompt-generate-text'
+            ? messageOption.content
+            : value
+      })
       .then(res => {
         if (res.data.code === 200) {
           MessageOptionUtils.addPrompt(res.data.data)
@@ -113,10 +174,12 @@ export const handleCreateImagePrompt = (
           ChatUtils.editChat(
             buttonType,
             id,
-            `<div>생성된 프롬프트는 다음과 같아요!<div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${res.data.data}</div><div/><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong></li>을 입력해주세요<li><div><strong>다시 생성</strong>은<strong><span style="color: #38bdf8"> 재생성</span></strong>을 입력해주세요</div></li><li><div><strong>다음 단계</strong>는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요</div></li></ul>`
+            `<div>생성된 프롬프트는 다음과 같아요!<div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${res.data.data}</div><div/><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</li><li><div><strong>다시 생성</strong>은<strong><span style="color: #38bdf8"> 재생성</span></strong>을 입력해주세요</div></li><li><div><strong>다음 단계</strong>는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요</div></li></ul>`
           )
           ChatUtils.editIsTyping(id, true)
-          setCurrentProcess('done-ai')
+          currentProcess === 'prompt-generate-text'
+            ? setCurrentProcess('done-ai-text')
+            : setCurrentProcess('done-ai')
         } else {
           throw new Error()
         }
@@ -130,7 +193,9 @@ export const handleCreateImagePrompt = (
           '오류가 발생했습니다. 아무키나 입력하여 다시 시도해주세요'
         )
         ChatUtils.editIsTyping(buttonType, false)
-        setCurrentProcess('prompt-generate')
+        currentProcess === 'prompt-generate-text'
+          ? setCurrentProcess('prompt-generate-text')
+          : setCurrentProcess('prompt-generate')
       })
   }
 
@@ -138,7 +203,7 @@ export const handleCreateImagePrompt = (
     callGeneratePrompt()
   }
 
-  function handleNextLevelAI() {
+  function handleNextLevelAIText() {
     switch (value) {
       case '재생성':
         callGeneratePrompt()
@@ -158,7 +223,7 @@ export const handleCreateImagePrompt = (
           `<div>프롬프트 생성이 완료되었습니다. 👏🏻</div>`
         )
         setCurrentProcess('welcome')
-        setActiveButton('create-image-prompt')
+        setActiveButton('image-generate')
         break
       default:
         exceptionHandler('다시 시도해주세요')
@@ -169,29 +234,22 @@ export const handleCreateImagePrompt = (
   function handleEdit() {
     switch (value) {
       case '수정':
-        ChatUtils.addChat(
-          buttonType,
-          'assistant-animation-html',
-          `<div>수정하고자 하는 메시지를 입력해주세요</div>`
-        )
-        break
       case '다음':
-        ChatUtils.addChat(
-          buttonType,
-          'assistant-animation-html',
-          `<div>프롬프트 생성이 완료되었습니다. 👏🏻</div>`
-        )
-        setCurrentProcess('welcome')
-        setActiveButton('image-generate')
+      case '재생성':
+      case '전송':
+        exceptionHandler('다시 시도해주세요')
         break
       default:
         MessageOptionUtils.addPrompt(value)
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>다음 내용으로 수정되었습니다.<div style="margin-top: 12px; font-size: 16px;>${value}</div><div/><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</li><li><strong>다음 단계</strong>는 <strong><span style="color: #34d399">다음</span></strong>을 입력해주세요</li></ul>`
+          `<div>다음 내용으로 수정되었습니다.<div style="margin-top: 12px; font-size: 16px;">${value}</div><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8;">수정</span></strong>을 입력해주세요</li><li><strong>다음 단계</strong>는 <strong><span style="color: #34d399;">다음</span></strong>을 입력해주세요</li></ul></div>`
         )
-        break
+        currentProcess === 'prompt-generate-text' ||
+        currentProcess === 'done-ai-text'
+          ? setCurrentProcess('done-ai-text')
+          : setCurrentProcess('done-ai')
     }
   }
 

@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { MessageCard } from './message-card'
 import { SentMessages } from './history-panel'
 import MessageCardModal from './message-card-modal'
+import AddressBookModal from '@/app/address/modal/select-contact-modal'
 
 export function MessageHistory({
   sentMessages: sentMessages
@@ -19,6 +20,7 @@ export function MessageHistory({
     null
   )
   const containerRef = useRef<HTMLDivElement>(null)
+  const [isAddressOpen, setIsAddressOpen] = useState(false)
 
   const cardWidth = 300
   const cardHeight = 400
@@ -202,6 +204,17 @@ export function MessageHistory({
           message={selectedMessage}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
+          callback={() => {
+            setIsAddressOpen(true)
+          }}
+        />
+      )}
+
+      {isAddressOpen && (
+        <AddressBookModal
+          file={null}
+          method="image"
+          onClose={() => setIsAddressOpen(false)}
         />
       )}
     </div>

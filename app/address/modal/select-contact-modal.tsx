@@ -3,12 +3,19 @@
 import React, { useState } from 'react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { format } from 'date-fns'
 import AddressBook from '../address-book'
 import { Contact2 } from '../entity'
 import { api, Target } from './service'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/redux/store'
+import ChatUtils from '@/components/chat/utils/ChatUtils'
 
 interface AddressBookModalProps {
-  file: File | null // File passed from ParentComponent
+  file?: File | null // File passed from ParentComponent
   onClose: () => void // Close modal callback
   method: string
 }
@@ -19,7 +26,11 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
   method
 }) => {
   const [selectedContacts, setSelectedContacts] = useState<Contact2[]>([])
-
+  const [isScheduled, setIsScheduled] = useState(false)
+  const [scheduledDateTime, setScheduledDateTime] = useState<string>('')
+  const content = useSelector(
+    (state: RootState) => state.messageOption
+  ).content!
   /**
    * Handle contact selection based on type:
    * 1. Add
@@ -79,34 +90,50 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
 
     // Define message parameters
     const messageType = file ? 'MMS' : 'LMS' // Adjust based on your requirements
-    const subject = '전송할 제목입니다.'
-    const content = '안녕하세요 테스트중입니다.'
+    const subject = ''
 
+    // Determine scheduled date
+    const scheduledDate = isScheduled ? scheduledDateTime || null : null
+    const formattedScheduledDate = scheduledDateTime
+      ? new Date(scheduledDateTime).toISOString()
+      : null
     api
       .sendMessage(
         {
           messageType,
           content,
           targets,
-          subject
+          subject,
+          ...(isScheduled && formattedScheduledDate
+            ? { scheduledDate: formattedScheduledDate }
+            : {})
         },
         method,
         file || undefined
       )
       .then(() => {
-        console.log('Message sent successfully.')
-        onClose() // Close the modal after sending
+        ChatUtils.addChat(
+          'create-message',
+          'assistant-animation-html',
+          '<div>문자 전송을 완료했어요! 👏🏻</div>'
+        )
       })
       .catch(error => {
-        console.error('Error sending message:', error)
-        alert('메시지 전송에 실패했습니다.')
+        ChatUtils.addChat(
+          'create-message',
+          'assistant-animation-html',
+          '<div>문자 전송에 실패했어요ㅠ 😭</div>'
+        )
+      })
+      .finally(() => {
+        onClose()
       })
   }
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent
-        className="fixed bg-white dark:bg-gray-800 rounded-2xl shadow-lg w-full max-w-[95vw] md:max-w-[1000px] z-50"
+        className="fixed bg-white dark:bg-zinc-800 rounded-2xl shadow-lg w-full max-w-[95vw] md:max-w-[1000px] z-50"
         style={{
           top: '50%',
           left: '50%',
@@ -116,24 +143,52 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* AddressBook Component */}
-        <div className="mt-4">
-          <AddressBook onSelectContacts={handleSelectContacts} />
-        </div>
-        {/* Send Button */}
-        <div className="mt-4 flex justify-end">
+        <div className="flex items-center mt-4 justify-between">
+          {/* 예약 발송 스위치와 라벨 */}
+          <div className="flex items-center">
+            <Switch
+              id="schedule-switch"
+              checked={isScheduled}
+              onCheckedChange={setIsScheduled}
+            />
+            <Label
+              htmlFor="schedule-switch"
+              className="ml-2 text-gray-700 dark:text-gray-300"
+            >
+              예약 발송
+            </Label>
+          </div>
+
+          {/* 날짜/시간 입력 필드 */}
+          {isScheduled && (
+            <Input
+              type="datetime-local"
+              value={scheduledDateTime}
+              onChange={e => setScheduledDateTime(e.target.value)}
+              className="w-[240px] mx-4"
+            />
+          )}
+
+          {/* 전송 버튼 */}
           <Button
             onClick={handleSend}
             disabled={selectedContacts.length === 0}
             className={`text-white ${
               selectedContacts.length === 0
-                ? 'bg-gray-400 cursor-not-allowed'
+                ? 'bg-zinc-400 cursor-not-allowed'
                 : 'bg-blue-500 hover:bg-blue-600'
             }`}
           >
             전송하기 ({selectedContacts.length})
           </Button>
         </div>
+
+        {/* AddressBook Component */}
+        <div className="mt-4">
+          <AddressBook onSelectContacts={handleSelectContacts} />
+        </div>
+
+        {/* Send Button and DateTime Picker */}
       </DialogContent>
     </Dialog>
   )

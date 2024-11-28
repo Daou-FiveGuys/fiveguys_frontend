@@ -47,7 +47,7 @@ export function MessageCard({
           />
         </div>
         <p className="text-sm text-gray-500 text-left w-full overflow-hidden text-ellipsis whitespace-nowrap">
-          {message.title}
+          {message.content}
         </p>
       </CardContent>
     </Card>

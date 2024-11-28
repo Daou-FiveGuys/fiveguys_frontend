@@ -15,22 +15,25 @@ import MessageOptionUtils from '../utils/MessageOptionUtils'
 import ImageUtils from '../utils/ImageUtils'
 import { useRouter } from 'next/navigation'
 import { Separator } from '@radix-ui/react-separator'
+import CallBack from '@/app/login/[provider]/page'
 
 interface MessageCardModalProps {
   isOpen: boolean
   onClose: () => void
   message: SentMessages
+  callback: () => void
 }
 
 export default function MessageCardModal({
   isOpen,
   onClose,
-  message
+  message,
+  callback
 }: MessageCardModalProps) {
   const [hovered, setHovered] = useState(false)
 
   const handleOpenImageInNewTab = () => {
-    if(message.image === null)return;// null 값에 대한 예외처리.
+    if (message.image === null) return // null 값에 대한 예외처리.
     window.open(message.image, '_blank')
   }
 
@@ -103,10 +106,15 @@ export default function MessageCardModal({
               <Button
                 className="bg-[rgb(31,111,186)]"
                 onClick={() => {
-                  onClose()
-                  ImageUtils.addImage(null, message.image)
                   MessageOptionUtils.addContent(message.content)
-                  router.push('edit')
+                  if (message.image) {
+                    onClose()
+                    ImageUtils.addImage(null, message.image)
+                    router.push('edit')
+                  } else {
+                    onClose()
+                    callback()
+                  }
                 }}
               >
                 재전송

@@ -15,7 +15,7 @@ export const handleCreateMessage = (
   messageOption: MessageOptionState,
   currentProcess: CreateMessageProcessType,
   setCurrentProcess: (currentProcess: CreateMessageProcessType) => void,
-  setIsDone: (isOpen: boolean) => void// 모달 띄우기 위해서.
+  setIsDone: (isOpen: boolean) => void // 모달 띄우기 위해서.
 ) => {
   switch (currentProcess) {
     case 'welcome':
@@ -73,12 +73,7 @@ export const handleCreateMessage = (
         exceptionHandler('다시 시도해주세요')
         break
       case '전송':
-        ChatUtils.addChat(
-          buttonType,
-          'assistant',
-          `<div>생성된 문자를 전송합니다.</div>`
-         )
-        setIsDone(true)  // 모달을 열기 위해 setSendModal을 호출합니다.
+        setIsDone(true) // 모달을 열기 위해 setSendModal을 호출합니다.
         setCurrentProcess('welcome')
         break
       //2. 전송 입력 후 전송 프로세스
@@ -87,7 +82,7 @@ export const handleCreateMessage = (
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>입력하신 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8;">수정</span></strong>을 입력해주세요</li><li><strong>다음 단계</strong>는 <strong><span style="color: #34d399;">다음</span></strong>을 입력해주세요</li></ul></div>`
+          `<div>입력하신 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8;">수정</span></strong>을 입력해주세요</li><li><strong>다음 단계</strong>는 <strong><span style="color: #34d399;">다음</span></strong>을 입력해주세요.</li><li><strong>전송</strong>을 원하시면 <strong><span style="color: #fbbf24;">전송</span></strong>을 입력해주세요.</li></ul></div>`
         )
         setCurrentProcess('done')
         break
@@ -113,12 +108,17 @@ export const handleCreateMessage = (
         setCurrentProcess('welcome')
         setActiveButton('create-image-prompt')
         break
+      case '전송':
+        setIsDone(true) // 모달을 열기 위해 setSendModal을 호출합니다.
+        setCurrentProcess('welcome')
+        break
+      //2. 전송 입력 후 전송 프로세스
       default:
         MessageOptionUtils.addContent(value)
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>입력하신 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li>수정을 원하시면 <span style="color: #f838a8;">수정</span>을 입력해주세요</li><li>다음 단계는 <span style="color: #34d399;">다음</span>을 입력해주세요.</li><li>전송을 원하시면 <span style="color: #3BB3E4;">전송</span>을 입력해주세요.</li></ul></div>`
+          `<div>입력하신 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li>수정을 원하시면 <span style="color: #f838a8;">수정</span>을 입력해주세요</li><li>다음 단계는 <span style="color: #34d399;">다음</span>을 입력해주세요.</li><li><strong>전송</strong>을 원하시면 <strong><span style="color: #fbbf24;">전송</span></strong>을 입력해주세요.</li></ul></div>`
         )
         break
     }
@@ -139,7 +139,7 @@ export const handleCreateMessage = (
           ChatUtils.editChat(
             buttonType,
             id,
-            `<div>생성된 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${res.data.data}</div><ul><li><div><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</div></li><li><div><strong>다시 생성</strong>은<strong><span style="color: #38bdf8"> 재생성</span></strong>을 입력해주세요</div></li><li><div><strong>다음 단계</strong>는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요</div></li></ul></div>`
+            `<div>생성된 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${res.data.data}</div><ul><li><div><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</div></li><li><div><strong>다시 생성</strong>은<strong><span style="color: #38bdf8"> 재생성</span></strong>을 입력해주세요</div></li><li><div><strong>다음 단계</strong>는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요</div></li><li><strong>전송</strong>을 원하시면 <strong><span style="color: #fbbf24;">전송</span></strong>을 입력해주세요.</li></ul></div></ul></div>`
           )
           ChatUtils.editIsTyping(id, true)
           setCurrentProcess('done-ai')
@@ -201,6 +201,10 @@ export const handleCreateMessage = (
         setCurrentProcess('welcome')
         setActiveButton('create-image-prompt')
         break
+      case '전송':
+        setIsDone(true)
+        setCurrentProcess('welcome')
+        break
       default:
         exceptionHandler('다시 시도해주세요')
         break
@@ -210,28 +214,25 @@ export const handleCreateMessage = (
   function handleEdit() {
     switch (value) {
       case '수정':
-        ChatUtils.addChat(
-          buttonType,
-          'assistant-animation-html',
-          `<div>정하고자 하는 메시지를 입력해주세요</div>`
-        )
-        break
       case '다음':
-        ChatUtils.addChat(
-          buttonType,
-          'assistant',
-          `<div>문자 생성이 완료되었습니다</div>`
-        )
-        setCurrentProcess('welcome')
-        setActiveButton('create-image-prompt')
+      case '재생성':
+      case '전송':
+        exceptionHandler('다시 시도해주세요')
         break
+
       default:
         MessageOptionUtils.addContent(value)
         ChatUtils.addChat(
           buttonType,
           'assistant-animation-html',
-          `<div>수정된 내용은 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li><div><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</div></li><li><div><strong>다음 단계</strong>는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요</div></li></ul></div>`
+
+          currentProcess === 'message-generate' || currentProcess === 'done-ai'
+            ? `<div>입력하신 문자는 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8;">수정</span></strong>을 입력해주세요</li><li><strong>다음 단계</strong>는 <strong><span style="color: #34d399;">다음</span></strong>을 입력해주세요.</li><li><strong>전송</strong>을 원하시면 <strong><span style="color: #fbbf24;">전송</span></strong>을 입력해주세요.</li></ul></div>`
+            : `<div>수정된 내용은 다음과 같아요!</div><div><div style="margin-top: 12px; font-size: 16px; font-weight: 500;">${value}</div><ul><li><div><strong>수정</strong>을 원하시면 <strong><span style="color: #f838a8">수정</span></strong>을 입력해주세요</div></li><li><div><strong>다음 단계</strong>는<strong><span style="color: #34d399"> 다음</span></strong>을 입력해주세요</div></li><li><strong>전송</strong>을 원하시면 <strong><span style="color: #fbbf24;">전송</span></strong>을 입력해주세요.</li></ul></div>`
         )
+        currentProcess === 'message-generate' || currentProcess === 'done-ai'
+          ? setCurrentProcess('done-ai')
+          : setCurrentProcess('done')
         break
     }
   }
