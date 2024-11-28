@@ -11,66 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import apiClient from '@/services/apiClient'
 import { CommonResponse } from '@/app/address/modal/service'
-
-interface Reservation {
-  reservationId: number;
-  sendTime: string;
-  state: ReservationState;
-  messageHistory: MessageHistory
-}
-
-interface MessageHistory {
-  messageHistoryId: number;
-  sendImage: SendImage | null;
-  fromNumber: string;
-  messageType: MessageType;
-  subject: string;
-  content: string;
-  createdAt: string;
-  contact2s: Contact2[];
-  messageKey: string;
-}
-
-interface SendImage {
-  sendImageId: number;
-  url: string;
-}
-
-interface Contact2 {
-  contactId: number;
-  name: string;
-  telNum: string;
-  one: string;
-  two: string;
-  three: string;
-  four: string;
-  five: string;
-  six: string;
-  seven: string;
-  eight: string;
-}
-
-enum ReservationState {
-  DIRECT = "DIRECT",
-  NOTYET = "NOTYET",
-  DONE = "DONE",
-  CANCEL = "CANCEL",
-}
-
-enum MessageType {
-  SMS = "SMS",
-  MMS = "MMS",
-  LMS = "LMS",
-}
-
-function getState(state: ReservationState): String {
-  switch(state) {
-    case ReservationState.DIRECT: return "전송 완료"
-    case ReservationState.NOTYET: return "전송 대기"
-    case ReservationState.DONE: return "전송 완료"
-    case ReservationState.CANCEL: return "예약 취소"
-  }
-}
+import ReservationItemDetail from './reservation-item-detail'
+import { getState, type Reservation, ReservationState, MessageType } from './reservation-types'
 
 export default function ReservationList() {
   const [filterType, setFilterType] = useState('createdAt')
@@ -78,6 +20,7 @@ export default function ReservationList() {
   const [endDate, setEndDate] = useState<Date>()
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null)
 
   useEffect(() => {
     fetchReservations()
@@ -169,27 +112,33 @@ export default function ReservationList() {
               <TableHead>컨텐츠</TableHead>
               <TableHead>발송 시간</TableHead>
               <TableHead>예약 상태</TableHead>
-              <TableHead>이미지</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredData.map((item) => (
-              <TableRow key={item.reservationId}>
+              <TableRow 
+                key={item.reservationId}
+                className="cursor-pointer hover:bg-muted/50"
+                onClick={() => setSelectedReservation(item)}
+              >
                 <TableCell>{item.messageHistory.messageType}</TableCell>
                 <TableCell>{item.messageHistory.fromNumber}</TableCell>
                 <TableCell>{item.messageHistory.content}</TableCell>
                 <TableCell>{format(new Date(item.sendTime), 'yyyy-MM-dd HH:mm')}</TableCell>
                 <TableCell>{getState(item.state)}</TableCell>
-                <TableCell>{item.messageHistory.sendImage?.url}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       )}
+      <ReservationItemDetail
+        isOpen={!!selectedReservation}
+        onClose={() => setSelectedReservation(null)}
+        reservation={selectedReservation}
+      />
     </div>
   )
 }
-
 
 // const sampleData: Reservation[] = [
 //     {
