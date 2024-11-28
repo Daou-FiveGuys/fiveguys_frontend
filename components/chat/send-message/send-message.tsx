@@ -39,6 +39,12 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       }
     }))
 
+    useEffect(() => {
+      if (content.content !== null) {
+        setActiveButton('create-image-prompt')
+      }
+    }, [])
+
     return (
       <>
         <Button
