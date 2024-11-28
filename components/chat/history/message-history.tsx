@@ -7,6 +7,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { MessageCard } from './message-card'
 import { SentMessages } from './history-panel'
 import MessageCardModal from './message-card-modal'
+import AddressBookModal from '@/app/address/modal/select-contact-modal'
+import { RootState } from '@/redux/store'
+import { useSelector } from 'react-redux'
 
 export function MessageHistory({
   sentMessages: sentMessages
@@ -25,6 +28,12 @@ export function MessageHistory({
   const gap = 20
   const leftPadding = cardWidth / 2
   const rightPadding = cardWidth / 2
+
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false)
+
+  const handleCancel = () => {
+    setIsSendModalOpen(false)
+  }
 
   useEffect(() => {
     const handleResize = () => {
@@ -198,12 +207,21 @@ export function MessageHistory({
       )}
 
       {isModalOpen && selectedMessage && (
-        <MessageCardModal
+          <MessageCardModal
           message={selectedMessage}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
+          setIsSendModalOpen={setIsSendModalOpen}
         />
       )}
+      {isSendModalOpen && (
+        <AddressBookModal
+        file={null} // null 적으면 전송하기 버튼 클릭 시 오류남.
+        onClose={handleCancel}
+        method={'message'}
+        />
+      )
+      }
     </div>
   )
 }
