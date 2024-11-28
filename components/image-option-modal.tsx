@@ -54,10 +54,10 @@ const styleOptions: { value: ImageStyle; label: string; image: string }[] = [
       'https://i.pinimg.com/736x/21/74/8e/21748e848c22f6fdfea4fbc876e6261d.jpg?height=200&width=200'
   },
   {
-    value: 'mix',
-    label: '스타일 3',
+    value: 'clearFilter',
+    label: '일본 여름풍',
     image: 
-      'https://i.pinimg.com/736x/da/7b/32/da7b323a28dda4755c5c5f15fd324880.jpg'
+      '/clearfilter-img.jpg?height=200&width=200'
   },
   {
     value: 'mix',
@@ -79,33 +79,35 @@ const InfoPopover = ({ content }: { content: string }) => (
 )
 
 export default function Component({
-  isOpen = true,
-  imageOption,
-  setImageOption,
-  setActiveButton
-}: {
-  isOpen?: boolean
-  imageOption: ImageOption
-  setImageOption: (imageOption: ImageOption) => void
-  setActiveButton: (value: ButtonType) => void
+                                    isOpen = true,
+                                    imageOption,
+                                    setImageOption,
+                                    setActiveButton
+                                  }: {
+  isOpen?: boolean;
+  imageOption: ImageOption;
+  setImageOption: React.Dispatch<React.SetStateAction<ImageOption>>;
+  setActiveButton: (value: ButtonType) => void;
 }) {
-  const [currentStep, setCurrentStep] = useState(1)
+  // 내부 상태 관리
+  const [currentStep, setCurrentStep] = useState(1);
   const [selectedStyle, setSelectedStyle] = useState<ImageStyle>(
-    imageOption.imageStyle
-  )
+      imageOption.imageStyle
+  );
   const [imageSize, setImageSize] = useState({
     width: imageOption.width,
     height: imageOption.height
-  })
+  });
   const [numInferenceSteps, setNumInferenceSteps] = useState<number>(
-    imageOption.numInferenceSteps
-  )
-  const [seed, setSeed] = useState<number>(imageOption.seed)
+      imageOption.numInferenceSteps
+  );
+  const [seed, setSeed] = useState<number>(imageOption.seed);
   const [guidanceScale, setGuidanceScale] = useState<number>(
-    imageOption.guidanceScale
-  )
-  const [safetyChecker, setSafetyChecker] = useState(true)
+      imageOption.guidanceScale
+  );
+  const [safetyChecker, setSafetyChecker] = useState(true);
 
+  // imageOption 상태 업데이트
   useEffect(() => {
     const newImageOption: ImageOption = {
       imageStyle: selectedStyle,
@@ -114,33 +116,40 @@ export default function Component({
       guidanceScale: guidanceScale,
       seed: seed,
       numInferenceSteps: numInferenceSteps
-    }
+    };
+
+    // 부모로 상태 전달
+    setImageOption(newImageOption);
   }, [
     selectedStyle,
     imageSize.width,
     imageSize.height,
-    numInferenceSteps,
+    guidanceScale,
     seed,
-    guidanceScale
-  ])
+    numInferenceSteps,
+    setImageOption
+  ]);
 
+  // 다음 단계로 이동
   const handleNext = () => {
     if (currentStep === 1 && selectedStyle) {
-      setCurrentStep(2)
+      setCurrentStep(2);
     }
-  }
+  };
 
+  // 이전 단계로 이동
   const handleBack = () => {
     if (currentStep === 2) {
-      setCurrentStep(1)
+      setCurrentStep(1);
     }
-  }
+  };
 
+  // 제출 로직
   const handleSubmit = () => {
-    isOpen = false
-    setImageOption(imageOption)
-    setActiveButton('select-image')
-  }
+    // isOpen은 props로 전달된 값이므로 직접 수정할 수 없습니다.
+    // 부모에서 관리하는 상태를 통해 처리해야 합니다.
+    setActiveButton('select-image'); // 버튼 상태 업데이트
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleSubmit}>
