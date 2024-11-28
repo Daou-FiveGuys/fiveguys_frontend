@@ -1,16 +1,16 @@
 // ChatList.tsx
-import React, {useCallback, useMemo, useState} from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { Separator } from '@/components/ui/separator'
-import { setIsTyping, Message } from '@/redux/slices/chatSlice'
-import {useDispatch, useSelector} from 'react-redux'
+import { Message, setIsTyping } from '@/redux/slices/chatSlice'
+import { useDispatch, useSelector } from 'react-redux'
 import MessageItem from './chat/utils/MessageItem'
 import { ButtonType } from './prompt-form'
 import HistoryPanel from './chat/history/history-panel'
 import AmountUsedPanel from './chat/amount-used/amount-used-panel'
-import Component from "@/components/image-option-modal";
-import HandleGenerateImage from "@/components/chat/image-generate/image-generate-modal";
-import {ImageOption, initialState} from "@/redux/slices/imageOptionSlice";
-import {RootState} from "@/redux/store";
+import Component from '@/components/image-option-modal'
+import HandleGenerateImage from '@/components/chat/image-generate/image-generate-modal'
+import { ImageOption, initialState } from '@/redux/slices/imageOptionSlice'
+import { RootState } from '@/redux/store'
 
 export const ChatList = ({
   chatId,
@@ -44,7 +44,7 @@ export const ChatList = ({
       content.endsWith('>')
     )
   }
-  const [imageOption, setImageOption] = useState<ImageOption>(initialState)
+  const [imageOption, setImageOption] = React.useState<ImageOption>(initialState)
   const messageOption = useSelector((root: RootState) => root.messageOption)
   const [isOpen, setIsOpen] = React.useState(true)
   // 선택 imageOption

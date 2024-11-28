@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-export type ImageStyle = 'waterColor' | 'cityPop' | 'mix'
+export type ImageStyle = 'waterColor' | 'cityPop' | 'clearFilter' | 'mix'
 
 export interface ImageOption {
   imageStyle: ImageStyle

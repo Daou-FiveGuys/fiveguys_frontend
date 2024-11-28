@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 import { ImageOption } from '@/redux/slices/imageOptionSlice'
 import { postImageGenerate } from '@/components/image-generator-api'
 import { setImageData } from '@/redux/slices/imageSlice'
@@ -7,6 +7,11 @@ import { BotCard } from '@/components/stocks'
 import ImagePreviewModal from '@/components/image-preview-modal'
 import { useRouter } from 'next/navigation'
 import { MessageOptionState } from '@/redux/slices/messageOptionSlice'
+
+interface GImageData {
+  requestId: string;
+  url: string
+}
 
 export default function HandleGenerateImage({
   imageOption,
@@ -20,13 +25,16 @@ export default function HandleGenerateImage({
   const [isDone, setDone] = useState<boolean>(false)
   const [imageUrl, setImageUrl] = useState<string>('')
   let imageUrls: string[] = []
-
+  const [imageUrlList, setImageUrlList] = useState<string[]>([])
+  const [imageData, setImageData] = useState<GImageData[]>([])
   const handleEditImage = (isEdit: boolean) => {
     setIsOpen(false)
     isEdit && router.push('/edit')
   }
-
+  const isFetchedRef = useRef(false);
   const fetchImages = async () => {
+    if (isFetchedRef.current) return;
+    isFetchedRef.current = true; // 플래그 설정
     try {
       const imagePromises = Array(4)
         .fill(null)
@@ -48,9 +56,18 @@ export default function HandleGenerateImage({
         })
 
       const imageResults = await Promise.all(imagePromises) // 모든 이미지 Promise 처리
-      const imageUrls: string[] = []
+      let imageUrls: string[] = ['','','','']
       const imageList: Array<{ requestId: string; url: string }> = []
-
+      console.log(imageResults)
+      setImageUrlList(imageResults.map((r) => r?.url || ""))
+      setImageData(
+        imageResults.map(r => {
+          return {
+            requestId: r?.requestId || "",
+            url: r?.url || ""
+          }
+        }
+      ))
       imageResults.forEach((result, index) => {
         if (result) {
           imageList[index] = {
@@ -64,7 +81,7 @@ export default function HandleGenerateImage({
             url: ''
           }
           // 실패한 경우 기본값 설정
-          imageUrls[index] = 'a'
+          imageUrls[index] = '/public/no-image.png'
         }
       })
 
@@ -101,7 +118,7 @@ export default function HandleGenerateImage({
         />
       )}
       <BotCard>
-        {['a', 'b', 'c', 'd']?.map(
+        {imageUrlList?.map(
           (
             url,
             idx // imageUrls?.map
@@ -110,14 +127,10 @@ export default function HandleGenerateImage({
               <button
                 key={`image-${idx}`}
                 onClick={() => {
-                  setImageData({
-                    requestId: '',
-                    url: ''
-                  })
-                  // setImageUrl(url)
-                  setImageUrl(
+                  setImageUrl(url)
+                  /*setImageUrl(
                     'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'
-                  )
+                  )*/
                   setIsOpen(true)
                 }}
                 style={{
@@ -128,10 +141,10 @@ export default function HandleGenerateImage({
                 }}
               >
                 <img
-                  src={
+                  /*src={
                     'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'
-                  }
-                  /*src={url}*/
+                  }*/
+                  src={url}
                   alt={`Generated Image ${idx + 1}`}
                   width={200}
                   height={200}
@@ -151,7 +164,7 @@ export default function HandleGenerateImage({
               >
                 <img
                   src={
-                    'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'
+                    '/public/no-image.png'
                   }
                   alt={`Generated Image ${idx + 1}`}
                   width={200}

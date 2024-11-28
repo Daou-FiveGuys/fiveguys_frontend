@@ -56,20 +56,18 @@ const ImageGenerateButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     useEffect(() => {
       if (
         ChatUtils.dispatch &&
-        !hasAddedChat &&
         activeButton === 'image-generate'
       ) {
-        ChatUtils.addChat(
-          buttonType,
-          'assistant-animation',
-          `마지막으로 이미지 스타일을 지정해보아요! 🧑🏻‍🔬`
-        )
-        setTimeout(() => {
-          setActiveButton('select-image-options')
-        }, 1800)
-        setHasAddedChat(true)
+          ChatUtils.addChat(
+              buttonType,
+              'assistant-animation',
+              `마지막으로 이미지 스타일을 지정해보아요! 🧑🏻‍🔬`
+          )
+          setTimeout(() => {
+              setActiveButton('select-image-options')
+          }, 1800)
       }
-    }, [hasAddedChat, buttonType, activeButton, ChatUtils.dispatch])
+    }, [activeButton])
 
     const handleGenerateImage2 = (imageOption: ImageOption) => {
       /*setLastUserInput(null)
