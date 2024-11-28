@@ -35,6 +35,18 @@ export default function UserOrLogin() {
             </div>
           </div>
         )}
+      {!pathname.includes('/mypage') &&
+      !pathname.includes('/login') &&
+      !pathname.includes('/address') &&
+      !pathname.includes('/signup') && (
+        <div className="flex items-center">
+          <div className="flex items-center">
+            <Button variant="link" asChild className="-ml-2">
+              <Link href="/reservation">예약 관리 🕒</Link>
+            </Button>
+          </div>
+        </div>
+      )}
       {pathname.includes('/mypage') && (
         <div className="flex items-center">
           <IconSeparator className="size-6 text-muted-foreground/50" />
