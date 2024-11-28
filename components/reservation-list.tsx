@@ -36,9 +36,12 @@ export default function ReservationList() {
   const [loading, setLoading] = useState(true);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
 
+  // State to force re-fetch reservations
+  const [refresh, setRefresh] = useState(false);
+
   useEffect(() => {
     fetchReservationsData();
-  }, []);
+  }, [refresh]); // Trigger useEffect whenever `refresh` changes
 
   const fetchReservationsData = async () => {
     setLoading(true);
@@ -48,6 +51,8 @@ export default function ReservationList() {
     }
     setLoading(false);
   };
+
+  const triggerRefresh = () => setRefresh((prev) => !prev); // Toggles `refresh` to trigger `useEffect`
 
   const filteredData = reservations.filter((item) => {
     const itemDate = new Date(filterType === 'createdAt' ? item.messageHistory.createdAt : item.sendTime);
@@ -70,43 +75,29 @@ export default function ReservationList() {
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              variant={"outline"}
-              className={cn(
-                "w-[280px] justify-start text-left font-normal",
-                !startDate && "text-muted-foreground"
-              )}
+              variant="outline"
+              className={cn('w-[280px] justify-start text-left font-normal', !startDate && 'text-muted-foreground')}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {startDate ? format(startDate, "PPP") : <span>시작 날짜</span>}
+              {startDate ? format(startDate, 'PPP') : <span>시작 날짜</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={startDate}
-              onSelect={setStartDate}
-            />
+            <Calendar mode="single" selected={startDate} onSelect={setStartDate} />
           </PopoverContent>
         </Popover>
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              variant={"outline"}
-              className={cn(
-                "w-[280px] justify-start text-left font-normal",
-                !endDate && "text-muted-foreground"
-              )}
+              variant="outline"
+              className={cn('w-[280px] justify-start text-left font-normal', !endDate && 'text-muted-foreground')}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {endDate ? format(endDate, "PPP") : <span>종료 날짜</span>}
+              {endDate ? format(endDate, 'PPP') : <span>종료 날짜</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={endDate}
-              onSelect={setEndDate}
-            />
+            <Calendar mode="single" selected={endDate} onSelect={setEndDate} />
           </PopoverContent>
         </Popover>
       </div>
@@ -143,50 +134,9 @@ export default function ReservationList() {
       <ReservationItemDetail
         isOpen={!!selectedReservation}
         onClose={() => setSelectedReservation(null)}
-        reservation={selectedReservation} 
-        fetchReservations={fetchReservations}
+        reservation={selectedReservation}
+        fetchReservations={triggerRefresh} // Pass refresh trigger function to the detail component
       />
     </div>
   );
 }
-
-// const sampleData: Reservation[] = [
-//     {
-//         reservationId: 1,
-//         sendTime: "2023-06-01T10:00:00",
-//         state: ReservationState.NOTYET,
-//         messageHistory: {
-//         messageHistoryId: 1,
-//         sendImage: {
-//             sendImageId: 1,
-//             url: "image1.jpg",
-//         },
-//         fromNumber: "01012345678",
-//         messageType: MessageType.SMS,
-//         subject: "제목 없음",
-//         content: "본문입니다.",
-//         createdAt: "2023-05-31T09:00:00",
-//         contact2s: [],
-//         messageKey: "MSG_1",
-//         },
-//     },
-//     {
-//         reservationId: 2,
-//         sendTime: "2023-06-02T14:00:00",
-//         state: ReservationState.DONE,
-//         messageHistory: {
-//         messageHistoryId: 2,
-//         sendImage: {
-//             sendImageId: 2,
-//             url: "image2.jpg",
-//         },
-//         fromNumber: "01087654321",
-//         messageType: MessageType.MMS,
-//         subject: "제목 없음",
-//         content: "본문입니다.",
-//         createdAt: "2023-06-01T13:00:00",
-//         contact2s: [],
-//         messageKey: "MSG_2",
-//         },
-//     },
-//     ];
