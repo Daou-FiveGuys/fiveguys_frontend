@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 import { ImageOption } from '@/redux/slices/imageOptionSlice'
 import { postImageGenerate } from '@/components/image-generator-api'
 import { setImageData } from '@/redux/slices/imageSlice'
@@ -31,10 +31,10 @@ export default function HandleGenerateImage({
     setIsOpen(false)
     isEdit && router.push('/edit')
   }
-  const [isFected, setIsFected] = useState<boolean>(false)
+  const isFetchedRef = useRef(false);
   const fetchImages = async () => {
-    if (isFected) return
-    setIsFected(true)
+    if (isFetchedRef.current) return;
+    isFetchedRef.current = true; // 플래그 설정
     try {
       const imagePromises = Array(4)
         .fill(null)
