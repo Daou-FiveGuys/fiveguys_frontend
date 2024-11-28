@@ -5,7 +5,6 @@ import { format } from "date-fns"
 import { ImageIcon } from 'lucide-react'
 import { getState, type Reservation } from "./reservation-types"
 import { CancelReservation } from "./reservation-cancel"
-import { fetchReservations } from "./reservation-list"
 
 interface ReservationItemDetailProps {
   isOpen: boolean
@@ -17,7 +16,8 @@ interface ReservationItemDetailProps {
 export default function ReservationItemDetail({
   isOpen,
   onClose,
-  reservation,
+  fetchReservations,
+  reservation
 }: ReservationItemDetailProps) {
   if (!reservation) return null
 
@@ -81,7 +81,8 @@ export default function ReservationItemDetail({
         </div>
         <CancelReservation
           messageHistoryId={reservation.messageHistory.messageHistoryId} 
-          onCancelSuccess = {fetchReservations}
+          onCancelSuccess={fetchReservations}
+          onClose={onClose}  // Pass onClose to CancelReservation
         />
       </DialogContent>
     </Dialog>

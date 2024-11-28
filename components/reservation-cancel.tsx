@@ -18,22 +18,26 @@ import apiClient from '@/services/apiClient'
 interface CancelReservationProps {
     messageHistoryId: number
     onCancelSuccess: () => void
+    onClose: () => void  // Add onClose prop
 }
 
 export function CancelReservation({ 
   messageHistoryId,
-  onCancelSuccess 
+  onCancelSuccess,
+  onClose  // Destructure onClose
 }: CancelReservationProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)  // Add state to control AlertDialog
 
   const handleCancel = async () => {
     try {
       setIsLoading(true)
-      // API 호출
       const response = await apiClient.post(`ppurio/cancel/${messageHistoryId}`)
       
       if (response.data.code === 200) {
-        onCancelSuccess
+        onCancelSuccess()  // Add parentheses to call the function
+        onClose()  // Close the detail dialog
+        setIsOpen(false)  // Close the alert dialog
       } else {
         throw new Error('예약 취소에 실패했습니다.')
       }
@@ -45,7 +49,7 @@ export function CancelReservation({
   }
 
   return (
-    <AlertDialog>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
         <Button variant="destructive" className="w-full">
           예약 취소하기
@@ -72,3 +76,4 @@ export function CancelReservation({
     </AlertDialog>
   )
 }
+
