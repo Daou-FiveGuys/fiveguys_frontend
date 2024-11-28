@@ -208,22 +208,21 @@ export function MessageHistory({
       )}
 
       {isModalOpen && selectedMessage && (
-        <MessageCardModal
+        selectedMessage?.image === null ?
+        (
+          <AddressBookModal
+          file={null} // null 적으면 전송하기 버튼 클릭 시 오류남.
+          onClose={handleCancel}
+          method={'message'}
+        />
+        )
+        :
+          <MessageCardModal
           message={selectedMessage}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
         />
       )}
-
-{
-          isSendModalOpen && !selectedMessage?.image === null && (
-          <AddressBookModal
-            file={null} // null 적으면 전송하기 버튼 클릭 시 오류남.
-            onClose={handleCancel}
-            method={'message'}
-          />
-        )
-        }
     </div>
   )
 }
