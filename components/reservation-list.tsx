@@ -11,66 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import apiClient from '@/services/apiClient'
 import { CommonResponse } from '@/app/address/modal/service'
-
-interface Reservation {
-  reservationId: number;
-  sendTime: string;
-  state: ReservationState;
-  messageHistory: MessageHistory
-}
-
-interface MessageHistory {
-  messageHistoryId: number;
-  sendImage: SendImage | null;
-  fromNumber: string;
-  messageType: MessageType;
-  subject: string;
-  content: string;
-  createdAt: string;
-  contact2s: Contact2[];
-  messageKey: string;
-}
-
-interface SendImage {
-  sendImageId: number;
-  url: string;
-}
-
-interface Contact2 {
-  contactId: number;
-  name: string;
-  telNum: string;
-  one: string;
-  two: string;
-  three: string;
-  four: string;
-  five: string;
-  six: string;
-  seven: string;
-  eight: string;
-}
-
-enum ReservationState {
-  DIRECT = "DIRECT",
-  NOTYET = "NOTYET",
-  DONE = "DONE",
-  CANCEL = "CANCEL",
-}
-
-enum MessageType {
-  SMS = "SMS",
-  MMS = "MMS",
-  LMS = "LMS",
-}
-
-function getState(state: ReservationState): String {
-  switch(state) {
-    case ReservationState.DIRECT: return "전송 완료"
-    case ReservationState.NOTYET: return "전송 대기"
-    case ReservationState.DONE: return "전송 완료"
-    case ReservationState.CANCEL: return "예약 취소"
-  }
-}
+import ReservationItemDetail from './reservation-item-detail'
+import { getState, type Reservation, ReservationState, MessageType } from './reservation-types'
 
 export default function ReservationList() {
   const [filterType, setFilterType] = useState('createdAt')
@@ -78,6 +20,7 @@ export default function ReservationList() {
   const [endDate, setEndDate] = useState<Date>()
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null)
 
   useEffect(() => {
     fetchReservations()
@@ -97,7 +40,7 @@ export default function ReservationList() {
     }
   }
 
-  const filteredData = reservations.filter((item) => {
+  const filteredData = sampleData.filter((item) => {
     const itemDate = new Date(filterType === 'createdAt' ? item.messageHistory.createdAt : item.sendTime)
     return (!startDate || itemDate >= startDate) && (!endDate || itemDate <= endDate)
   })
@@ -169,65 +112,71 @@ export default function ReservationList() {
               <TableHead>컨텐츠</TableHead>
               <TableHead>발송 시간</TableHead>
               <TableHead>예약 상태</TableHead>
-              <TableHead>이미지</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredData.map((item) => (
-              <TableRow key={item.reservationId}>
+              <TableRow 
+                key={item.reservationId}
+                className="cursor-pointer hover:bg-muted/50"
+                onClick={() => setSelectedReservation(item)}
+              >
                 <TableCell>{item.messageHistory.messageType}</TableCell>
                 <TableCell>{item.messageHistory.fromNumber}</TableCell>
                 <TableCell>{item.messageHistory.content}</TableCell>
                 <TableCell>{format(new Date(item.sendTime), 'yyyy-MM-dd HH:mm')}</TableCell>
                 <TableCell>{getState(item.state)}</TableCell>
-                <TableCell>{item.messageHistory.sendImage?.url}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       )}
+      <ReservationItemDetail
+        isOpen={!!selectedReservation}
+        onClose={() => setSelectedReservation(null)}
+        reservation={selectedReservation}
+      />
     </div>
   )
 }
 
-
-// const sampleData: Reservation[] = [
-//     {
-//         reservationId: 1,
-//         sendTime: "2023-06-01T10:00:00",
-//         state: ReservationState.NOTYET,
-//         messageHistory: {
-//         messageHistoryId: 1,
-//         sendImage: {
-//             sendImageId: 1,
-//             url: "image1.jpg",
-//         },
-//         fromNumber: "01012345678",
-//         messageType: MessageType.SMS,
-//         subject: "제목 없음",
-//         content: "본문입니다.",
-//         createdAt: "2023-05-31T09:00:00",
-//         contact2s: [],
-//         messageKey: "MSG_1",
-//         },
-//     },
-//     {
-//         reservationId: 2,
-//         sendTime: "2023-06-02T14:00:00",
-//         state: ReservationState.DONE,
-//         messageHistory: {
-//         messageHistoryId: 2,
-//         sendImage: {
-//             sendImageId: 2,
-//             url: "image2.jpg",
-//         },
-//         fromNumber: "01087654321",
-//         messageType: MessageType.MMS,
-//         subject: "제목 없음",
-//         content: "본문입니다.",
-//         createdAt: "2023-06-01T13:00:00",
-//         contact2s: [],
-//         messageKey: "MSG_2",
-//         },
-//     },
-//     ];
+const sampleData: Reservation[] = [
+  {
+      reservationId: 1,
+      sendTime: "2023-06-01T10:00:00",
+      state: ReservationState.NOTYET,
+      messageHistory: {
+      messageHistoryId: 1,
+      sendImage: {
+          sendImageId: 1,
+          url: "image1.jpg",
+      },
+      fromNumber: "01012345678",
+      messageType: MessageType.SMS,
+      subject: "제목 없음",
+      content: "본문입니다.",
+      createdAt: "2023-05-31T09:00:00",
+      contact2s: [],
+      messageKey: "MSG_1",
+      },
+  },
+  {
+      reservationId: 2,
+      sendTime: "2023-06-02T14:00:00",
+      state: ReservationState.DONE,
+      messageHistory: {
+      messageHistoryId: 2,
+      sendImage: {
+          sendImageId: 2,
+          url: "image2.jpg",
+      },
+      fromNumber: "01087654321",
+      messageType: MessageType.MMS,
+      subject: "제목 없음",
+      content: "본문입니다.",
+      createdAt: "2023-06-01T13:00:00",
+      contact2s: [],
+      messageKey: "MSG_2",
+      },
+  },
+  ];
