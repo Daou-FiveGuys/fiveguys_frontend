@@ -23,7 +23,7 @@ export function HeroSection() {
         <div className="w-full space-y-4">
           <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-7xl font-saas">
             문자 발송의 새로운 패러다임 <br></br>
-            <span className="bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent inline-block pt-2 pr-[0.3rem]">
               Pa·Letter
             </span>{' '}
             🎨
