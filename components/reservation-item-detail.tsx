@@ -4,10 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { format } from "date-fns"
 import { ImageIcon } from 'lucide-react'
 import { getState, type Reservation } from "./reservation-types"
+import { CancelReservation } from "./reservation-cancel"
+import { fetchReservations } from "./reservation-list"
 
 interface ReservationItemDetailProps {
   isOpen: boolean
   onClose: () => void
+  fetchReservations: () => void
   reservation: Reservation | null
 }
 
@@ -76,6 +79,10 @@ export default function ReservationItemDetail({
             )}
           </div>
         </div>
+        <CancelReservation
+          messageHistoryId={reservation.messageHistory.messageHistoryId} 
+          onCancelSuccess = {fetchReservations}
+        />
       </DialogContent>
     </Dialog>
   )
