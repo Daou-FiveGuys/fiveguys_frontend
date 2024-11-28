@@ -211,7 +211,67 @@ body {
 
 @layer utilities {
   .animate-fade-in {
-    animation: fadeIn 0.5s ease-in forwards;
+    animation: fadeIn-pg 0.5s ease-in forwards;
+  }
+
+  .animate-gradient-x {
+    background-size: 200% 100%;
+    animation: gradient-x 3s linear infinite;
+  }
+
+  .animate-gradient-text {
+    background-size: 200% 200%;
+    animation: gradient-x 2s linear infinite;
+  }
+
+  .dot-bounce {
+    animation: dot-bounce 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  }
+}
+
+@keyframes fadeIn-pg {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradient-x {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes gradient-y {
+  0% {
+    background-position: 50% 0%;
+  }
+  50% {
+    background-position: 50% 100%;
+  }
+  100% {
+    background-position: 50% 0%;
+  }
+}
+
+@keyframes dot-bounce {
+  0%, 100% {
+    transform: translateY(0);
+    background-color: #c084fc;
+  }
+  50% {
+    transform: translateY(-12px);
+    background-color: #9333ea;
   }
 }
 

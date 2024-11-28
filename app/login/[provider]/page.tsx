@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import apiClient from '@/services/apiClient'
 import { setCookie } from 'cookies-next'
-import { Progress } from '@/components/ui/progress'
+import {Progress} from "@/components/ui/progress";
 
 interface CallBackProps {
   params: { provider: string }
@@ -93,42 +93,59 @@ export default function CallBack({ params, searchParams }: CallBackProps) {
   }, [provider, code, state, router])
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-      <div className="w-full max-w-md p-8 space-y-8">
-        <div className="text-center space-y-6">
-          <div className="flex items-center justify-center space-x-1">
-            <span className="text-2xl font-medium">로그인</span>
-            <div className="flex space-x-1">
-              {[...Array(4)].map((_, i) => (
-                <span
-                  key={i}
-                  className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"
+      <div
+          className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+        <div className="w-full max-w-md p-8 space-y-8">
+          <div className="text-center space-y-6">
+            <div className="flex items-center justify-center space-x-1">
+            <span
+                className="text-2xl font-medium bg-gradient-to-b from-[#9333ea] to-[#9333ea] bg-clip-text text-transparent animate-gradient-text"
+                style={{
+                  backgroundImage: 'linear-gradient(180deg, #9333ea 0%, #9333ea 45%, #c084fc 50%, #9333ea 55%, #9333ea 100%)',
+                }}
+            >
+              로그인
+            </span>
+              <div className="flex space-x-1">
+                {[...Array(4)].map((_, i) => (
+                    <span
+                        key={i}
+                        className="w-1.5 h-1.5 rounded-full dot-bounce"
+                        style={{
+                          animationDelay: `${i * 0.15}s`,
+                        }}
+                    />
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <Progress
+                  value={progress}
+                  className="h-2 transition-all duration-300"
+              />
+              <div
+                  className="text-sm bg-gradient-to-b from-[#9333ea] to-[#9333ea] bg-clip-text text-transparent animate-gradient-text"
                   style={{
-                    animationDelay: `${i * 0.15}s`,
-                    animationDuration: '0.8s'
+                    backgroundImage: 'linear-gradient(180deg, #9333ea 0%, #9333ea 45%, #c084fc 50%, #9333ea 55%, #9333ea 100%)',
                   }}
-                ></span>
-              ))}
+              >
+                {progress.toFixed(0)}%
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-4">
-            <Progress
-              value={progress}
-              className="h-2 transition-all duration-300"
-            />
-            <div className="text-sm text-muted-foreground">
-              {progress.toFixed(0)}%
-            </div>
+            {showRedirect && (
+                <div
+                    className="animate-fade-in bg-gradient-to-b from-[#9333ea] to-[#9333ea] bg-clip-text text-transparent animate-gradient-text"
+                    style={{
+                      backgroundImage: 'linear-gradient(180deg, #9333ea 0%, #9333ea 45%, #c084fc 50%, #9333ea 55%, #9333ea 100%)',
+                    }}
+                >
+                  리다이렉팅하는 중...
+                </div>
+            )}
           </div>
-
-          {showRedirect && (
-            <div className="text-primary animate-fade-in">
-              리다이렉팅하는 중...
-            </div>
-          )}
         </div>
       </div>
-    </div>
   )
 }
