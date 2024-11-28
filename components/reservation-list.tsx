@@ -40,7 +40,7 @@ export default function ReservationList() {
     }
   }
 
-  const filteredData = sampleData.filter((item) => {
+  const filteredData = reservations.filter((item) => {
     const itemDate = new Date(filterType === 'createdAt' ? item.messageHistory.createdAt : item.sendTime)
     return (!startDate || itemDate >= startDate) && (!endDate || itemDate <= endDate)
   })
@@ -140,43 +140,43 @@ export default function ReservationList() {
   )
 }
 
-const sampleData: Reservation[] = [
-  {
-      reservationId: 1,
-      sendTime: "2023-06-01T10:00:00",
-      state: ReservationState.NOTYET,
-      messageHistory: {
-      messageHistoryId: 1,
-      sendImage: {
-          sendImageId: 1,
-          url: "image1.jpg",
-      },
-      fromNumber: "01012345678",
-      messageType: MessageType.SMS,
-      subject: "제목 없음",
-      content: "본문입니다.",
-      createdAt: "2023-05-31T09:00:00",
-      contact2s: [],
-      messageKey: "MSG_1",
-      },
-  },
-  {
-      reservationId: 2,
-      sendTime: "2023-06-02T14:00:00",
-      state: ReservationState.DONE,
-      messageHistory: {
-      messageHistoryId: 2,
-      sendImage: {
-          sendImageId: 2,
-          url: "image2.jpg",
-      },
-      fromNumber: "01087654321",
-      messageType: MessageType.MMS,
-      subject: "제목 없음",
-      content: "본문입니다.",
-      createdAt: "2023-06-01T13:00:00",
-      contact2s: [],
-      messageKey: "MSG_2",
-      },
-  },
-  ];
+// const sampleData: Reservation[] = [
+//     {
+//         reservationId: 1,
+//         sendTime: "2023-06-01T10:00:00",
+//         state: ReservationState.NOTYET,
+//         messageHistory: {
+//         messageHistoryId: 1,
+//         sendImage: {
+//             sendImageId: 1,
+//             url: "image1.jpg",
+//         },
+//         fromNumber: "01012345678",
+//         messageType: MessageType.SMS,
+//         subject: "제목 없음",
+//         content: "본문입니다.",
+//         createdAt: "2023-05-31T09:00:00",
+//         contact2s: [],
+//         messageKey: "MSG_1",
+//         },
+//     },
+//     {
+//         reservationId: 2,
+//         sendTime: "2023-06-02T14:00:00",
+//         state: ReservationState.DONE,
+//         messageHistory: {
+//         messageHistoryId: 2,
+//         sendImage: {
+//             sendImageId: 2,
+//             url: "image2.jpg",
+//         },
+//         fromNumber: "01087654321",
+//         messageType: MessageType.MMS,
+//         subject: "제목 없음",
+//         content: "본문입니다.",
+//         createdAt: "2023-06-01T13:00:00",
+//         contact2s: [],
+//         messageKey: "MSG_2",
+//         },
+//     },
+//     ];
