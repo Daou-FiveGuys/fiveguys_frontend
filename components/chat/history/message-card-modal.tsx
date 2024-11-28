@@ -15,20 +15,17 @@ import MessageOptionUtils from '../utils/MessageOptionUtils'
 import ImageUtils from '../utils/ImageUtils'
 import { useRouter } from 'next/navigation'
 import { Separator } from '@radix-ui/react-separator'
-import AddressBookModal from '@/app/address/modal/select-contact-modal'
 
 interface MessageCardModalProps {
   isOpen: boolean
   onClose: () => void
   message: SentMessages
-  setIsSendModalOpen: (isOpen: boolean) => void// 모달 띄우기 위해서.
 }
 
 export default function MessageCardModal({
   isOpen,
   onClose,
-  message,
-  setIsSendModalOpen
+  message
 }: MessageCardModalProps) {
   const [hovered, setHovered] = useState(false)
 
@@ -106,18 +103,11 @@ export default function MessageCardModal({
               <Button
                 className="bg-[rgb(31,111,186)]"
                 onClick={() => {
-                  
-                  if (message.image !== null) {
-                    // message.image가 있는 경우 동작
-                    onClose();
-                    ImageUtils.addImage(null, message.image);
-                    MessageOptionUtils.addContent(message.content);
-                    router.push('edit');
-                  } else {
-                    setIsSendModalOpen(true)
-                }
-              }
-            }
+                  onClose()
+                  ImageUtils.addImage(null, message.image)
+                  MessageOptionUtils.addContent(message.content)
+                  router.push('edit')
+                }}
               >
                 재전송
               </Button>
