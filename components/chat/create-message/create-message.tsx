@@ -14,8 +14,6 @@ import MessageOptionUtils from '../utils/MessageOptionUtils'
 import CancelProcessModal from '../cancel-process-modal'
 import MessageCardModal from '../history/message-card-modal'
 import AddressBookModal from '@/app/address/modal/select-contact-modal'
-import SaveEditedImage from '@/components/image-save'
-import SaveEditedImageWithModal from '@/components/image-save'
 import CustomImageModal from '@/components/image-method-modal'
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
