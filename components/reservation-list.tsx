@@ -36,7 +36,7 @@ export default function ReservationList() {
   const [loading, setLoading] = useState(true);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const itemsPerPage = 15;
 
   // State to force re-fetch reservations
   const [refresh, setRefresh] = useState(false);
