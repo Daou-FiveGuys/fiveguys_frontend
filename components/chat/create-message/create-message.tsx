@@ -12,6 +12,11 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import MessageOptionUtils from '../utils/MessageOptionUtils'
 import CancelProcessModal from '../cancel-process-modal'
+import MessageCardModal from '../history/message-card-modal'
+import AddressBookModal from '@/app/address/modal/select-contact-modal'
+import SaveEditedImage from '@/main/components/image-save'
+import SaveEditedImageWithModal from '@/components/image-save'
+import CustomImageModal from '@/components/image-method-modal'
 export interface CustomButtonHandle {
   handleEnterPress: (value: string) => void
 }
@@ -29,6 +34,7 @@ export type CreateMessageProcessType =
   | 'done'
   | 'done-ai'
   | 'edit'
+  | 'send'
 
 const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
   ({ buttonType, activeButton, setActiveButton }, ref) => {
@@ -44,6 +50,8 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       (state: RootState) => state.chat[buttonType].messages
     )
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isSendModalOpen, setIsSendModalOpen] = useState(false)
+    const image = useSelector((state: RootState) => state.image)
 
     React.useEffect(() => {
       if (ChatUtils.dispatch && !hasAddedChat && messages.length === 0) {
@@ -70,7 +78,8 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
             setActiveButton,
             messageOption,
             currentProcess,
-            setCurrentProcess
+            setCurrentProcess,
+            setIsDone
           )
         }, 100)
       }
@@ -100,8 +109,133 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
     }
 
     const handleCancel = () => {
-      setIsModalOpen(false)
+      setIsSendModalOpen(false)
     }
+    //addressBookModal 닫는 용도
+    
+    const [isDone, setIsDone] = useState(false);
+    const [file, setFile] = useState<File | null>(null);
+    const [method, setMethod] = useState('')
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(true)
+    //
+    console.log(file)
+    const handleFileGenerated = (generatedFile: File, method: string) => {
+      setMethod('image')
+      setIsSendModalOpen(true)
+      setFile(generatedFile)
+    }
+
+    interface SaveEditedImageProps {
+      isDone: boolean
+      setIsDone: React.Dispatch<React.SetStateAction<boolean>>
+      onFileGenerated: (file: File, method: string) => void
+    }
+    const SaveEditedImageWithModal: React.FC<SaveEditedImageProps> = ({
+      setIsDone,
+      onFileGenerated
+    }) => {
+  
+
+      const handleOptionSelect = async (option: 'link' | 'image') => {
+        setIsModalOpen(false)
+        if(image.url === null)return;
+        if (option === 'image') {
+          
+          const compressedBlob = await resizeImage(image.url, 300 * 1024)
+          const fileName = `edited_image_${new Date().toISOString()}.jpeg`
+          const compressedFile = new File([compressedBlob], fileName, {
+            type: 'image/png'
+          })
+          handleFileGenerated(compressedFile, 'image')
+        } else {
+          const blob = dataURLToBlob(image.url)
+          const fileName = `edited_image_${new Date().toISOString()}.jpeg`
+          const originalFile = new File([blob], fileName, { type: 'image/png' })
+          handleFileGenerated(originalFile, 'link')
+        }
+    
+        // 상태 초기화
+        setIsDone(false)
+      }
+  
+      const dataURLToBlob = (dataURL: string): Blob => {
+        const parts = dataURL.split(',')
+        const byteString =
+          parts[0].indexOf('base64') >= 0
+            ? atob(parts[1])
+            : decodeURIComponent(parts[1])
+        const mimeString = parts[0].split(':')[1].split(';')[0]
+    
+        const array = new Uint8Array(byteString.length)
+        for (let i = 0; i < byteString.length; i++) {
+          array[i] = byteString.charCodeAt(i)
+        }
+    
+        return new Blob([array], { type: mimeString })
+      }
+  
+      const resizeImage = async (
+        dataURL: string,
+        maxSize: number
+      ): Promise<Blob> => {
+        if(dataURL === null)return new Blob();
+        let quality = 1.0
+        let scaleFactor = 1.0
+        let blob = dataURLToBlob(dataURL)
+    
+        // 압축 반복
+        while (blob.size > maxSize && (quality > 0.05 || scaleFactor > 0.1)) {
+          // 품질 감소
+          if (quality > 0.05) {
+            quality -= 0.05
+          }
+    
+          // 배율 감소
+          if (blob.size > maxSize * 1.5 && scaleFactor > 0.1) {
+            scaleFactor -= 0.1
+          }
+    
+          // HTML Canvas 생성 및 크기 조정
+          const image = new Image()
+          image.src = dataURL
+    
+          // Promise로 이미지 로드 완료 대기
+          await new Promise(resolve => (image.onload = resolve))
+    
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d')!
+    
+          canvas.width = image.width * scaleFactor
+          canvas.height = image.height * scaleFactor
+    
+          // 크기 조정 후 다시 그림
+          ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
+    
+          // JPEG로 변환하여 크기 축소
+          const resizedDataURL = canvas.toDataURL('image/jpeg', quality)
+          blob = dataURLToBlob(resizedDataURL)
+        }
+        
+    
+        return blob
+      }
+    
+      return (
+        <>
+          {isSaveModalOpen && (
+            <CustomImageModal
+              onLinkSend={() => handleOptionSelect('link')}
+              onImageSend={() => handleOptionSelect('image')}
+              onClose={() => {
+                setIsSaveModalOpen(false)
+                setIsDone(false)
+              }}
+            />
+          )}
+        </>
+      )
+    }
+    //canvas 없는 버전으로 변형함.
 
     return (
       <>
@@ -118,7 +252,41 @@ const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
             onClose={handleCancel}
             onConfirm={handleConfirm}
           />
-        )}
+        )}        
+        {
+          isDone && (
+            (!image.url && messageOption.title!==null && messageOption.content!==null) ? (
+              <MessageCardModal
+              message={{
+              id: 0,
+              title: messageOption.title,
+              content: messageOption.content,
+              image: null, 
+              date: new Date(),
+              }} 
+              isOpen={isSendModalOpen}
+              onClose={() => setIsModalOpen(false)}
+            />
+              )
+            : (
+              <SaveEditedImageWithModal
+              isDone={isDone}
+              setIsDone={setIsDone}
+              onFileGenerated={handleFileGenerated}/>
+            )
+          )
+        }
+        {/* 이미지가 있으면 편집창 처럼 나오게, 이미지 없으면 이미지 없는 상태로 전송 모달 */}
+        {
+          isSendModalOpen &&  (
+          <AddressBookModal
+            file={file} // null 적으면 전송하기 버튼 클릭 시 오류남.
+            onClose={handleCancel}
+            method={method}
+          />
+        )
+        }
+        {/* 링크, 사진으로 보내기 클릭 시 나오는 모달 */}
       </>
     )
   }

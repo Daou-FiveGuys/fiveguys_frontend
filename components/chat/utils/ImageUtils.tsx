@@ -7,7 +7,7 @@ export default class ImageUtils {
     ImageUtils.dispatch = newDispatch
   }
 
-  static addImage(requestId: string | null, imageUrl: string) {
+  static addImage(requestId: string | null, imageUrl: string | null) {
     if (!ImageUtils.dispatch) {
       throw new Error(
         'Dispatch is not initialized. Call MessageOptionUtils.initialize() first.'
