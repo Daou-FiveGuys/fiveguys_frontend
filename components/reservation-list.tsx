@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -35,13 +35,15 @@ export default function ReservationList() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   // State to force re-fetch reservations
   const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {
     fetchReservationsData(); 
-  }, [refresh]); // Trigger useEffect whenever `refresh` changes
+  }, [refresh]); 
 
   const fetchReservationsData = async () => {
     setLoading(true);
@@ -52,12 +54,42 @@ export default function ReservationList() {
     setLoading(false);
   };
 
-  const triggerRefresh = () => setRefresh((prev) => !prev); // Toggles `refresh` to trigger `useEffect`
+  const triggerRefresh = () => setRefresh((prev) => !prev);
 
   const filteredData = reservations.filter((item) => {
     const itemDate = new Date(filterType === 'createdAt' ? item.messageHistory.createdAt : item.sendTime);
     return (!startDate || itemDate >= startDate) && (!endDate || itemDate <= endDate);
   });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+
+  // Generate page numbers array
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5; // Show maximum 5 page numbers at a time
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Adjust start page if we're near the end
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+    
+    return pageNumbers;
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [startDate, endDate, filterType]);
 
   return (
     <div className="p-8">
@@ -104,39 +136,74 @@ export default function ReservationList() {
       {loading ? (
         <div>Loading...</div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>메시지 타입</TableHead>
-              <TableHead>발신 번호</TableHead>
-              <TableHead>컨텐츠</TableHead>
-              <TableHead>발송 시간</TableHead>
-              <TableHead>예약 상태</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredData.map((item) => (
-              <TableRow
-                key={item.reservationId}
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => setSelectedReservation(item)}
-              >
-                <TableCell>{item.messageHistory.messageType}</TableCell>
-                <TableCell>{item.messageHistory.fromNumber}</TableCell>
-                <TableCell>{item.messageHistory.content}</TableCell>
-                <TableCell>{format(new Date(item.sendTime), 'yyyy-MM-dd HH:mm')}</TableCell>
-                <TableCell>{getState(item.state)}</TableCell>
+        <>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>메시지 타입</TableHead>
+                <TableHead>발신 번호</TableHead>
+                <TableHead>컨텐츠</TableHead>
+                <TableHead>발송 시간</TableHead>
+                <TableHead>예약 상태</TableHead>
               </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedData.map((item) => (
+                <TableRow
+                  key={item.reservationId}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setSelectedReservation(item)}
+                >
+                  <TableCell>{item.messageHistory.messageType}</TableCell>
+                  <TableCell>{item.messageHistory.fromNumber}</TableCell>
+                  <TableCell>{item.messageHistory.content}</TableCell>
+                  <TableCell>{format(new Date(item.sendTime), 'yyyy-MM-dd HH:mm')}</TableCell>
+                  <TableCell>{getState(item.state)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          
+          {/* Pagination Controls */}
+          <div className="flex justify-center items-center gap-2 mt-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            {getPageNumbers().map((pageNum) => (
+              <Button
+                key={pageNum}
+                variant={currentPage === pageNum ? "default" : "outline"}
+                onClick={() => setCurrentPage(pageNum)}
+                className="min-w-[40px]"
+              >
+                {pageNum}
+              </Button>
             ))}
-          </TableBody>
-        </Table>
+            
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </>
       )}
       <ReservationItemDetail
         isOpen={!!selectedReservation}
         onClose={() => setSelectedReservation(null)}
         reservation={selectedReservation}
-        fetchReservations={triggerRefresh} // Pass refresh trigger function to the detail component
+        fetchReservations={triggerRefresh}
       />
     </div>
   );
 }
+
