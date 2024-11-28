@@ -35,6 +35,9 @@ export type CreateMessageProcessType =
   | 'done-ai'
   | 'edit'
   | 'send'
+  | 'done'
+  | 'done-ai'
+  | 'edit'
 
 const CreateMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
   ({ buttonType, activeButton, setActiveButton }, ref) => {
