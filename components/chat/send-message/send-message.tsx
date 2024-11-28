@@ -39,12 +39,6 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
       }
     }))
 
-    useEffect(() => {
-      if (content.content !== null) {
-        setActiveButton('create-image-prompt')
-      }
-    }, [])
-
     return (
       <>
         <Button
@@ -55,6 +49,7 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
               ChatUtils.clearChat('image-generate')
               setActiveButton('image-generate')
             } else if (content.content) {
+              ChatUtils.clearChat('image-generate')
               ChatUtils.clearChat('create-image-prompt')
               ChatUtils.addChat(
                 'create-image-prompt',
@@ -65,6 +60,7 @@ const SendMessageButton = forwardRef<CustomButtonHandle, CustomButtonProps>(
             } else {
               ChatUtils.clearChat('image-generate')
               ChatUtils.clearChat('create-image-prompt')
+              ChatUtils.clearChat('create-message')
               setActiveButton('create-message')
             }
           }}

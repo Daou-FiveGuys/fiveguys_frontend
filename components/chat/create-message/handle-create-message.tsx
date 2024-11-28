@@ -72,10 +72,6 @@ export const handleCreateMessage = (
       case '재생성':
         exceptionHandler('다시 시도해주세요')
         break
-      case '전송':
-        setIsDone(true) // 모달을 열기 위해 setSendModal을 호출합니다.
-        setCurrentProcess('welcome')
-        break
       //2. 전송 입력 후 전송 프로세스
       default:
         MessageOptionUtils.addContent(value)
