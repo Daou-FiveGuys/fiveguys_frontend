@@ -81,7 +81,8 @@ export default function ReservationItemDetail({
         </div>
         <CancelReservation
           messageHistoryId={reservation.messageHistory.messageHistoryId} 
-          onCancelSuccess = {fetchReservations}
+          onCancelSuccess={fetchReservations}
+          onClose={onClose}  // Pass onClose to CancelReservation
         />
       </DialogContent>
     </Dialog>

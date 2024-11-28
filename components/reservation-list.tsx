@@ -40,7 +40,7 @@ export default function ReservationList() {
   const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {
-    fetchReservationsData();
+    fetchReservationsData(); 
   }, [refresh]); // Trigger useEffect whenever `refresh` changes
 
   const fetchReservationsData = async () => {
