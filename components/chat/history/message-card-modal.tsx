@@ -30,6 +30,7 @@ export default function MessageCardModal({
   const [hovered, setHovered] = useState(false)
 
   const handleOpenImageInNewTab = () => {
+    if(message.image === null)return;// null 값에 대한 예외처리.
     window.open(message.image, '_blank')
   }
 
@@ -98,7 +99,7 @@ export default function MessageCardModal({
               닫기
             </Button>
             <Separator className="px-1" />
-            {message.image && (
+            {
               <Button
                 className="bg-[rgb(31,111,186)]"
                 onClick={() => {
@@ -110,7 +111,7 @@ export default function MessageCardModal({
               >
                 재전송
               </Button>
-            )}
+            }
           </div>
         </DialogFooter>
       </DialogContent>
