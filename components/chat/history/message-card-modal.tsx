@@ -21,24 +21,20 @@ interface MessageCardModalProps {
   isOpen: boolean
   onClose: () => void
   message: SentMessages
+  setIsSendModalOpen: (isOpen: boolean) => void// 모달 띄우기 위해서.
 }
 
 export default function MessageCardModal({
   isOpen,
   onClose,
-  message
+  message,
+  setIsSendModalOpen
 }: MessageCardModalProps) {
   const [hovered, setHovered] = useState(false)
 
   const handleOpenImageInNewTab = () => {
     if(message.image === null)return;// null 값에 대한 예외처리.
     window.open(message.image, '_blank')
-  }
-
-  const [isSendModalOpen, setIsSendModalOpen] = useState(false)
-
-  const handleCancel = () => {
-    setIsSendModalOpen(false)
   }
 
   const router = useRouter()
@@ -111,18 +107,14 @@ export default function MessageCardModal({
                 className="bg-[rgb(31,111,186)]"
                 onClick={() => {
                   
-                  if (message.image) {
+                  if (message.image !== null) {
                     // message.image가 있는 경우 동작
                     onClose();
                     ImageUtils.addImage(null, message.image);
                     MessageOptionUtils.addContent(message.content);
                     router.push('edit');
                   } else {
-                    <AddressBookModal
-                    file={null} // null 적으면 전송하기 버튼 클릭 시 오류남.
-                    onClose={handleCancel}
-                    method={'message'}
-                  />
+                    setIsSendModalOpen(true)
                 }
               }
             }
