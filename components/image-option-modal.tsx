@@ -42,13 +42,13 @@ import {ButtonType} from "@/components/prompt-form";
 
 const styleOptions: { value: ImageStyle; label: string; image: string }[] = [
   {
-    value: 'waterColor',
+    value: 'clearFilter',
     label: '수채화',
     image: 
       'https://i.pinimg.com/736x/39/2d/a2/392da2ecea6c95f366c8df5ef461947e.jpg?height=200&width=200'
   },
   {
-    value: 'cityPop',
+    value: 'clearFilter',
     label: '시티팝',
     image: 
       'https://i.pinimg.com/736x/21/74/8e/21748e848c22f6fdfea4fbc876e6261d.jpg?height=200&width=200'
