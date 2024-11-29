@@ -61,7 +61,7 @@ const styleOptions: { value: ImageStyle; label: string; image: string }[] = [
   },
   {
     value: 'mix',
-    label: '스타일 4',
+    label: 'Flux 기본',
     image: 
       'https://tjzk.replicate.delivery/models_organizations_avatar/01ed70be-0d47-4a4a-85fb-32c02cdd4ab5/bfl.png'
   }
