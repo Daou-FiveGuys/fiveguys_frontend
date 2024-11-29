@@ -14,6 +14,7 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import ChatUtils from '@/components/chat/utils/ChatUtils'
 import {useRouter} from "next/navigation";
+import MessageOptionUtils from "@/components/chat/utils/MessageOptionUtils";
 
 interface AddressBookModalProps {
   file?: File | null // File passed from ParentComponent
@@ -129,6 +130,7 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
       })
       .finally(() => {
         onClose()
+        MessageOptionUtils.addContent(null)
         router.push("/")
       })
   }
