@@ -13,6 +13,7 @@ import { api, Target } from './service'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/redux/store'
 import ChatUtils from '@/components/chat/utils/ChatUtils'
+import {useRouter} from "next/navigation";
 
 interface AddressBookModalProps {
   file?: File | null // File passed from ParentComponent
@@ -28,6 +29,7 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
   const [selectedContacts, setSelectedContacts] = useState<Contact2[]>([])
   const [isScheduled, setIsScheduled] = useState(false)
   const [scheduledDateTime, setScheduledDateTime] = useState<string>('')
+  const router = useRouter()
   const content = useSelector(
     (state: RootState) => state.messageOption
   ).content!
@@ -127,6 +129,7 @@ const AddressBookModal: React.FC<AddressBookModalProps> = ({
       })
       .finally(() => {
         onClose()
+        router.push("/")
       })
   }
 
