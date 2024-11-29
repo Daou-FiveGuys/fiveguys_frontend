@@ -171,7 +171,7 @@ export default function HandleGenerateImage({
               >
                 <img
                   src={
-                    '/public/no-image.png'
+                    '/no-image.png'
                   }
                   alt={`Generated Image ${idx + 1}`}
                   width={200}
