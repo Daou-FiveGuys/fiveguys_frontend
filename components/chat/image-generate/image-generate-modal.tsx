@@ -7,6 +7,7 @@ import { BotCard } from '@/components/stocks'
 import ImagePreviewModal from '@/components/image-preview-modal'
 import { useRouter } from 'next/navigation'
 import { MessageOptionState } from '@/redux/slices/messageOptionSlice'
+import ImageUtils from "@/components/chat/utils/ImageUtils";
 
 interface GImageData {
   requestId: string;
@@ -26,7 +27,7 @@ export default function HandleGenerateImage({
   const [imageUrl, setImageUrl] = useState<string>('')
   let imageUrls: string[] = []
   const [imageUrlList, setImageUrlList] = useState<string[]>([])
-  const [imageData, setImageData] = useState<GImageData[]>([])
+  const [gImageData, setGImageData] = useState<GImageData[]>([])
   const handleEditImage = (isEdit: boolean) => {
     setIsOpen(false)
     isEdit && router.push('/edit')
@@ -61,7 +62,7 @@ export default function HandleGenerateImage({
       const imageList: Array<{ requestId: string; url: string }> = []
       console.log(imageResults)
       setImageUrlList(imageResults.map((r) => r?.url || ""))
-      setImageData(
+      setGImageData(
         imageResults.map(r => {
           return {
             requestId: r?.requestId || "",
@@ -132,6 +133,9 @@ export default function HandleGenerateImage({
                   /*setImageUrl(
                     'https://fal.media/files/zebra/P5U45vbYFA-XC_qbPt4xv_78e77d40040c4f5fbe676209d78d3f6e.jpg'
                   )*/
+                  ImageUtils.addImage(
+                     gImageData[idx].requestId, gImageData[idx].url
+                  )
                   setIsOpen(true)
                 }}
                 style={{

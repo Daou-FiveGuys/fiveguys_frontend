@@ -253,7 +253,7 @@ export default function Component({
               <Input
                 id="seed"
                 value={seed}
-                onChange={e => setSeed(parseInt(e.target.value))}
+                onChange={e => setSeed(parseInt(e.target.value || '0'))}
                 placeholder="random"
               />
             </div>
