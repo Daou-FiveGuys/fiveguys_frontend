@@ -8,6 +8,7 @@ import ImagePreviewModal from '@/components/image-preview-modal'
 import { useRouter } from 'next/navigation'
 import { MessageOptionState } from '@/redux/slices/messageOptionSlice'
 import ImageUtils from "@/components/chat/utils/ImageUtils";
+import PngImage from "@/components/ui/icons";
 
 interface GImageData {
   requestId: string;
@@ -169,14 +170,12 @@ export default function HandleGenerateImage({
                   cursor: 'pointer'
                 }}
               >
-                <img
-                  src={
-                    '/no-image.png'
-                  }
-                  alt={`Generated Image ${idx + 1}`}
-                  width={200}
-                  height={200}
-                  style={{ borderRadius: '8px' }}
+                <PngImage
+                src='/no-image.png'
+                alt={`Generated Image ${idx + 1}`}
+                width={200}
+                height={200}
+                className="rounded-lg"
                 />
               </button>
             )
