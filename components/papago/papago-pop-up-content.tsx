@@ -113,7 +113,6 @@ export const TranslationPopup: React.FC<TranslationPopupProps> = ({
               placeholder={
                 isKoreanToEnglish ? 'Translated English' : '번역된 한국어'
               }
-              onChange={e => setTranslatedText(e.target.value)}
               className={getTextAreaClassName(translatedText)}
             />
             {/* 클립보드 복사 버튼 */}

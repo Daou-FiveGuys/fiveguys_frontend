@@ -1,5 +1,5 @@
 // CopyButton.tsx
-import React, { useState } from 'react'
+import React, {useEffect, useState} from 'react'
 import { Clipboard, ClipboardCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -9,10 +9,15 @@ interface CopyButtonProps {
 
 const CopyButton: React.FC<CopyButtonProps> = ({ textToCopy }) => {
   const [isCopied, setIsCopied] = useState(false)
+  const [textState, setTextState] = useState<string>(textToCopy)
+
+  useEffect(() => {
+    setTextState(textToCopy)
+  }, [textToCopy]);
 
   const copyToClipboard = () => {
     navigator.clipboard
-      .writeText(textToCopy)
+      .writeText(textState)
       .then(() => {
         setIsCopied(true)
         setTimeout(() => {
