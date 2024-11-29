@@ -101,15 +101,17 @@ export default function HandleGenerateImage({
 
   // 로딩 상태 추가 (가로 4개로 배치)
   return !isDone ? (
-    <BotCard>
-      <div className="flex gap-2">
-        {Array(4)
-          .fill(null)
-          .map((_, i) => (
-            <ImageSkeleton key={`skeleton-${i}`} />
-          ))}
+      <div className="ml-2">
+        <BotCard>
+          <div className="grid grid-cols-2 w-fit gap-2">
+            {Array(4)
+                .fill(null)
+                .map((_, i) => (
+                    <ImageSkeleton key={`skeleton-${i}`} />
+                ))}
+          </div>
+        </BotCard>
       </div>
-    </BotCard>
   ) : (
     <>
       {isOpen && imageUrl && (
