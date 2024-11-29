@@ -5,29 +5,12 @@ import { Button } from '@/components/ui/button'
 
 interface CopyButtonProps {
   textToCopy: string
+  copyToClipboard: () => void
 }
 
-const CopyButton: React.FC<CopyButtonProps> = ({ textToCopy }) => {
+const CopyButton: React.FC<CopyButtonProps> = ({ textToCopy, copyToClipboard }) => {
   const [isCopied, setIsCopied] = useState(false)
   const [textState, setTextState] = useState<string>(textToCopy)
-
-  useEffect(() => {
-    setTextState(textToCopy)
-  }, [textToCopy]);
-
-  const copyToClipboard = () => {
-    navigator.clipboard
-      .writeText(textState)
-      .then(() => {
-        setIsCopied(true)
-        setTimeout(() => {
-          setIsCopied(false)
-        }, 1000)
-      })
-      .catch(err => {
-        console.error('텍스트 복사 실패:', err)
-      })
-  }
 
   return (
     <Button

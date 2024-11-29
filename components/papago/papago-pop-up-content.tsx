@@ -57,6 +57,21 @@ export const TranslationPopup: React.FC<TranslationPopupProps> = ({
     return `${baseClass} text-base`
   }
 
+
+  const copyToClipboard2 = () => {
+    navigator.clipboard
+        .writeText(translatedText)
+        .then(() => {
+          setIsCopied(true)
+          setTimeout(() => {
+            setIsCopied(false)
+          }, 1000)
+        })
+        .catch(err => {
+          console.error('텍스트 복사 실패:', err)
+        })
+  }
+
   // 오버레이와 팝업을 포탈을 통해 렌더링
   if (!isOpen) return null
 
@@ -116,7 +131,7 @@ export const TranslationPopup: React.FC<TranslationPopupProps> = ({
               className={getTextAreaClassName(translatedText)}
             />
             {/* 클립보드 복사 버튼 */}
-            <CopyButton textToCopy={translatedText} />
+            <CopyButton textToCopy={translatedText} copyToClipboard={copyToClipboard2}/>
           </div>
         </div>
         {/* 번역 방향 전환 및 번역 버튼 */}
